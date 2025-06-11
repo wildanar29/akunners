@@ -125,6 +125,11 @@ class DaftarUser extends Model implements AuthenticatableContract, JWTSubject
         return $this->hasOne(SipModel::class, 'user_id', 'user_id');
     }
 
+    public function Spk()
+    {
+        return $this->hasOne(SpkModel::class, 'user_id', 'user_id');
+    }
+
     public function Str()
     {
         return $this->hasOne(StrModel::class, 'user_id', 'user_id');
