@@ -1,0 +1,67 @@
+[30-Jan-2025 09:05:41 UTC] [33mWarning: operationId must be unique. Duplicate value found: "getTranskrip"[0m
+[30-Jan-2025 09:06:36 UTC] [33mWarning: operationId must be unique. Duplicate value found: "getTranskrip"[0m
+[30-Jan-2025 09:07:01 UTC] [33mWarning: operationId must be unique. Duplicate value found: "getTranskrip"[0m
+[30-Jan-2025 09:16:32 UTC] [33mWarning: operationId must be unique. Duplicate value found: "getTranskrip"[0m
+[31-Jan-2025 03:28:48 UTC] [33mWarning: operationId must be unique. Duplicate value found: "getTranskrip"[0m
+[31-Jan-2025 03:30:19 UTC] [33mWarning: operationId must be unique. Duplicate value found: "getTranskrip"[0m
+[31-Jan-2025 03:33:23 UTC] [33mWarning: operationId must be unique. Duplicate value found: "getTranskrip"[0m
+[31-Jan-2025 03:38:08 UTC] [33mWarning: Required @OA\Info() not found[0m
+[31-Jan-2025 03:38:08 UTC] [33mWarning: operationId must be unique. Duplicate value found: "getTranskrip"[0m
+[31-Jan-2025 03:38:39 UTC] [33mWarning: operationId must be unique. Duplicate value found: "getTranskrip"[0m
+[31-Jan-2025 03:40:10 UTC] [31mError: [Syntax Error] Expected PlainValue, got '/' in \App\Http\Controllers\UjikomController->getUjikom() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\UjikomController.php on line 647:37[0m
+[31-Jan-2025 03:41:48 UTC] [31mError: [Syntax Error] Expected PlainValue, got '/' in \App\Http\Controllers\UjikomController->getUjikom() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\UjikomController.php on line 647:37[0m
+[31-Jan-2025 03:42:14 UTC] [31mError: [Syntax Error] Expected PlainValue, got '/' in \App\Http\Controllers\UjikomController->getUjikom() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\UjikomController.php on line 647:37[0m
+[31-Jan-2025 03:44:31 UTC] [31mError: [Syntax Error] Expected PlainValue, got '/' in \App\Http\Controllers\UjikomController->getUjikom() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\UjikomController.php on line 647:37[0m
+[31-Jan-2025 03:46:57 UTC] [31m[0m
+[31-Jan-2025 03:46:57 UTC] [31mError: Unknown option: "--verbose"[0m
+[31-Jan-2025 03:46:57 UTC] 
+Usage: openapi [--option value] [/path/to/project ...]
+
+Options:
+  --config (-c)     Generator config
+                    ex: -c operationId.hash=false
+  --output (-o)     Path to store the generated documentation.
+                    ex: --output openapi.yaml
+  --exclude (-e)    Exclude path(s).
+                    ex: --exclude vendor,library/Zend
+  --pattern (-n)    Pattern of files to scan.
+                    ex: --pattern "*.php" or --pattern "/\.(phps|php)$/"
+  --bootstrap (-b)  Bootstrap php file(s) for defining constants, etc.
+                    ex: --bootstrap config/constants.php
+  --processor (-p)  Register an additional processor.
+  --format (-f)     Force yaml or json.
+  --debug (-d)      Show additional error information.
+  --version         The OpenAPI version; defaults to 3.0.0.
+  --help (-h)       Display this help message.
+
+
+[31-Jan-2025 03:49:52 UTC] [31mError: [Syntax Error] Expected PlainValue, got '/' in \App\Http\Controllers\UjikomController->getUjikom() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\UjikomController.php on line 647:37[0m
+[31-Jan-2025 03:52:42 UTC] [31mError: [Syntax Error] Expected PlainValue, got '/' in \App\Http\Controllers\UjikomController->getUjikom() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\UjikomController.php on line 647:37[0m
+[31-Jan-2025 03:52:42 UTC] [33mWarning: Required @OA\Info() not found[0m
+[31-Jan-2025 03:54:25 UTC] [31mError: [Syntax Error] Expected PlainValue, got '/' in \App\Http\Controllers\UjikomController->getUjikom() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\UjikomController.php on line 647:37[0m
+[31-Jan-2025 04:41:43 UTC] [31mError: [Syntax Error] Expected PlainValue, got '/' in \App\Http\Controllers\UjikomController->getUjikom() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\UjikomController.php on line 647:37[0m
+[31-Jan-2025 04:45:25 UTC] [31mError: [Syntax Error] Expected PlainValue, got '/' in \App\Http\Controllers\UjikomController->getUjikom() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\UjikomController.php on line 647:37[0m
+[31-Jan-2025 04:50:10 UTC] [31mError: [Syntax Error] Expected PlainValue, got '/' in \App\Http\Controllers\UjikomController->getUjikom() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\UjikomController.php on line 647:37[0m
+[31-Jan-2025 04:51:38 UTC] [31mError: [Syntax Error] Expected PlainValue, got '/' in \App\Http\Controllers\UjikomController->getUjikom() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\UjikomController.php on line 647:33[0m
+[31-Jan-2025 04:52:13 UTC] [31mError: [Syntax Error] Expected PlainValue, got '/' in \App\Http\Controllers\UjikomController->getUjikom() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\UjikomController.php on line 647:37[0m
+[31-Jan-2025 04:53:39 UTC] [33mWarning: operationId must be unique. Duplicate value found: "getTranskrip"[0m
+[26-Feb-2025 09:25:50 UTC] [31mError: [Syntax Error] Expected Doctrine\Common\Annotations\DocLexer::T_CLOSE_PARENTHESIS, got '@' in \App\Http\Controllers\UsersController->GetAkunNurseByNIK() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\UsersController.php on line 963:12[0m
+[26-Feb-2025 09:25:50 UTC] [33mWarning: operationId must be unique. Duplicate value found: "getUjikomFilePath"[0m
+[27-Feb-2025 06:24:26 UTC] [31mError: [Syntax Error] Expected Doctrine\Common\Annotations\DocLexer::T_CLOSE_PARENTHESIS, got '@' in \App\Http\Controllers\UsersController->GetAkunNurseByNIK() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\UsersController.php on line 973:12[0m
+[27-Feb-2025 06:24:26 UTC] [33mWarning: Unable to merge @OA\Post() in \App\Http\Controllers\SpkController->upload() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\SpkController.php on line 98[0m
+[27-Feb-2025 06:24:26 UTC] [33mWarning: Unable to merge @OA\Put() in \App\Http\Controllers\SpkController->updateFile() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\SpkController.php on line 360[0m
+[27-Feb-2025 06:24:26 UTC] [33mWarning: Unable to merge @OA\Delete() in \App\Http\Controllers\SpkController->deleteFile() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\SpkController.php on line 527[0m
+[27-Feb-2025 06:24:26 UTC] [33mWarning: Unable to merge @OA\Get() in \App\Http\Controllers\SpkController->getTranskrip() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\SpkController.php on line 636[0m
+[27-Feb-2025 06:24:26 UTC] [33mWarning: operationId must be unique. Duplicate value found: "getUjikomFilePath"[0m
+[29-Apr-2025 10:44:18 UTC] [31mError: [Syntax Error] Expected Doctrine\Common\Annotations\DocLexer::T_CLOSE_PARENTHESIS, got '@' in \App\Http\Controllers\SertifikatController->upload() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\SertifikatController.php on line 61:20[0m
+[29-Apr-2025 10:44:18 UTC] [31mError: [Syntax Error] Expected Doctrine\Common\Annotations\DocLexer::T_CLOSE_PARENTHESIS, got '@' in \App\Http\Controllers\SertifikatController->getSertifikatByNik() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\SertifikatController.php on line 657:20[0m
+[29-Apr-2025 10:44:19 UTC] [31mError: [Syntax Error] Expected Doctrine\Common\Annotations\DocLexer::T_CLOSE_PARENTHESIS, got '@' in \App\Http\Controllers\UsersController->GetAkunNurseByNIK() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\UsersController.php on line 1054:12[0m
+[29-Apr-2025 10:44:19 UTC] [33mWarning: Unable to merge @OA\Post() in \App\Http\Controllers\SpkController->upload() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\SpkController.php on line 113[0m
+[29-Apr-2025 10:44:19 UTC] [33mWarning: Unable to merge @OA\Put() in \App\Http\Controllers\SpkController->updateFile() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\SpkController.php on line 385[0m
+[29-Apr-2025 10:44:19 UTC] [33mWarning: Unable to merge @OA\Delete() in \App\Http\Controllers\SpkController->deleteFile() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\SpkController.php on line 552[0m
+[29-Apr-2025 10:44:19 UTC] [33mWarning: Unable to merge @OA\Get() in \App\Http\Controllers\SpkController->getTranskrip() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\SpkController.php on line 663[0m
+[29-Apr-2025 10:44:19 UTC] [31mError: Multiple @OA\Response() with the same response="200":
+  \App\Http\Controllers\BidangController->getListDataAsesor() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\BidangController.php on line 647
+  \App\Http\Controllers\BidangController->getListDataAsesor() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\BidangController.php on line 647[0m
+[29-Apr-2025 10:44:19 UTC] [33mWarning: @OA\Items() is required when @OA\Property(property="data") has type "array" in \App\Http\Controllers\BidangController->getListDataAsesor() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\BidangController.php on line 647[0m
+[22-May-2025 01:42:43 UTC] [33mWarning: Required @OA\Info() not found[0m

@@ -1,0 +1,1 @@
+C:\inetpub\wwwroot\akunurse>php vendor/bin/openapi app/Http/Controllers

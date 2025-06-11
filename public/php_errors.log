@@ -1,0 +1,1067 @@
+[31-Jan-2025 01:53:44 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: Cannot access offset of type Laravel\Lumen\Http\Request on array
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[31-Jan-2025 02:36:52 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: Cannot access offset of type Laravel\Lumen\Http\Request on array
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[31-Jan-2025 05:30:34 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: Class "App\Http\Controllers\Carbon" not found
+Context: {"exception":{}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[31-Jan-2025 05:31:31 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: Class "App\Http\Controllers\Carbon" not found
+Context: {"exception":{}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[31-Jan-2025 05:40:34 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: syntax error, unexpected token "private", expecting end of file
+Context: {"exception":{}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[31-Jan-2025 08:02:35 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: Call to undefined function str_slug()
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'Call to undefin...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('Call to undefin...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'Call to undefin...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('Call to undefin...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('Call to undefin...', Array)
+#8 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): Laravel\Lumen\Exceptions\Handler->report(Object(Error))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(Error))
+#10 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(Error))
+#11 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[31-Jan-2025 08:03:51 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: Call to undefined function str_slug()
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'Call to undefin...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('Call to undefin...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'Call to undefin...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('Call to undefin...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('Call to undefin...', Array)
+#8 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): Laravel\Lumen\Exceptions\Handler->report(Object(Error))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(Error))
+#10 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(Error))
+#11 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[31-Jan-2025 08:04:53 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: Call to undefined function str_slug()
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'Call to undefin...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('Call to undefin...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'Call to undefin...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('Call to undefin...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('Call to undefin...', Array)
+#8 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): Laravel\Lumen\Exceptions\Handler->report(Object(Error))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(Error))
+#10 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(Error))
+#11 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[31-Jan-2025 08:04:56 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: Call to undefined function str_slug()
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'Call to undefin...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('Call to undefin...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'Call to undefin...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('Call to undefin...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('Call to undefin...', Array)
+#8 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): Laravel\Lumen\Exceptions\Handler->report(Object(Error))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(Error))
+#10 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(Error))
+#11 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[31-Jan-2025 08:05:00 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: Call to undefined function str_slug()
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'Call to undefin...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('Call to undefin...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'Call to undefin...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('Call to undefin...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('Call to undefin...', Array)
+#8 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): Laravel\Lumen\Exceptions\Handler->report(Object(Error))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(Error))
+#10 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(Error))
+#11 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[31-Jan-2025 08:05:38 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: Call to undefined function str_slug()
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'Call to undefin...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('Call to undefin...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'Call to undefin...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('Call to undefin...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('Call to undefin...', Array)
+#8 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): Laravel\Lumen\Exceptions\Handler->report(Object(Error))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(Error))
+#10 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(Error))
+#11 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[31-Jan-2025 08:05:50 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: Call to undefined function str_slug()
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'Call to undefin...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('Call to undefin...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'Call to undefin...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('Call to undefin...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('Call to undefin...', Array)
+#8 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): Laravel\Lumen\Exceptions\Handler->report(Object(Error))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(Error))
+#10 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(Error))
+#11 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[31-Jan-2025 08:06:54 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: Call to undefined function str_slug()
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'Call to undefin...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('Call to undefin...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'Call to undefin...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('Call to undefin...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('Call to undefin...', Array)
+#8 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): Laravel\Lumen\Exceptions\Handler->report(Object(Error))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(Error))
+#10 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(Error))
+#11 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[31-Jan-2025 08:43:08 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: syntax error, unexpected token "public"
+Context: {"exception":{}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[31-Jan-2025 08:52:46 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: syntax error, unexpected token "{"
+Context: {"exception":{}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[31-Jan-2025 08:57:18 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: Undefined variable $router
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'Undefined varia...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('Undefined varia...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'Undefined varia...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('Undefined varia...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('Undefined varia...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(ErrorException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(ErrorException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(ErrorException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(ErrorException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[31-Jan-2025 08:59:08 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: Undefined variable $router
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'Undefined varia...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('Undefined varia...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'Undefined varia...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('Undefined varia...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('Undefined varia...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(ErrorException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(ErrorException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(ErrorException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(ErrorException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[31-Jan-2025 09:00:04 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: Target class [web] does not exist.
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[31-Jan-2025 09:00:06 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: Target class [web] does not exist.
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[31-Jan-2025 09:00:14 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: Target class [web] does not exist.
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[31-Jan-2025 09:00:31 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: Target class [web] does not exist.
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[31-Jan-2025 09:17:19 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: Cannot access offset of type Laravel\Lumen\Http\Request on array
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[31-Jan-2025 09:33:19 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: Tymon\JWTAuth\JWT::fromUser(): Argument #1 ($user) must be of type Tymon\JWTAuth\Contracts\JWTSubject, stdClass given, called in C:\inetpub\wwwroot\akunurse\vendor\illuminate\support\Facades\Facade.php on line 338
+Context: {"exception":{}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[31-Jan-2025 09:34:01 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: Tymon\JWTAuth\JWT::fromUser(): Argument #1 ($user) must be of type Tymon\JWTAuth\Contracts\JWTSubject, stdClass given, called in C:\inetpub\wwwroot\akunurse\vendor\illuminate\support\Facades\Facade.php on line 338
+Context: {"exception":{}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[31-Jan-2025 09:34:03 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: Tymon\JWTAuth\JWT::fromUser(): Argument #1 ($user) must be of type Tymon\JWTAuth\Contracts\JWTSubject, stdClass given, called in C:\inetpub\wwwroot\akunurse\vendor\illuminate\support\Facades\Facade.php on line 338
+Context: {"exception":{}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[31-Jan-2025 09:34:05 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: Tymon\JWTAuth\JWT::fromUser(): Argument #1 ($user) must be of type Tymon\JWTAuth\Contracts\JWTSubject, stdClass given, called in C:\inetpub\wwwroot\akunurse\vendor\illuminate\support\Facades\Facade.php on line 338
+Context: {"exception":{}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[31-Jan-2025 09:48:02 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: Tymon\JWTAuth\JWT::fromUser(): Argument #1 ($user) must be of type Tymon\JWTAuth\Contracts\JWTSubject, stdClass given, called in C:\inetpub\wwwroot\akunurse\vendor\illuminate\support\Facades\Facade.php on line 338
+Context: {"exception":{}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[31-Jan-2025 09:48:15 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-01-31.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: Tymon\JWTAuth\JWT::fromUser(): Argument #1 ($user) must be of type Tymon\JWTAuth\Contracts\JWTSubject, stdClass given, called in C:\inetpub\wwwroot\akunurse\vendor\illuminate\support\Facades\Facade.php on line 338
+Context: {"exception":{}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[01-Feb-2025 02:37:51 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-01.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-01.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry '089665795500' for key 'users_otps.no_telp' (SQL: insert into `users_otps` (`no_telp`, `otp`, `expires_at`, `validate_otp`, `updated_at`, `created_at`) values (089665795500, 613682, 2025-02-01 02:42:51, 0, 2025-02-01 02:37:51, 2025-02-01 02:37:51))
+Context: {"exception":{"errorInfo":["23000",1062,"Duplicate entry '089665795500' for key 'users_otps.no_telp'"]}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[03-Feb-2025 02:32:44 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: Target class [Laravel\Lumen\Http\Middleware\VerifyCsrfToken] does not exist.
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[03-Feb-2025 02:35:50 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: Target class [Laravel\Lumen\Http\Middleware\VerifyCsrfToken] does not exist.
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[03-Feb-2025 02:35:53 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: Target class [Laravel\Lumen\Http\Middleware\VerifyCsrfToken] does not exist.
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[03-Feb-2025 02:41:37 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: Target class [Laravel\Lumen\Http\Middleware\VerifyCsrfToken] does not exist.
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[03-Feb-2025 02:41:42 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: Target class [Laravel\Lumen\Http\Middleware\VerifyCsrfToken] does not exist.
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[03-Feb-2025 02:47:36 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: file_put_contents(C:\inetpub\wwwroot\akunurse\storage\framework/sessions/dKsDFBA1K4eBiMR2Xu1VxzX7QwQr5pL2bXbqnLq0): Failed to open stream: Permission denied
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[03-Feb-2025 02:47:42 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: file_put_contents(C:\inetpub\wwwroot\akunurse\storage\framework/sessions/1J3ypVAAhlCLTKFP1LZU0rtHtkKeUNgRuytDaLUI): Failed to open stream: Permission denied
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[03-Feb-2025 02:47:50 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: file_put_contents(C:\inetpub\wwwroot\akunurse\storage\framework/sessions/x2cKuNRiQ3jNRjHI6wdUmWkZ0perGdkbB5Jzgpm9): Failed to open stream: Permission denied
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[03-Feb-2025 02:49:03 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: file_put_contents(C:\inetpub\wwwroot\akunurse\storage\framework/sessions/TwAKRUtGd0hmKMJszIYWariMCPO6H02Iq2LasNdH): Failed to open stream: Permission denied
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[03-Feb-2025 02:49:09 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: file_put_contents(C:\inetpub\wwwroot\akunurse\storage\framework/sessions/z9ZCYECS4rQLCsFj1EY7SYXrytZzlijpfE0xzeJa): Failed to open stream: Permission denied
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[03-Feb-2025 02:50:49 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: file_put_contents(C:\inetpub\wwwroot\akunurse\storage\framework/sessions/a5jDxuQsuWldZHXoG7oRdifhdcIkpPQYIZGVf9EW): Failed to open stream: Permission denied
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[03-Feb-2025 03:21:32 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: file_put_contents(C:\inetpub\wwwroot\akunurse\storage\framework/sessions/4l6zS19QbXRWlWQAva7VayRH8nC7rBioCHmicU9i): Failed to open stream: Permission denied
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[03-Feb-2025 03:24:23 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: file_put_contents(C:\inetpub\wwwroot\akunurse\storage\framework/sessions/BuOPupnn5FJVb1PhczFKRUfYq8jihCEy6IczvYoz): Failed to open stream: Permission denied
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[03-Feb-2025 03:24:59 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: file_put_contents(C:\inetpub\wwwroot\akunurse\storage\framework/sessions/wxWdR2MDc3w3G02l7A45lNoIS5IIQV0zNYGWU7db): Failed to open stream: Permission denied
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[03-Feb-2025 03:25:55 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: file_put_contents(C:\inetpub\wwwroot\akunurse\storage\framework/sessions/XfleehKkZ5Gl8LU1YzAqCJSNycLuixE0U3vklvRO): Failed to open stream: Permission denied
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[03-Feb-2025 03:26:31 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: file_put_contents(C:\inetpub\wwwroot\akunurse\storage\framework/sessions/dQoz3AswD6wibVvrj2CYlgUfycbLHZQhTbKVsd2h): Failed to open stream: Permission denied
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[03-Feb-2025 03:28:29 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: file_put_contents(C:\inetpub\wwwroot\akunurse\storage\framework/sessions/VIChk17YA1anvuInbIrs8CmxDHWxyXgO1o4Q6mWY): Failed to open stream: Permission denied
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[03-Feb-2025 03:28:31 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: file_put_contents(C:\inetpub\wwwroot\akunurse\storage\framework/sessions/1EL1weIKXhSry2cmyFLHaJxPp7zh0RplJ9TaXSvo): Failed to open stream: Permission denied
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[03-Feb-2025 03:32:26 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: file_put_contents(C:\inetpub\wwwroot\akunurse\storage\framework/sessions/s2dWDYXoLOX2HmkkrCs6uxqcwQWsbsBT51P9oW8F): Failed to open stream: Permission denied
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[03-Feb-2025 03:32:28 UTC] PHP Fatal error:  Uncaught UnexpectedValueException: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: The stream or file "C:\inetpub\wwwroot\akunurse\storage\logs/lumen-2025-02-03.log" could not be opened in append mode: Failed to open stream: Permission denied
+The exception occurred while attempting to log: file_put_contents(C:\inetpub\wwwroot\akunurse\storage\framework/sessions/7jmeDtrdnnRwyVCeeew0bwM6fZtSpu3T4HgJLp9z): Failed to open stream: Permission denied
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}}
+Context: {"exception":{}} in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php:157
+Stack trace:
+#0 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\RotatingFileHandler.php(126): Monolog\Handler\StreamHandler->write(Array)
+#1 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\AbstractProcessingHandler.php(48): Monolog\Handler\RotatingFileHandler->write(Array)
+#2 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(400): Monolog\Handler\AbstractProcessingHandler->handle(Array)
+#3 C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Logger.php(651): Monolog\Logger->addRecord(400, 'The stream or f...', Array)
+#4 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(181): Monolog\Logger->error('The stream or f...', Array)
+#5 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\Logger.php(94): Illuminate\Log\Logger->writeLog('error', 'The stream or f...', Array)
+#6 C:\inetpub\wwwroot\akunurse\vendor\illuminate\log\LogManager.php(645): Illuminate\Log\Logger->error('The stream or f...', Array)
+#7 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Exceptions\Handler.php(58): Illuminate\Log\LogManager->error('The stream or f...', Array)
+#8 C:\inetpub\wwwroot\akunurse\app\Exceptions\Handler.php(38): Laravel\Lumen\Exceptions\Handler->report(Object(UnexpectedValueException))
+#9 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(200): App\Exceptions\Handler->report(Object(UnexpectedValueException))
+#10 C:\inetpub\wwwroot\akunurse\vendor\laravel\lumen-framework\src\Concerns\RegistersExceptionHandlers.php(51): Laravel\Lumen\Application->handleException(Object(UnexpectedValueException))
+#11 [internal function]: Laravel\Lumen\Application->Laravel\Lumen\Concerns\{closure}(Object(UnexpectedValueException))
+#12 {main}
+  thrown in C:\inetpub\wwwroot\akunurse\vendor\monolog\monolog\src\Monolog\Handler\StreamHandler.php on line 157
+[24-Mar-2025 02:15:59 UTC] PHP Fatal error:  Maximum execution time of 30 seconds exceeded in C:\inetpub\wwwroot\akunurse\vendor\predis\predis\src\Connection\StreamConnection.php on line 288
+[24-Mar-2025 02:16:25 UTC] PHP Fatal error:  Maximum execution time of 30 seconds exceeded in C:\inetpub\wwwroot\akunurse\vendor\predis\predis\src\Connection\StreamConnection.php on line 288
+[24-Mar-2025 02:17:40 UTC] PHP Fatal error:  Maximum execution time of 30 seconds exceeded in C:\inetpub\wwwroot\akunurse\vendor\predis\predis\src\Connection\StreamConnection.php on line 288
+[24-Mar-2025 02:17:49 UTC] PHP Fatal error:  Maximum execution time of 30 seconds exceeded in C:\inetpub\wwwroot\akunurse\vendor\predis\predis\src\Connection\StreamConnection.php on line 288
+[24-Mar-2025 02:17:56 UTC] PHP Fatal error:  Maximum execution time of 30 seconds exceeded in C:\inetpub\wwwroot\akunurse\vendor\predis\predis\src\Connection\StreamConnection.php on line 288
+[24-Mar-2025 02:20:30 UTC] PHP Fatal error:  Maximum execution time of 30 seconds exceeded in C:\inetpub\wwwroot\akunurse\vendor\predis\predis\src\Connection\StreamConnection.php on line 288
+[06-May-2025 00:48:53 UTC] PHP Fatal error:  Cannot use Carbon\Carbon as Carbon because the name is already in use in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\Form3Controller.php on line 18
