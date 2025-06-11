@@ -1112,7 +1112,7 @@ use Illuminate\Support\Facades\Log;
 	
 			// Jika tidak ada di Redis, ambil dari database
 			$user = DaftarUser::where('nik', $nik)->first();
-	
+			
 			if (!$user) {
 				return response()->json([
 					'status' => 404,
@@ -1150,7 +1150,7 @@ use Illuminate\Support\Facades\Log;
 					 'sampai' => $history->sampai
 				 ];
 			 });
-
+			Log::info('ini user data', ['user' => $user->toArray()]);
 			// Ambil URL dokumen dan masa berlaku berdasarkan NIK
 			$ijazah = [
 				'url' => isset($user->ijazah->path_file) ? url('storage/' . $user->ijazah->path_file) : null,
