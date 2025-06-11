@@ -1175,6 +1175,13 @@ use Illuminate\Support\Facades\Log;
 				'masa_berlaku' => $user->sip->masa_berlaku_sip ?? null
 				
 			];
+
+			$spk = [
+				'url' => isset($user->spk->path_file) ? url('storage/' . $user->spk->path_file) : null,
+				'nomor' => $user->spk->nomor_spk ?? null,
+				'masa_berlaku' => $user->spk->masa_berlaku_spk ?? null
+				
+			];
 	
 			// Ambil semua sertifikat beserta masa berlakunya
 			$sertifikat = $user->sertifikat->map(function ($item) {
@@ -1210,6 +1217,7 @@ use Illuminate\Support\Facades\Log;
 				'ujikom' => $ujikom,
 				'str' => $str,
 				'sip' => $sip,
+				'spk' => $spk,
 				'sertifikat' => $sertifikat,
 			];
 		
