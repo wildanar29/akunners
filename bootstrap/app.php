@@ -42,6 +42,7 @@ $app->alias('redis', \Illuminate\Support\Facades\Redis::class);
 $app->register(Laravel\Tinker\TinkerServiceProvider::class);
 
 
+
 // Aktifkan sesi
 $app->register(Illuminate\Session\SessionServiceProvider::class);
 $app->alias('session', Illuminate\Session\SessionManager::class);
