@@ -114,6 +114,14 @@ $router->get('/storage/spk/{path}', function ($path) {
     return response()->file(storage_path('app/public/Spk/' . $path));  
 });  
 
+//SAK Controller
+$router->post('/upload-sak', 'SakController@upload');
+$router->put('/update-sak/{nik}', 'SakController@updateFile');
+$router->delete('/sak/file/{nik}', 'SakController@deleteFile');
+$router->get('/get-no-expired-sak/{nik}', 'SakController@getSakByNik');
+$router->get('/storage/sak/{path}', function ($path) {  
+    return response()->file(storage_path('app/public/Sak/' . $path));  
+});  
 
 //Ujikom Controller
 $router->post('/upload-ujikom', 'UjikomController@upload');
