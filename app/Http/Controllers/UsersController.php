@@ -1303,12 +1303,15 @@ use Illuminate\Support\Facades\Log;
 	public function CheckDataCompleteness($nik)
 	{
 		try {
+
 			$user = DaftarUser::where('nik', $nik)->first();
 
 			if (!$user) {
 				return response()->json([
 					'status' => 404,
-					'message' => 'User not found. The account with NIK ' . $nik . ' is not registered in the system. Please check your NIK or ensure you have registered.'
+					'message' => 'User not found.',
+					'detail' => "The account with NIK '{$nik}' is not registered in the system.",
+					'solution' => 'Please check your NIK or ensure you have registered.'
 				], 404);
 			}
 
@@ -1322,25 +1325,6 @@ use Illuminate\Support\Facades\Log;
 				'provinsi', 'kota', 'alamat', 'kode_pos', 'role_id'
 			];
 
-			$fieldLabels = [
-				'nama' => 'Nama Lengkap',
-				'email' => 'Email',
-				'no_telp' => 'Nomor Telepon',
-				'tempat_lahir' => 'Tempat Lahir',
-				'tanggal_lahir' => 'Tanggal Lahir',
-				'kewarganegaraan' => 'Kewarganegaraan',
-				'jenis_kelamin' => 'Jenis Kelamin',
-				'pendidikan' => 'Pendidikan',
-				'tahun_lulus' => 'Tahun Lulus',
-				'provinsi' => 'Provinsi',
-				'kota' => 'Kota/Kabupaten',
-				'alamat' => 'Alamat Lengkap',
-				'kode_pos' => 'Kode Pos',
-				'role_id' => 'Peran/Role',
-				'working_unit_id' => 'Unit Kerja',
-				'jabatan_id' => 'Jabatan',
-			];
-
 			$missingFields = [];
 
 			foreach ($requiredFields as $field) {
@@ -1349,11 +1333,14 @@ use Illuminate\Support\Facades\Log;
 				}
 			}
 
-			if (empty($working_unit_id)) $missingFields[] = 'working_unit_id';
-			if (empty($jabatan_id)) $missingFields[] = 'jabatan_id';
+			if (empty($working_unit_id)) {
+				$missingFields[] = 'working_unit_id';
+			}
+			if (empty($jabatan_id)) {
+				$missingFields[] = 'jabatan_id';
+			}
 
-			$missingFieldsReadable = array_map(fn($field) => $fieldLabels[$field] ?? $field, $missingFields);
-
+			// Dokumen yang diperiksa
 			$documentFields = [
 				'ijazah' => isset($user->ijazah->path_file) ? url('storage/' . $user->ijazah->path_file) : null,
 				'sip' => isset($user->sip->path_file) ? [
@@ -1365,44 +1352,56 @@ use Illuminate\Support\Facades\Log;
 					'url' => url('storage/' . $user->str->path_file),
 					'masa_berlaku' => $user->str->masa_berlaku_str ?? null,
 					'nomor' => $user->str->nomor_str ?? null
-				] : null
+				] : null,
+
+				// 'ujikom' => isset($user->ujikom->path_file) ? [
+				// 	'url' => url('storage/' . $user->ujikom->path_file),
+				// 	'masa_berlaku' => $user->ujikom->masa_berlaku_kompetensi ?? null,
+				// 	'nomor' => $user->ujikom->nomor_kompetensi ?? null
+				// ] : null
 			];
 
 			$missingDocuments = [];
 			foreach ($documentFields as $key => $value) {
 				if (empty($value)) {
-					$missingDocuments[] = strtoupper($key);
+					$missingDocuments[] = $key;
 				}
 			}
 
-			if (count($missingFieldsReadable) > 0 || count($missingDocuments) > 0) {
-				$message = "Data berikut belum lengkap: " . implode(', ', $missingFieldsReadable);
-				if (count($missingDocuments) > 0) {
-					$message .= ". Dokumen yang belum diunggah: " . implode(', ', $missingDocuments);
-				}
+			// if (empty($user->ujikom?->path_file)) {
+			// 	$missingDocuments[] = 'ujikom';
+			// }
 
+			if (count($missingFields) > 0 || count($missingDocuments) > 0) {
 				return response()->json([
 					'status' => 400,
-					'message' => $message,
-					'solution' => 'Silakan lengkapi data atau dokumen yang belum diisi/unggah.'
+					'message' => 'User data is incomplete.',
+					'missing_fields' => $missingFields,
+					'missing_documents' => $missingDocuments,
+					'detail' => "The following data is incomplete: " . implode(', ', $missingFields) .
+						(count($missingDocuments) > 0 ? ". Missing documents: " . implode(', ', $missingDocuments) : ""),
+					'solution' => 'Please review the missing data and complete the required information.'
 				], 400);
 			}
 
-			// Jika lengkap, lanjut menyiapkan detail
 			$role = DB::table('user_role')->where('role_id', $user->role_id)->first();
-			$role_name = $role->role_name ?? null;
+			$role_name = $role ? $role->role_name : null;
 
 			$working_unit = DB::table('working_unit')->where('working_unit_id', $user->working_unit_id)->first();
-			$working_unit_name = $working_unit->working_unit_name ?? null;
+			$working_unit_name = $working_unit ? $working_unit->working_unit_name : null;
 
 			$working_area = DB::table('working_area')
-				->where('working_area_id', $working_unit?->working_area_id)
+				->where('working_area_id', $working_unit ? $working_unit->working_area_id : null)
 				->first();
+			$working_area_id = $working_area ? $working_area->working_area_id : null;
+			$working_area_name = $working_area ? $working_area->working_area_name : null;
 
 			$jabatan = DB::table('jabatan')
 				->where('jabatan_id', $user->jabatan_id)
 				->select('nama_jabatan')
 				->first();
+			$jabatan_id = $jabatan ? $user->jabatan_id : null;
+			$nama_jabatan = $jabatan ? $jabatan->nama_jabatan : null;
 
 			$sertifikat = $user->sertifikat->map(function ($item) {
 				return [
@@ -1430,13 +1429,14 @@ use Illuminate\Support\Facades\Log;
 				'role_name' => $role_name,
 				'working_unit_id' => $user->working_unit_id,
 				'working_unit_name' => $working_unit_name,
-				'working_area_id' => $working_area?->working_area_id,
-				'working_area_name' => $working_area?->working_area_name,
-				'jabatan_id' => $user->jabatan_id,
-				'nama_jabatan' => $jabatan?->nama_jabatan,
+				'working_area_id' => $working_area_id,
+				'working_area_name' => $working_area_name,
+				'jabatan_id' => $jabatan_id,
+				'nama_jabatan' => $nama_jabatan,
 				'ijazah' => $documentFields['ijazah'],
 				'sip' => $documentFields['sip'],
 				'str' => $documentFields['str'],
+				// 'ujikom' => $documentFields['ujikom'],
 				'sertifikat' => $sertifikat,
 				'foto' => $user->foto ? url('storage/foto_nurse/' . basename($user->foto)) : null,
 			];
@@ -1444,17 +1444,20 @@ use Illuminate\Support\Facades\Log;
 			return response()->json([
 				'status' => 200,
 				'message' => 'User data found and complete.',
-				'data' => $userData
+				'source' => 'Database',
+				'data' => $userData,
+				'message_detail' => 'User data retrieved successfully from the database.'
 			], 200);
+
 		} catch (\Exception $e) {
 			return response()->json([
 				'status' => 500,
-				'message' => 'Terjadi kesalahan pada server.',
-				'error' => $e->getMessage()
+				'message' => 'An error occurred on the server.',
+				'kesalahan' => $e->getMessage(),
+				'solusi' => 'Please try again later. If the issue persists, contact the system admin.'
 			], 500);
 		}
 	}
-
 
 
 	/**

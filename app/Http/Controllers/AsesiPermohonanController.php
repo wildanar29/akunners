@@ -76,7 +76,7 @@ class AsesiPermohonanController extends Controller
      *     )
      * )
      */
-    public function AjuanPermohonanAsesi(Request $request)
+   public function AjuanPermohonanAsesi(Request $request)
     {
         try {
             // Ambil user dari token
@@ -102,7 +102,7 @@ class AsesiPermohonanController extends Controller
 
             // Ambil data terkait dari berbagai tabel berdasarkan user_id
             $ijazah = IjazahModel::where('user_id', $user->user_id)->first();
-            $ujikom = UjikomModel::where('user_id', $user->user_id)->first();
+            // $ujikom = UjikomModel::where('user_id', $user->user_id)->first(); // Dikomentari sesuai permintaan
             $str = StrModel::where('user_id', $user->user_id)->first();
             $sip = SipModel::where('user_id', $user->user_id)->first();
             $sertifikat = SertifikatModel::where('user_id', $user->user_id)->first();
@@ -111,7 +111,7 @@ class AsesiPermohonanController extends Controller
             $missingDocuments = [];
 
             if (!$ijazah || empty($ijazah->path_file)) $missingDocuments[] = 'Ijazah';
-            if (!$ujikom || empty($ujikom->path_file)) $missingDocuments[] = 'Ujikom';
+            // if (!$ujikom || empty($ujikom->path_file)) $missingDocuments[] = 'Ujikom'; // Dikomentari sesuai permintaan
             if (!$str || empty($str->path_file)) $missingDocuments[] = 'STR';
             if (!$sip || empty($sip->path_file)) $missingDocuments[] = 'SIP';
 
@@ -120,30 +120,28 @@ class AsesiPermohonanController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Submission failed. The following documents must have a valid file path: ' . implode(', ', $missingDocuments) . '.',
-                    'missing_documents' => $missingDocuments, // Menyertakan daftar dalam response
+                    'missing_documents' => $missingDocuments,
                     'status_code' => 400,
                 ], 400);
             }
-
 
             // Cek apakah permohonan sudah pernah diajukan
             $existingBidang = BidangModel::where('user_id', $user->user_id)->first();
 
             // Data yang akan disimpan atau diperbarui
             $dataUpdate = [
-                'asesi_name' => $user->nama, // Nama asesi
-                'asesi_date' => Carbon::now()->toDateString(), // Tanggal otomatis terisi
+                'asesi_name' => $user->nama,
+                'asesi_date' => Carbon::now()->toDateString(),
                 'ijazah_id' => $ijazah->ijazah_id,
-                'ujikom_id' => $ujikom->ujikom_id,
+                // 'ujikom_id' => $ujikom->ujikom_id, // Dikomentari sesuai permintaan
                 'str_id' => $str->str_id,
                 'sip_id' => $sip->sip_id,
-                'sertifikat_id' => $sertifikat ? $sertifikat->user_id : null, // Opsional
+                'sertifikat_id' => $sertifikat ? $sertifikat->user_id : null,
                 'updated_at' => Carbon::now(),
                 'status' => 'Waiting',
             ];
 
             if ($existingBidang) {
-                // Jika sudah ada, lakukan update
                 $existingBidang->update($dataUpdate);
 
                 return response()->json([
@@ -154,7 +152,6 @@ class AsesiPermohonanController extends Controller
                     'status_code' => 200,
                 ], 200);
             } else {
-                // Jika belum ada, lakukan insert data baru
                 $dataUpdate['user_id'] = $user->user_id;
                 $dataUpdate['created_at'] = Carbon::now();
 
@@ -165,13 +162,13 @@ class AsesiPermohonanController extends Controller
             // *** Tambahkan Data ke pk_progress ***
             $progress = PkProgressModel::create([
                 'user_id' => $user->user_id,
-                'form_1_id' => $form_1_id, // Ambil ID form_1 yang baru
+                'form_1_id' => $form_1_id,
             ]);
 
             // *** Tambahkan Data ke pk_status ***
             PkStatusModel::create([
-                'progress_id' => $progress->progress_id, // Ambil ID progress yang baru
-                'form_1_status' => 'Open', // Set status default
+                'progress_id' => $progress->progress_id,
+                'form_1_status' => 'Open',
             ]);
 
             return response()->json([
@@ -183,7 +180,7 @@ class AsesiPermohonanController extends Controller
                     'asesi_name' => $dataUpdate['asesi_name'],
                     'asesi_date' => $dataUpdate['asesi_date'],
                     'ijazah_id' => $dataUpdate['ijazah_id'],
-                    'ujikom_id' => $dataUpdate['ujikom_id'],
+                    // 'ujikom_id' => $dataUpdate['ujikom_id'] ?? null, // Dikomentari sesuai permintaan
                     'str_id' => $dataUpdate['str_id'],
                     'sip_id' => $dataUpdate['sip_id'],
                     'sertifikat_id' => $dataUpdate['sertifikat_id'],
@@ -197,7 +194,6 @@ class AsesiPermohonanController extends Controller
                 'status_code' => 201,
             ], 201);
 
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -207,6 +203,7 @@ class AsesiPermohonanController extends Controller
             ], 500);
         }
     }
+
 
 
 }
