@@ -20,7 +20,7 @@ $router->get('/', function () use ($router) {
 
 
 // FORM 1 ATAU FORM PENGAJUAN
-$router->get('/progress/{userId}', 'ProgressController@getUserProgress');
+$router->get('/progress/{userId}', 'AsesiPermohonanController@getUserProgress');
 
 // Bagian API Form 5
 $router->post('/konsultasi/pra-asesmen', 'Form5Controller@pengajuanKonsultasiPraAsesmen');
