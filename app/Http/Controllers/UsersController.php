@@ -1365,18 +1365,13 @@ use Illuminate\Support\Facades\Log;
 					'url' => url('storage/' . $user->str->path_file),
 					'masa_berlaku' => $user->str->masa_berlaku_str ?? null,
 					'nomor' => $user->str->nomor_str ?? null
-				] : null,
-				'ujikom' => isset($user->ujikom->path_file) ? [
-					'url' => url('storage/' . $user->ujikom->path_file),
-					'masa_berlaku' => $user->ujikom->masa_berlaku_kompetensi ?? null,
-					'nomor' => $user->ujikom->nomor_kompetensi ?? null
 				] : null
 			];
 
 			$missingDocuments = [];
 			foreach ($documentFields as $key => $value) {
 				if (empty($value)) {
-					$missingDocuments[] = strtoupper($key); // biar lebih jelas
+					$missingDocuments[] = strtoupper($key);
 				}
 			}
 
@@ -1442,7 +1437,6 @@ use Illuminate\Support\Facades\Log;
 				'ijazah' => $documentFields['ijazah'],
 				'sip' => $documentFields['sip'],
 				'str' => $documentFields['str'],
-				'ujikom' => $documentFields['ujikom'],
 				'sertifikat' => $sertifikat,
 				'foto' => $user->foto ? url('storage/foto_nurse/' . basename($user->foto)) : null,
 			];
@@ -1460,6 +1454,7 @@ use Illuminate\Support\Facades\Log;
 			], 500);
 		}
 	}
+
 
 
 	/**
