@@ -18,65 +18,6 @@ use App\Http\Controllers\UsersController; // Ganti dengan nama controller yang b
 class AsesiPermohonanController extends Controller
 {
 
-
-    /**
-     * @OA\Post(
-     *     path="/ajuan-asesi",
-     *     summary="Mengajukan permohonan asesi berdasarkan bearer token",
-     *     description="Endpoint ini digunakan untuk mengajukan permohonan sebagai asesi. 
-     *     Pastikan dokumen Ijazah, Ujikom/Askom, STR, dan SIP telah diunggah.",
-     *     tags={"Ajuan Asesi"},
-     *     security={{"bearerAuth":{}}},
-     *     
-     *     @OA\Response(
-     *         response=201,
-     *         description="Permohonan berhasil diajukan.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Data successfully inserted into Form_1."),
-     *             @OA\Property(property="form_1_id", type="integer", example=1),
-     *             @OA\Property(property="data_status", type="object"),
-     *             @OA\Property(property="status_code", type="integer", example=201)
-     *         )
-     *     ),
-     *     
-     *     @OA\Response(
-     *         response=400,
-     *         description="Permohonan gagal karena dokumen wajib tidak tersedia.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(property="message", type="string", example="Submission failed. The following documents must have a valid file path: Ijazah, Transkrip."),
-     *             @OA\Property(property="missing_documents", type="array", @OA\Items(type="string")),
-     *             @OA\Property(property="status_code", type="integer", example=400)
-     *         )
-     *     ),
-     *     
-     *     @OA\Response(
-     *         response=401,
-     *         description="Token tidak valid atau pengguna tidak ditemukan.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(property="message", type="string", example="Unauthorized. Invalid token or user not found."),
-     *             @OA\Property(property="status_code", type="integer", example=401)
-     *         )
-     *     ),
-     *     
-     *     @OA\Response(
-     *         response=500,
-     *         description="Terjadi kesalahan pada server.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(property="message", type="string", example="An unexpected error occurred while inserting data."),
-     *             @OA\Property(property="error", type="string", example="SQLSTATE[23000]: Integrity constraint violation"),
-     *             @OA\Property(property="status_code", type="integer", example=500)
-     *         )
-     *     )
-     * )
-     */
    public function AjuanPermohonanAsesi(Request $request)
     {
         try {
