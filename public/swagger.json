@@ -1,25 +1,229 @@
 {
     "openapi": "3.0.0",
+    "info": {
+        "title": "Akunners API",
+        "description": "Dokumentasi API Swagger untuk aplikasi Akunners",
+        "version": "1.0.0"
+    },
     "paths": {
-        "/api/users": {
-            "get": {
+        "/upload-sak": {
+            "post": {
                 "tags": [
-                    "Users"
+                    "SAK"
                 ],
-                "summary": "List all users",
-                "operationId": "e691fe03d2b8f4fa9e994bf9e0ad28a5",
+                "summary": "Unggah atau perbarui file SAK untuk pengguna",
+                "operationId": "uploadSakFile",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "nomor_sak",
+                                    "masa_berlaku_sak"
+                                ],
+                                "properties": {
+                                    "path_file": {
+                                        "description": "File PDF/JPG/JPEG/PNG (maks 2MB)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "nomor_sak": {
+                                        "type": "string"
+                                    },
+                                    "masa_berlaku_sak": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "valid": {
+                                        "type": "boolean"
+                                    },
+                                    "authentic": {
+                                        "type": "boolean"
+                                    },
+                                    "current": {
+                                        "type": "boolean"
+                                    },
+                                    "sufficient": {
+                                        "type": "boolean"
+                                    },
+                                    "ket": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
-                        "description": "List of users"
+                        "description": "Berhasil memperbarui file SAK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "sak_id": {
+                                                    "type": "integer"
+                                                },
+                                                "user_id": {
+                                                    "type": "integer"
+                                                },
+                                                "file_path": {
+                                                    "type": "string"
+                                                },
+                                                "nomor_sak": {
+                                                    "type": "string"
+                                                },
+                                                "masa_berlaku_sak": {
+                                                    "type": "string",
+                                                    "format": "date"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "status_code": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "201": {
+                        "description": "Berhasil mengunggah file SAK baru",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "sak_id": {
+                                                    "type": "integer"
+                                                },
+                                                "user_id": {
+                                                    "type": "integer"
+                                                },
+                                                "file_path": {
+                                                    "type": "string"
+                                                },
+                                                "nomor_sak": {
+                                                    "type": "string"
+                                                },
+                                                "masa_berlaku_sak": {
+                                                    "type": "string",
+                                                    "format": "date"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "status_code": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validasi gagal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        },
+                                        "status_code": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User tidak ditemukan",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "status_code": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Kesalahan server",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "error": {
+                                            "type": "string"
+                                        },
+                                        "status_code": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         }
     },
     "tags": [
         {
-            "name": "Users",
-            "description": "Users"
+            "name": "SAK",
+            "description": "SAK"
         }
     ]
 }
