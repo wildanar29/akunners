@@ -200,5 +200,7 @@ $router->get('/swagger.json', function () {
     return response()->file(public_path('swagger.json'));
 });
 
-
+$router->get('/api-docs.json', function () {
+    return response()->file(storage_path('api-docs/api-docs.json'));
+});
 
