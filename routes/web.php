@@ -18,6 +18,10 @@ $router->get('/', function () use ($router) {
     return $router->app->version();
 });
 
+
+// FORM 1 ATAU FORM PENGAJUAN
+$router->get('/progress/{userId}', 'ProgressController@getUserProgress');
+
 // Bagian API Form 5
 $router->post('/konsultasi/pra-asesmen', 'Form5Controller@pengajuanKonsultasiPraAsesmen');
 
