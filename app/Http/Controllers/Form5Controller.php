@@ -20,10 +20,20 @@ class Form5Controller extends BaseController
 	{
 		$user = Auth::user();
 
-		if (!$user || $user->role_id != 1) {
+		 if (!$user) {
+			return response()->json([
+				'status' => 401,
+				'message' => 'Pengguna belum login atau token tidak valid.',
+				'data' => []
+			], 401);
+		}
+
+		// Cek jika bukan asesi (role_id != 1)
+		if ($user->role_id != 1) {
 			return response()->json([
 				'status' => 403,
-				'message' => 'Akses ditolak. Hanya asesi yang dapat melakukan pengajuan konsultasi.'
+				'message' => 'Akses ditolak. Hanya asesi yang dapat melakukan pengajuan konsultasi.',
+				'data' => []
 			], 403);
 		}
 
@@ -89,6 +99,4 @@ class Form5Controller extends BaseController
 			'data' => $interview
 		]);
 	}
-
-
 }
