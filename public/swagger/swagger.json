@@ -6,136 +6,6 @@
         "version": "1.0.0"
     },
     "paths": {
-        "/ajuan-asesi": {
-            "post": {
-                "tags": [
-                    "Ajuan Asesi"
-                ],
-                "summary": "Mengajukan permohonan asesi berdasarkan bearer token",
-                "description": "Endpoint ini digunakan untuk mengajukan permohonan sebagai asesi. \r\n     *     Pastikan dokumen Ijazah, Ujikom/Askom, STR, dan SIP telah diunggah.",
-                "operationId": "4b78ed588e279ee1632d2edefd361470",
-                "responses": {
-                    "201": {
-                        "description": "Permohonan berhasil diajukan.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Data successfully inserted into Form_1."
-                                        },
-                                        "form_1_id": {
-                                            "type": "integer",
-                                            "example": 1
-                                        },
-                                        "data_status": {
-                                            "type": "object"
-                                        },
-                                        "status_code": {
-                                            "type": "integer",
-                                            "example": 201
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Permohonan gagal karena dokumen wajib tidak tersedia.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Submission failed. The following documents must have a valid file path: Ijazah, Transkrip."
-                                        },
-                                        "missing_documents": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "string"
-                                            }
-                                        },
-                                        "status_code": {
-                                            "type": "integer",
-                                            "example": 400
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Token tidak valid atau pengguna tidak ditemukan.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Unauthorized. Invalid token or user not found."
-                                        },
-                                        "status_code": {
-                                            "type": "integer",
-                                            "example": 401
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Terjadi kesalahan pada server.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "An unexpected error occurred while inserting data."
-                                        },
-                                        "error": {
-                                            "type": "string",
-                                            "example": "SQLSTATE[23000]: Integrity constraint violation"
-                                        },
-                                        "status_code": {
-                                            "type": "integer",
-                                            "example": 500
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
         "/form1/asesor/{asesorName}": {
             "get": {
                 "tags": [
@@ -7355,6 +7225,200 @@
                 }
             }
         },
+        "/ajuan-asesi": {
+            "post": {
+                "tags": [
+                    "FORM 1"
+                ],
+                "summary": "Ajukan permohonan asesi (Form_1)",
+                "operationId": "34ee59fe97922efa3b7a725c9ce42493",
+                "requestBody": {
+                    "description": "Tidak membutuhkan body karena user diambil dari token.",
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {}
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Data berhasil dimasukkan ke Form_1, Pk_Progress, dan Pk_Status",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Data successfully inserted into Form_1, Pk_Progress, and Pk_Status."
+                                        },
+                                        "form_1": {
+                                            "properties": {
+                                                "form_1_id": {
+                                                    "type": "integer",
+                                                    "example": 123
+                                                },
+                                                "user_id": {
+                                                    "type": "integer",
+                                                    "example": 53
+                                                },
+                                                "asesi_name": {
+                                                    "type": "string",
+                                                    "example": "John Doe"
+                                                },
+                                                "asesi_date": {
+                                                    "type": "string",
+                                                    "format": "date",
+                                                    "example": "2025-06-16"
+                                                },
+                                                "ijazah_id": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "str_id": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "sip_id": {
+                                                    "type": "integer",
+                                                    "example": 7
+                                                },
+                                                "sertifikat_id": {
+                                                    "type": "integer",
+                                                    "example": 53,
+                                                    "nullable": true
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "Waiting"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-06-16T09:00:00Z"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-06-16T09:00:00Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "pk_progress": {
+                                            "properties": {
+                                                "form_1_status": {
+                                                    "type": "string",
+                                                    "example": "Open"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 201
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Dokumen belum lengkap",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Submission failed. The following documents must have a valid file path: Ijazah, STR."
+                                        },
+                                        "missing_documents": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string",
+                                                "example": "Ijazah"
+                                            }
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 400
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Token tidak valid atau user tidak ditemukan",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized. Invalid token or user not found."
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 401
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Kesalahan server saat memproses permohonan",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "An unexpected error occurred while processing data."
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "SQLSTATE[HY000]: ..."
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 500
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/sak/file/{nik}": {
             "delete": {
                 "tags": [
@@ -7464,6 +7528,200 @@
                 }
             }
         },
+        "/get-form1-byasesor": {
+            "post": {
+                "tags": [
+                    "FORM 1"
+                ],
+                "summary": "Ambil daftar Form1 berdasarkan user_id asesor",
+                "operationId": "e42eb24659d1df78512b198fc5cafe19",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "required": [
+                                    "user_id"
+                                ],
+                                "properties": {
+                                    "user_id": {
+                                        "description": "ID dari user asesor",
+                                        "type": "integer",
+                                        "example": 123
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Data form_1 berhasil diambil",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "string",
+                                            "example": "OK"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Data form_1 berhasil diambil berdasarkan no_reg asesor."
+                                        },
+                                        "no_reg": {
+                                            "type": "string",
+                                            "example": "REG-2024-001"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "form_1_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "user_id": {
+                                                        "type": "integer",
+                                                        "example": 123
+                                                    },
+                                                    "asesi_name": {
+                                                        "type": "string",
+                                                        "example": "John Doe"
+                                                    },
+                                                    "asesi_date": {
+                                                        "type": "string",
+                                                        "format": "date",
+                                                        "example": "2024-05-01"
+                                                    },
+                                                    "asesor_name": {
+                                                        "type": "string",
+                                                        "example": "Jane Asesor"
+                                                    },
+                                                    "asesor_date": {
+                                                        "type": "string",
+                                                        "format": "date",
+                                                        "example": "2024-05-02"
+                                                    },
+                                                    "no_reg": {
+                                                        "type": "string",
+                                                        "example": "REG-2024-001"
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "Waiting",
+                                                            "Approved",
+                                                            "Cancel"
+                                                        ],
+                                                        "example": "Approved"
+                                                    },
+                                                    "ijazah_id": {
+                                                        "type": "integer",
+                                                        "nullable": true
+                                                    },
+                                                    "spk_id": {
+                                                        "type": "integer",
+                                                        "nullable": true
+                                                    },
+                                                    "sip_id": {
+                                                        "type": "integer",
+                                                        "nullable": true
+                                                    },
+                                                    "str_id": {
+                                                        "type": "integer",
+                                                        "nullable": true
+                                                    },
+                                                    "ujikom_id": {
+                                                        "type": "integer",
+                                                        "nullable": true
+                                                    },
+                                                    "sertifikat_id": {
+                                                        "type": "integer",
+                                                        "nullable": true
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    },
+                                                    "updated_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Parameter user_id tidak diisi",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "string",
+                                            "example": "ERR"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Parameter user_id wajib diisi."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "User bukan asesor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "string",
+                                            "example": "OK"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "User ini bukan asesor."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No Registrasi tidak ditemukan",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "string",
+                                            "example": "ERR"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "No Registrasi tidak ditemukan untuk asesor ini."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/get-no-expired-sak/{nik}": {
             "get": {
                 "tags": [
@@ -7563,6 +7821,128 @@
                                         "status_code": {
                                             "type": "integer",
                                             "example": 500
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/progress/{userId}": {
+            "get": {
+                "tags": [
+                    "PROGRESS"
+                ],
+                "summary": "Ambil status progres semua form berdasarkan user_id",
+                "operationId": "fd698457268a16c5935ad868ce573025",
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "description": "ID dari user",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Berhasil mengambil data progres form",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Berhasil mengambil data progres form."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "user_id": {
+                                                    "type": "integer",
+                                                    "example": 53
+                                                },
+                                                "form_statuses": {
+                                                    "properties": {
+                                                        "form_1": {
+                                                            "type": "string",
+                                                            "example": "Approved"
+                                                        },
+                                                        "form_2": {
+                                                            "type": "string",
+                                                            "example": "Waiting"
+                                                        },
+                                                        "form_3": {
+                                                            "type": "string",
+                                                            "example": "Terkunci"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Data progress tidak ditemukan",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Data progress tidak ditemukan untuk user ini."
+                                        },
+                                        "data": {
+                                            "type": "string",
+                                            "example": null,
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Terjadi kesalahan server",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Terjadi kesalahan saat mengambil data progres."
+                                        },
+                                        "data": {
+                                            "type": "string",
+                                            "example": null,
+                                            "nullable": true
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "SQLSTATE[HY000] ..."
                                         }
                                     },
                                     "type": "object"
@@ -7988,10 +8368,6 @@
             "description": "API terkait Form 2"
         },
         {
-            "name": "Ajuan Asesi",
-            "description": "Ajuan Asesi"
-        },
-        {
             "name": "Asesor",
             "description": "Asesor"
         },
@@ -8064,8 +8440,16 @@
             "description": "History Jabatan"
         },
         {
+            "name": "FORM 1",
+            "description": "FORM 1"
+        },
+        {
             "name": "SAK",
             "description": "SAK"
+        },
+        {
+            "name": "PROGRESS",
+            "description": "PROGRESS"
         }
     ]
 }

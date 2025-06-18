@@ -6,7 +6,7 @@ namespace App\Docs;
  * @OA\Get(
  *     path="/progress/{userId}",
  *     summary="Ambil status progres semua form berdasarkan user_id",
- *     tags={"Progress"},
+ *     tags={"PROGRESS"},
  *     @OA\Parameter(
  *         name="userId",
  *         in="path",

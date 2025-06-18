@@ -200,6 +200,52 @@ class AsesiPermohonanController extends Controller
 		}
 	}
 
+	public function getForm1ByAsesor(Request $request) 
+	{
+		$userId = $request->input('user_id');
+
+		// Validasi input user_id
+		if (!$userId) {
+			return response()->json([
+				'success' => "ERR",
+				'message' => 'Parameter user_id wajib diisi.',
+			], 400);
+		}
+
+		// Cek apakah user adalah asesor
+		$asesor = DB::table('data_asesor')->where('user_id', $userId)->first();
+
+		if (!$asesor) {
+			return response()->json([
+				'success' => "OK",
+				'message' => 'User ini bukan asesor.',
+			], 403); // Forbidden
+		}
+
+		// Ambil no_reg asesor
+		$noReg = $asesor->no_reg;
+
+		if (!$noReg) {
+			return response()->json([
+				'success' => "ERR",
+				'message' => 'No Registrasi tidak ditemukan untuk asesor ini.',
+			], 404);
+		}
+
+		// Ambil semua data form_1 berdasarkan no_reg asesor
+		$formList = DB::table('form_1')
+			->where('no_reg', $noReg)
+			->orderBy('created_at', 'desc')
+			->get();
+
+		return response()->json([
+			'success' => "OK",
+			'message' => 'Data form_1 berhasil diambil berdasarkan no_reg asesor.',
+			'no_reg' => $noReg,
+			'data' => $formList
+		]);
+	}
+
 
 
 }
