@@ -112,3 +112,61 @@ Options:
   \App\Http\Controllers\BidangController->getListDataAsesor() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\BidangController.php on line 647
   \App\Http\Controllers\BidangController->getListDataAsesor() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\BidangController.php on line 647[0m
 [16-Jun-2025 02:51:48 UTC] [33mWarning: @OA\Items() is required when @OA\Property(property="data") has type "array" in \App\Http\Controllers\BidangController->getListDataAsesor() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\BidangController.php on line 647[0m
+[16-Jun-2025 03:01:42 UTC] [31mError: [Syntax Error] Expected Doctrine\Common\Annotations\DocLexer::T_CLOSE_PARENTHESIS, got '@' in \App\Http\Controllers\SertifikatController->upload() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\SertifikatController.php on line 61:20[0m
+[16-Jun-2025 03:01:42 UTC] [31mError: [Syntax Error] Expected Doctrine\Common\Annotations\DocLexer::T_CLOSE_PARENTHESIS, got '@' in \App\Http\Controllers\SertifikatController->getSertifikatByNik() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\SertifikatController.php on line 657:20[0m
+[16-Jun-2025 03:01:42 UTC] [31mError: [Syntax Error] Expected Doctrine\Common\Annotations\DocLexer::T_CLOSE_PARENTHESIS, got '@' in \App\Http\Controllers\UsersController->GetAkunNurseByNIK() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\UsersController.php on line 1054:12[0m
+[16-Jun-2025 03:01:42 UTC] [33mWarning: Skipping unknown App\Docs\UpdateSak[0m
+[16-Jun-2025 03:01:42 UTC] [33mWarning: Skipping unknown App\Docs\UploadSak[0m
+[16-Jun-2025 03:01:42 UTC] [33mWarning: Unable to merge @OA\Post() in \App\Http\Controllers\SpkController->upload() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\SpkController.php on line 113[0m
+[16-Jun-2025 03:01:42 UTC] [33mWarning: Unable to merge @OA\Put() in \App\Http\Controllers\SpkController->updateFile() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\SpkController.php on line 380[0m
+[16-Jun-2025 03:01:42 UTC] [33mWarning: Unable to merge @OA\Delete() in \App\Http\Controllers\SpkController->deleteFile() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\SpkController.php on line 547[0m
+[16-Jun-2025 03:01:42 UTC] [33mWarning: Unable to merge @OA\Get() in \App\Http\Controllers\SpkController->getTranskrip() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\SpkController.php on line 658[0m
+[16-Jun-2025 03:01:42 UTC] [33mWarning: Only one @OA\Info() allowed for @OA\OpenApi() multiple found in:
+    Using: C:\inetpub\wwwroot\akunurse\app\Http\Controllers\UsersController.php on line 31
+  Skipped: C:\inetpub\wwwroot\akunurse\app\docs\OpenApi.php on line 14[0m
+[16-Jun-2025 03:01:42 UTC] [31mError: Multiple @OA\Response() with the same response="200":
+  \App\Http\Controllers\BidangController->getListDataAsesor() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\BidangController.php on line 647
+  \App\Http\Controllers\BidangController->getListDataAsesor() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\BidangController.php on line 647[0m
+[16-Jun-2025 03:01:42 UTC] [33mWarning: @OA\Items() is required when @OA\Property(property="data") has type "array" in \App\Http\Controllers\BidangController->getListDataAsesor() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\BidangController.php on line 647[0m
+[16-Jun-2025 03:03:05 UTC] [31mError: [Syntax Error] Expected Doctrine\Common\Annotations\DocLexer::T_CLOSE_PARENTHESIS, got '@' in \App\Http\Controllers\SertifikatController->upload() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\SertifikatController.php on line 61:20[0m
+[16-Jun-2025 03:03:05 UTC] [31mError: [Syntax Error] Expected Doctrine\Common\Annotations\DocLexer::T_CLOSE_PARENTHESIS, got '@' in \App\Http\Controllers\SertifikatController->getSertifikatByNik() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\SertifikatController.php on line 657:20[0m
+[16-Jun-2025 03:03:05 UTC] [31mError: [Syntax Error] Expected Doctrine\Common\Annotations\DocLexer::T_CLOSE_PARENTHESIS, got '@' in \App\Http\Controllers\UsersController->GetAkunNurseByNIK() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\UsersController.php on line 1054:12[0m
+[16-Jun-2025 03:03:05 UTC] [33mWarning: Unable to merge @OA\Post() in \App\Http\Controllers\SpkController->upload() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\SpkController.php on line 113[0m
+[16-Jun-2025 03:03:05 UTC] [33mWarning: Unable to merge @OA\Put() in \App\Http\Controllers\SpkController->updateFile() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\SpkController.php on line 380[0m
+[16-Jun-2025 03:03:05 UTC] [33mWarning: Unable to merge @OA\Delete() in \App\Http\Controllers\SpkController->deleteFile() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\SpkController.php on line 547[0m
+[16-Jun-2025 03:03:05 UTC] [33mWarning: Unable to merge @OA\Get() in \App\Http\Controllers\SpkController->getTranskrip() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\SpkController.php on line 658[0m
+[16-Jun-2025 03:03:05 UTC] [33mWarning: Only one @OA\Info() allowed for @OA\OpenApi() multiple found in:
+    Using: C:\inetpub\wwwroot\akunurse\app\Http\Controllers\UsersController.php on line 31
+  Skipped: C:\inetpub\wwwroot\akunurse\app\docs\OpenApi.php on line 14[0m
+[16-Jun-2025 03:03:05 UTC] [31mError: Multiple @OA\Response() with the same response="200":
+  \App\Http\Controllers\BidangController->getListDataAsesor() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\BidangController.php on line 647
+  \App\Http\Controllers\BidangController->getListDataAsesor() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\BidangController.php on line 647[0m
+[16-Jun-2025 03:03:05 UTC] [33mWarning: @OA\Items() is required when @OA\Property(property="data") has type "array" in \App\Http\Controllers\BidangController->getListDataAsesor() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\BidangController.php on line 647[0m
+[16-Jun-2025 03:15:26 UTC] [31mError: [Syntax Error] Expected Doctrine\Common\Annotations\DocLexer::T_CLOSE_PARENTHESIS, got '@' in \App\Http\Controllers\SertifikatController->upload() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\SertifikatController.php on line 61:20[0m
+[16-Jun-2025 03:15:26 UTC] [31mError: [Syntax Error] Expected Doctrine\Common\Annotations\DocLexer::T_CLOSE_PARENTHESIS, got '@' in \App\Http\Controllers\SertifikatController->getSertifikatByNik() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\SertifikatController.php on line 657:20[0m
+[16-Jun-2025 03:15:26 UTC] [31mError: [Syntax Error] Expected Doctrine\Common\Annotations\DocLexer::T_CLOSE_PARENTHESIS, got '@' in \App\Http\Controllers\UsersController->GetAkunNurseByNIK() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\UsersController.php on line 1054:12[0m
+[16-Jun-2025 03:15:26 UTC] [33mWarning: Unable to merge @OA\Post() in \App\Http\Controllers\SpkController->upload() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\SpkController.php on line 113[0m
+[16-Jun-2025 03:15:26 UTC] [33mWarning: Unable to merge @OA\Put() in \App\Http\Controllers\SpkController->updateFile() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\SpkController.php on line 380[0m
+[16-Jun-2025 03:15:26 UTC] [33mWarning: Unable to merge @OA\Delete() in \App\Http\Controllers\SpkController->deleteFile() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\SpkController.php on line 547[0m
+[16-Jun-2025 03:15:26 UTC] [33mWarning: Unable to merge @OA\Get() in \App\Http\Controllers\SpkController->getTranskrip() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\SpkController.php on line 658[0m
+[16-Jun-2025 03:15:26 UTC] [33mWarning: Only one @OA\Info() allowed for @OA\OpenApi() multiple found in:
+    Using: C:\inetpub\wwwroot\akunurse\app\Http\Controllers\UsersController.php on line 31
+  Skipped: C:\inetpub\wwwroot\akunurse\app\docs\OpenApi.php on line 14[0m
+[16-Jun-2025 03:15:26 UTC] [31mError: Multiple @OA\Response() with the same response="200":
+  \App\Http\Controllers\BidangController->getListDataAsesor() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\BidangController.php on line 647
+  \App\Http\Controllers\BidangController->getListDataAsesor() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\BidangController.php on line 647[0m
+[16-Jun-2025 03:15:26 UTC] [33mWarning: @OA\Items() is required when @OA\Property(property="data") has type "array" in \App\Http\Controllers\BidangController->getListDataAsesor() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\BidangController.php on line 647[0m
+[16-Jun-2025 03:24:58 UTC] [31mError: [Syntax Error] Expected Doctrine\Common\Annotations\DocLexer::T_CLOSE_PARENTHESIS, got '@' in \App\Http\Controllers\SertifikatController->upload() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\SertifikatController.php on line 61:20[0m
+[16-Jun-2025 03:24:58 UTC] [31mError: [Syntax Error] Expected Doctrine\Common\Annotations\DocLexer::T_CLOSE_PARENTHESIS, got '@' in \App\Http\Controllers\SertifikatController->getSertifikatByNik() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\SertifikatController.php on line 657:20[0m
+[16-Jun-2025 03:24:58 UTC] [31mError: [Syntax Error] Expected Doctrine\Common\Annotations\DocLexer::T_CLOSE_PARENTHESIS, got '@' in \App\Http\Controllers\UsersController->GetAkunNurseByNIK() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\UsersController.php on line 1054:12[0m
+[16-Jun-2025 03:24:58 UTC] [33mWarning: Unable to merge @OA\Post() in \App\Http\Controllers\SpkController->upload() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\SpkController.php on line 113[0m
+[16-Jun-2025 03:24:58 UTC] [33mWarning: Unable to merge @OA\Put() in \App\Http\Controllers\SpkController->updateFile() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\SpkController.php on line 380[0m
+[16-Jun-2025 03:24:58 UTC] [33mWarning: Unable to merge @OA\Delete() in \App\Http\Controllers\SpkController->deleteFile() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\SpkController.php on line 547[0m
+[16-Jun-2025 03:24:58 UTC] [33mWarning: Unable to merge @OA\Get() in \App\Http\Controllers\SpkController->getTranskrip() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\SpkController.php on line 658[0m
+[16-Jun-2025 03:24:58 UTC] [33mWarning: Only one @OA\Info() allowed for @OA\OpenApi() multiple found in:
+    Using: C:\inetpub\wwwroot\akunurse\app\Http\Controllers\UsersController.php on line 31
+  Skipped: C:\inetpub\wwwroot\akunurse\app\docs\OpenApi.php on line 14[0m
+[16-Jun-2025 03:24:58 UTC] [31mError: Multiple @OA\Response() with the same response="200":
+  \App\Http\Controllers\BidangController->getListDataAsesor() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\BidangController.php on line 647
+  \App\Http\Controllers\BidangController->getListDataAsesor() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\BidangController.php on line 647[0m
+[16-Jun-2025 03:24:58 UTC] [33mWarning: @OA\Items() is required when @OA\Property(property="data") has type "array" in \App\Http\Controllers\BidangController->getListDataAsesor() in C:\inetpub\wwwroot\akunurse\app\Http\Controllers\BidangController.php on line 647[0m

@@ -205,67 +205,60 @@ class AsesiPermohonanController extends Controller
         }
     }
 
-    function getUserFormProgress($userId)
-    {
-        // Ambil data pk_progress dan join ke masing-masing form yang sudah tersedia
-        $progress = DB::table('pk_progress')
-            ->where('user_id', $userId)
-            ->leftJoin('form_1', 'pk_progress.form_1_id', '=', 'form_1.form_1_id')
-            ->leftJoin('form_2', 'pk_progress.form_2_id', '=', 'form_2.form_2_id')
-            ->leftJoin('form_3', 'pk_progress.form_3_id', '=', 'form_3.form_3_id')
-            
-            // ->leftJoin('form_4', 'pk_progress.form_4_id', '=', 'form_4.form_4_id')
-            // ->leftJoin('form_5', 'pk_progress.form_5_id', '=', 'form_5.form_5_id')
-            // ->leftJoin('form_6', 'pk_progress.form_6_id', '=', 'form_6.form_6_id')
-            // ->leftJoin('form_7', 'pk_progress.form_7_id', '=', 'form_7.form_7_id')
-            // ->leftJoin('form_8', 'pk_progress.form_8_id', '=', 'form_8.form_8_id')
-            // ->leftJoin('form_9', 'pk_progress.form_9_id', '=', 'form_9.form_9_id')
-            // ->leftJoin('form_10', 'pk_progress.form_10_id', '=', 'form_10.form_10_id')
-            // ->leftJoin('form_11', 'pk_progress.form_11_id', '=', 'form_11.form_11_id')
-            // ->leftJoin('form_12', 'pk_progress.form_12_id', '=', 'form_12.form_12_id')
-            ->select(
-                'pk_progress.*',
-                'form_1.status as form_1_status',
-                'form_2.status as form_2_status',
-                'form_3.status as form_3_status',
-                // 'form_4.status as form_4_status',
-                // 'form_5.status as form_5_status',
-                // 'form_6.status as form_6_status',
-                // 'form_7.status as form_7_status',
-                // 'form_8.status as form_8_status',
-                // 'form_9.status as form_9_status',
-                // 'form_10.status as form_10_status',
-                // 'form_11.status as form_11_status',
-                // 'form_12.status as form_12_status'
-            )
-            ->first();
+   public function getUserFormProgress($userId)
+	{
+		try {
+			// Ambil data pk_progress dan join ke masing-masing form yang sudah tersedia
+			$progress = DB::table('pk_progress')
+				->where('pk_progress.user_id', $userId)
+				->leftJoin('form_1', 'pk_progress.form_1_id', '=', 'form_1.form_1_id')
+				->leftJoin('form_2', 'pk_progress.form_2_id', '=', 'form_2.form_2_id')
+				->leftJoin('form_3', 'pk_progress.form_3_id', '=', 'form_3.form_3_id')
+				// ->leftJoin('form_4', ...)
+				// dst...
+				->select(
+					'pk_progress.*',
+					'form_1.status as form_1_status',
+					'form_2.status as form_2_status',
+					'form_3.status as form_3_status'
+					// 'form_4.status as form_4_status',
+					// dst...
+				)
+				->first();
 
-        if (!$progress) {
-            return [
-                'message' => 'Data progress tidak ditemukan untuk user ini.',
-                'status' => false
-            ];
-        }
+			if (!$progress) {
+				return response()->json([
+					'status' => false,
+					'message' => 'Data progress tidak ditemukan untuk user ini.',
+					'data' => null
+				], 404);
+			}
 
-        return [
-            'status' => true,
-            'user_id' => $userId,
-            'form_statuses' => [
-                'form_1' => $progress->form_1_status ?? 'Belum Diisi',
-                'form_2' => $progress->form_2_status ?? 'Belum Diisi',
-                'form_3' => $progress->form_3_status ?? 'Belum Diisi',
-                // 'form_4' => $progress->form_4_status ?? 'Belum Diisi',
-                // 'form_5' => $progress->form_5_status ?? 'Belum Diisi',
-                // 'form_6' => $progress->form_6_status ?? 'Belum Diisi',
-                // 'form_7' => $progress->form_7_status ?? 'Belum Diisi',
-                // 'form_8' => $progress->form_8_status ?? 'Belum Diisi',
-                // 'form_9' => $progress->form_9_status ?? 'Belum Diisi',
-                // 'form_10' => $progress->form_10_status ?? 'Belum Diisi',
-                // 'form_11' => $progress->form_11_status ?? 'Belum Diisi',
-                // 'form_12' => $progress->form_12_status ?? 'Belum Diisi',
-            ]
-        ];
-    }
+			return response()->json([
+				'status' => true,
+				'message' => 'Berhasil mengambil data progres form.',
+				'data' => [
+					'user_id' => $userId,
+					'form_statuses' => [
+						'form_1' => $progress->form_1_status ?? 'Terkunci',
+						'form_2' => $progress->form_2_status ?? 'Terkunci',
+						'form_3' => $progress->form_3_status ?? 'Terkunci',
+						// 'form_4' => $progress->form_4_status ?? 'Belum Diisi',
+						// dst...
+					]
+				]
+			]);
+		} catch (\Exception $e) {
+			// Tangani error tak terduga
+			return response()->json([
+				'status' => false,
+				'message' => 'Terjadi kesalahan saat mengambil data progres.',
+				'data' => null,
+				'error' => $e->getMessage() // opsional, hapus jika tak ingin expose error detail
+			], 500);
+		}
+	}
+
 
 
 }

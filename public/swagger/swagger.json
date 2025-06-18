@@ -7355,747 +7355,68 @@
                 }
             }
         },
-        "/send-otp": {
-            "post": {
+        "/sak/file/{nik}": {
+            "delete": {
                 "tags": [
-                    "OTP Whatsapp"
+                    "SAK"
                 ],
-                "summary": "Mengirimkan OTP ke email pengguna Untuk membuat Password pada Registrasi Akun",
-                "description": "API ini digunakan untuk mengirimkan OTP ke nomor telepon yang terdaftar pada sistem untuk tujuan verifikasi.",
-                "operationId": "6cdd5acc978ea35006b128636149aebc",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "nik"
-                                ],
-                                "properties": {
-                                    "nik": {
-                                        "description": "Nomor Telepon dari Redis yang digunakan untuk verifikasi OTP.",
-                                        "type": "string",
-                                        "example": "NIK diambil dari Redis"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "OTP berhasil dikirim.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "example": "SUCCESS"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Pesan berhasil dikirim!"
-                                        },
-                                        "data": {
-                                            "type": "object",
-                                            "additionalProperties": true
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Data input tidak valid.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "example": "ERROR"
-                                        },
-                                        "errorCode": {
-                                            "type": "string",
-                                            "example": "INVALID_INPUT"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Data tidak valid."
-                                        },
-                                        "errorMessages": {
-                                            "type": "object",
-                                            "additionalProperties": true
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Pengguna tidak ditemukan.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "example": "ERROR"
-                                        },
-                                        "errorCode": {
-                                            "type": "string",
-                                            "example": "USER_NOT_FOUND"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Pengguna tidak ditemukan."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Terjadi kesalahan pada server.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "example": "ERROR"
-                                        },
-                                        "errorCode": {
-                                            "type": "string",
-                                            "example": "SEND_MESSAGE_FAILED"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Gagal mengirim pesan."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/valid-otp": {
-            "get": {
-                "tags": [
-                    "OTP Whatsapp"
-                ],
-                "summary": "Memvalidasi OTP dengan email pengguna",
-                "description": "API ini digunakan untuk memvalidasi OTP yang dikirimkan untuk email pengguna.",
-                "operationId": "3a39b6eca88ea2bcc1cc338a12918b19",
+                "summary": "Menghapus file SAK berdasarkan NIK user",
+                "operationId": "2e11d14e498f7d747299ade42774f7aa",
                 "parameters": [
                     {
-                        "name": "email",
-                        "in": "query",
-                        "description": "Email yang terdaftar untuk verifikasi OTP.",
+                        "name": "nik",
+                        "in": "path",
+                        "description": "NIK user yang digunakan untuk mencari file SAK",
                         "required": true,
                         "schema": {
                             "type": "string",
-                            "example": "andikuy@gmail.com"
-                        }
-                    },
-                    {
-                        "name": "otp",
-                        "in": "query",
-                        "description": "Kode OTP yang diterima pengguna untuk verifikasi.",
-                        "required": true,
-                        "schema": {
-                            "type": "integer",
-                            "example": 123456
+                            "example": "3201123456789012"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Kode OTP berhasil divalidasi.",
+                        "description": "File berhasil dihapus",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "example": "SUCCESS"
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Kode OTP berhasil divalidasi."
+                                            "example": "File successfully deleted from the system."
                                         },
-                                        "data": {
-                                            "type": "object",
-                                            "additionalProperties": true
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Data input tidak valid atau OTP sudah kedaluwarsa.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "example": "ERROR"
-                                        },
-                                        "errorCode": {
-                                            "type": "string",
-                                            "example": "INVALID_INPUT"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Data tidak valid."
-                                        },
-                                        "errorMessages": {
-                                            "type": "object",
-                                            "additionalProperties": true
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "OTP tidak ditemukan atau salah.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "example": "ERROR"
-                                        },
-                                        "errorCode": {
-                                            "type": "string",
-                                            "example": "OTP_NOT_FOUND"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Kode OTP tidak ditemukan atau salah."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Terjadi kesalahan pada server.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "example": "ERROR"
-                                        },
-                                        "errorCode": {
-                                            "type": "string",
-                                            "example": "SERVER_ERROR"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Terjadi kesalahan saat memvalidasi OTP."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/reset-otp": {
-            "post": {
-                "tags": [
-                    "OTP Whatsapp"
-                ],
-                "summary": "Mengatur ulang OTP untuk nomor telepon pengguna",
-                "description": "API ini digunakan untuk mengatur ulang OTP dengan menghapus OTP yang belum divalidasi dan mengirimkan OTP baru ke nomor telepon pengguna.",
-                "operationId": "0e626f6817aa703f62ba25e7f063c112",
-                "parameters": [
-                    {
-                        "name": "no_telp",
-                        "in": "query",
-                        "description": "Nomor telepon yang terdaftar untuk mengatur ulang OTP.",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "example": "081234567890"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Kode OTP baru berhasil dikirim.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "example": "SUCCESS"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Kode OTP baru berhasil dikirim!"
-                                        },
-                                        "data": {
-                                            "type": "object",
-                                            "additionalProperties": true
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Data input tidak valid.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "example": "ERROR"
-                                        },
-                                        "errorCode": {
-                                            "type": "string",
-                                            "example": "INVALID_INPUT"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Data tidak valid."
-                                        },
-                                        "errorMessages": {
-                                            "type": "object",
-                                            "additionalProperties": true
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Pengguna tidak ditemukan.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "example": "ERROR"
-                                        },
-                                        "errorCode": {
-                                            "type": "string",
-                                            "example": "USER_NOT_FOUND"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Pengguna tidak ditemukan."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Terjadi kesalahan pada server.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "example": "ERROR"
-                                        },
-                                        "errorCode": {
-                                            "type": "string",
-                                            "example": "SEND_MESSAGE_FAILED"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Gagal mengirim kode OTP baru."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/send-otp-reset-password": {
-            "post": {
-                "tags": [
-                    "OTP Whatsapp"
-                ],
-                "summary": "Mengirimkan OTP untuk mereset password akun pengguna",
-                "description": "API ini digunakan untuk mengirimkan OTP yang diperlukan untuk mereset password akun pengguna berdasarkan nomor telepon yang terdaftar.",
-                "operationId": "57f542a64c14464f3a3399a09abd94bf",
-                "parameters": [
-                    {
-                        "name": "no_telp",
-                        "in": "query",
-                        "description": "Nomor telepon yang terdaftar yang akan dikirimkan OTP untuk reset password.",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "example": "081234567890"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Kode OTP berhasil dikirim untuk reset password.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "example": "SUCCESS"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Kode OTP untuk Reset Password berhasil dikirim!"
-                                        },
-                                        "data": {
-                                            "type": "object",
-                                            "additionalProperties": true
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Data input tidak valid.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "example": "ERROR"
-                                        },
-                                        "errorCode": {
-                                            "type": "string",
-                                            "example": "INVALID_INPUT"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Data tidak valid."
-                                        },
-                                        "errorMessages": {
-                                            "type": "object",
-                                            "additionalProperties": true
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Pengguna tidak ditemukan berdasarkan nomor telepon.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "example": "ERROR"
-                                        },
-                                        "errorCode": {
-                                            "type": "string",
-                                            "example": "USER_NOT_FOUND"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Pengguna tidak ditemukan."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Terjadi kesalahan server saat mengirim OTP.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "example": "ERROR"
-                                        },
-                                        "errorCode": {
-                                            "type": "string",
-                                            "example": "SEND_MESSAGE_FAILED"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Gagal mengirim OTP."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/valid-otp-reset-password": {
-            "get": {
-                "tags": [
-                    "OTP Whatsapp"
-                ],
-                "summary": "Validasi OTP untuk mereset password pengguna",
-                "description": "API ini digunakan untuk memvalidasi kode OTP yang dikirimkan ke pengguna untuk mereset password mereka.",
-                "operationId": "6db9e7476b32c747c124a3b0125dfe4a",
-                "parameters": [
-                    {
-                        "name": "no_telp",
-                        "in": "query",
-                        "description": "Nomor telepon yang digunakan saat mengirim OTP.",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "example": "081234567890"
-                        }
-                    },
-                    {
-                        "name": "otp",
-                        "in": "query",
-                        "description": "Kode OTP yang diterima oleh pengguna untuk memvalidasi reset password.",
-                        "required": true,
-                        "schema": {
-                            "type": "integer",
-                            "example": 123456
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Kode OTP berhasil divalidasi.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "example": "SUCCESS"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Kode OTP berhasil divalidasi."
-                                        },
-                                        "data": {
-                                            "type": "object",
-                                            "additionalProperties": true
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Input tidak valid atau OTP salah.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "example": "ERROR"
-                                        },
-                                        "errorCode": {
-                                            "type": "string",
-                                            "example": "INVALID_INPUT"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Data tidak valid."
-                                        },
-                                        "errorMessages": {
-                                            "type": "object",
-                                            "additionalProperties": true
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Kode OTP tidak ditemukan.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "example": "ERROR"
-                                        },
-                                        "errorCode": {
-                                            "type": "string",
-                                            "example": "OTP_NOT_FOUND"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Kode OTP tidak ditemukan."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Kode OTP salah atau telah kadaluarsa.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "example": "ERROR"
-                                        },
-                                        "errorCode": {
-                                            "type": "string",
-                                            "example": "INVALID_OTP"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Kode OTP salah."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "402": {
-                        "description": "Kode OTP telah kadaluarsa.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "example": "ERROR"
-                                        },
-                                        "errorCode": {
-                                            "type": "string",
-                                            "example": "OTP_EXPIRED"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Kode OTP telah kadaluarsa."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/reset-otp-password": {
-            "post": {
-                "tags": [
-                    "OTP Whatsapp"
-                ],
-                "summary": "Reset OTP Password",
-                "description": "Generate OTP baru untuk mereset password dan mengirimkannya ke nomor telepon pengguna.",
-                "operationId": "resetOtpPassword",
-                "requestBody": {
-                    "description": "Kirim nomor telepon pengguna untuk mereset OTP.",
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "no_telp"
-                                ],
-                                "properties": {
-                                    "no_telp": {
-                                        "type": "string",
-                                        "example": "081234567890"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "OTP berhasil direset dan dikirimkan ke nomor telepon pengguna.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "example": "SUCCESS"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Kode OTP baru berhasil dikirim."
-                                        },
-                                        "data": {
+                                        "details": {
+                                            "properties": {
+                                                "sak_id": {
+                                                    "type": "integer",
+                                                    "example": 123
+                                                },
+                                                "user_id": {
+                                                    "type": "integer",
+                                                    "example": 456
+                                                },
+                                                "file_path": {
+                                                    "type": "string",
+                                                    "example": null
+                                                },
+                                                "storage_status": {
+                                                    "type": "string",
+                                                    "example": "File deleted from storage."
+                                                },
+                                                "database_status": {
+                                                    "type": "string",
+                                                    "example": "File record has been deleted from the database."
+                                                }
+                                            },
                                             "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Input tidak valid atau OTP masih berlaku.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "example": "ERROR"
                                         },
-                                        "errorCode": {
-                                            "type": "string",
-                                            "example": "INVALID_INPUT"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Data tidak valid."
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 200
                                         }
                                     },
                                     "type": "object"
@@ -8104,22 +7425,116 @@
                         }
                     },
                     "404": {
-                        "description": "Pengguna atau OTP tidak ditemukan.",
+                        "description": "User atau file tidak ditemukan",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "example": "ERROR"
-                                        },
-                                        "errorCode": {
-                                            "type": "string",
-                                            "example": "USER_NOT_FOUND"
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Pengguna tidak ditemukan."
+                                            "example": "User not found. Please check the NIK and try again."
+                                        },
+                                        "details": {
+                                            "properties": {
+                                                "nik": {
+                                                    "type": "string",
+                                                    "example": "3201123456789012"
+                                                },
+                                                "reason": {
+                                                    "type": "string",
+                                                    "example": "No user associated with this NIK was found in the system."
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 404
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/get-no-expired-sak/{nik}": {
+            "get": {
+                "tags": [
+                    "SAK"
+                ],
+                "summary": "Mengambil nomor dan masa berlaku SAK berdasarkan NIK user",
+                "operationId": "e0ccc3271f7bc5c754bc91ed2d893e7a",
+                "parameters": [
+                    {
+                        "name": "nik",
+                        "in": "path",
+                        "description": "Nomor Induk Kependudukan (NIK) user",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "3201123456789012"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Data SAK berhasil ditemukan",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "nomor_sak": {
+                                                    "type": "string",
+                                                    "example": "SAK-2025-001"
+                                                },
+                                                "masa_berlaku_sak": {
+                                                    "type": "string",
+                                                    "format": "date",
+                                                    "example": "2025-12-31"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 200
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User atau data SAK tidak ditemukan",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "User Not Found."
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 404
                                         }
                                     },
                                     "type": "object"
@@ -8128,22 +7543,221 @@
                         }
                     },
                     "500": {
-                        "description": "Terjadi kesalahan di server.",
+                        "description": "Kesalahan server",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "example": "ERROR"
-                                        },
-                                        "errorCode": {
-                                            "type": "string",
-                                            "example": "SEND_MESSAGE_FAILED"
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Gagal mengirim pesan."
+                                            "example": "Terjadi kesalahan pada server."
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "SQLSTATE[HY000] ..."
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 500
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/update-sak/{nik}": {
+            "put": {
+                "tags": [
+                    "SAK"
+                ],
+                "summary": "Perbarui metadata file SAK berdasarkan NIK",
+                "operationId": "7da3cb17731c174a6d7ee998fcc9a4e1",
+                "parameters": [
+                    {
+                        "name": "nik",
+                        "in": "path",
+                        "description": "NIK pengguna yang terkait dengan file SAK",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "Field metadata yang dapat diperbarui",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "valid": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "authentic": {
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "current": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "sufficient": {
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "ket": {
+                                        "type": "string",
+                                        "example": "Dokumen tidak sesuai format"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Berhasil memperbarui data file SAK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "File details updated successfully."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "user_id": {
+                                                    "type": "integer",
+                                                    "example": 123
+                                                },
+                                                "sak_id": {
+                                                    "type": "integer",
+                                                    "example": 456
+                                                },
+                                                "path_file": {
+                                                    "type": "string",
+                                                    "example": "/storage/sak/example.pdf"
+                                                },
+                                                "valid": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "authentic": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "current": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "sufficient": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "ket": {
+                                                    "type": "string",
+                                                    "example": "Dokumen tidak sesuai format"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 200
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validasi gagal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Validation failed. Please ensure all fields are filled correctly."
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 400
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User atau file tidak ditemukan",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "User not found. Please check the NIK and try again."
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 404
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Kesalahan server",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "An unexpected error occurred while updating file details."
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Exception message"
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 500
                                         }
                                     },
                                     "type": "object"
@@ -8448,10 +8062,6 @@
         {
             "name": "History Jabatan",
             "description": "History Jabatan"
-        },
-        {
-            "name": "OTP Whatsapp",
-            "description": "OTP Whatsapp"
         },
         {
             "name": "SAK",
