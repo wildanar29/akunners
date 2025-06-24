@@ -9,8 +9,11 @@ use App\Models\InterviewModel;
 use App\Models\DataAsesorModel;
 use App\Models\DaftarUser;
 use App\Models\BidangModel;
+use App\Models\LangkahForm5;
+use App\Models\Form5KegiatanUser;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon; // Tambahkan ini untuk menggunakan Carbon
 
 
@@ -57,15 +60,6 @@ class Form5Controller extends BaseController
 			]);
 		}
 
-		// Ambil data BidangModel
-		$bidang = BidangModel::find($request->form_1_id);
-		if (!$bidang || !$bidang->no_reg) {
-			return response()->json([
-				'status' => 404,
-				'message' => 'Data bidang atau no_reg tidak ditemukan.'
-			]);
-		}
-
 		// Ambil data asesor dari DataAsesorModel
 		$asesorData = DataAsesorModel::where('no_reg', $bidang->no_reg)->first();
 
@@ -98,5 +92,296 @@ class Form5Controller extends BaseController
 			'message' => 'Pengajuan konsultasi pra asesmen berhasil disimpan.',
 			'data' => $interview
 		]);
+	}
+	
+	public function getJadwalInterviewByAsesor(Request $request)
+	{
+		$user = Auth::user();
+
+		// Cek user login
+		if (!$user) {
+			return response()->json([
+				'status' => 401,
+				'message' => 'User tidak terautentikasi.',
+				'data' => []
+			], 401);
+		}
+
+		// Tangkap inputan
+		$inputAsesorId = $request->input('asesor_id');
+		$inputNoReg = $request->input('no_reg');
+
+		$asesorId = null;
+
+		// Jika ada inputan asesor_id langsung digunakan
+		if ($inputAsesorId) {
+			$asesor = DB::table('data_asesor')->where('user_id', $inputAsesorId)->first();
+			if (!$asesor) {
+				return response()->json([
+					'status' => 404,
+					'message' => 'Asesor tidak ditemukan berdasarkan asesor_id.',
+					'data' => []
+				], 404);
+			}
+			$asesorId = $inputAsesorId;
+		}
+		// Jika ada inputan no_reg, cari user_id asesor dari data_asesor
+		elseif ($inputNoReg) {
+			$asesor = DB::table('data_asesor')->where('no_reg', $inputNoReg)->first();
+			if (!$asesor) {
+				return response()->json([
+					'status' => 404,
+					'message' => 'Asesor tidak ditemukan berdasarkan no_reg.',
+					'data' => []
+				], 404);
+			}
+			$asesorId = $asesor->user_id;
+		}
+		// Kalau tidak ada input, pakai user yang login
+		else {
+			$asesor = DB::table('data_asesor')->where('user_id', $user->user_id)->first();
+			if (!$asesor) {
+				return response()->json([
+					'status' => 403,
+					'message' => 'Akses ditolak. Hanya asesor yang dapat melihat jadwal ini.',
+					'data' => []
+				], 403);
+			}
+			$asesorId = $user->user_id;
+		}
+
+		// Ambil jadwal interview
+		$jadwal = DB::table('schedule_interview')
+			->where('asesor_id', $asesorId)
+			->orderBy('date', 'asc')
+			->orderBy('time', 'asc')
+			->get();
+
+		return response()->json([
+			'status' => 200,
+			'message' => 'Data jadwal interview berhasil diambil.',
+			'data' => $jadwal
+		]);
+	}
+
+	public function updateStatusInterview(Request $request)
+	{
+		$this->validate($request, [
+			'interview_id' => 'required|integer|exists:schedule_interview,interview_id',
+			'action' => 'required|in:accepted,canceled,reschedule',
+			'date' => 'required_if:action,reschedule|date',
+			'time' => 'required_if:action,reschedule',
+			'place' => 'required_if:action,reschedule|string|max:255',
+			'asesor_id' => 'nullable|integer|exists:data_asesor,user_id' // opsional, valid jika ada
+		]);
+
+		$user = Auth::user();
+
+		// Ambil ID asesor dari login atau dari request
+		$asesorId = $request->input('asesor_id', $user?->user_id);
+
+		// Validasi keberadaan user (jika tidak login dan tidak ada asesor_id dikirim)
+		if (!$asesorId) {
+			return response()->json([
+				'status' => 401,
+				'message' => 'User tidak terautentikasi dan asesor_id tidak disediakan.',
+				'data' => []
+			], 401);
+		}
+
+		// Cek apakah asesor_id valid di tabel data_asesor
+		$asesor = DB::table('data_asesor')->where('user_id', $asesorId)->first();
+		if (!$asesor) {
+			return response()->json([
+				'status' => 403,
+				'message' => 'Akses ditolak. User bukan asesor.',
+				'data' => []
+			], 403);
+		}
+
+		// Ambil data interview
+		$interview = DB::table('schedule_interview')->where('interview_id', $request->interview_id)->first();
+		if (!$interview) {
+			return response()->json([
+				'status' => 404,
+				'message' => 'Data interview tidak ditemukan.',
+				'data' => []
+			], 404);
+		}
+
+		// Cek apakah interview dimiliki oleh asesor_id yang sedang login atau dikirimkan
+		if ($interview->asesor_id != $asesorId) {
+			return response()->json([
+				'status' => 403,
+				'message' => 'Akses ditolak. Anda bukan pemilik jadwal interview ini.',
+				'data' => []
+			], 403);
+		}
+
+		// Proses update berdasarkan action
+		$updateData = [];
+
+		switch ($request->action) {
+			case 'accepted':
+				$updateData['status'] = 'Accepted';
+				break;
+
+			case 'canceled':
+				$updateData['status'] = 'Canceled';
+				break;
+
+			case 'reschedule':
+				$updateData['status'] = 'Rescheduled';
+				$updateData['date'] = $request->date;
+				$updateData['time'] = $request->time;
+				$updateData['place'] = $request->place;
+				break;
+		}
+
+		DB::table('schedule_interview')
+			->where('interview_id', $request->interview_id)
+			->update($updateData);
+
+		return response()->json([
+			'status' => 200,
+			'message' => 'Status interview berhasil diperbarui.',
+			'data' => $updateData
+		]);
+	}
+	
+	public function getJadwalInterviewByBidang(Request $request)
+	{
+		// Cek apakah user login
+		$authUser = Auth::user();
+
+		// Ambil bidang_id dari input jika ada, default ke user yang sedang login
+		$bidangId = $request->input('bidang_id', optional($authUser)->user_id);
+
+		// Validasi apakah user yang dimaksud punya role_id = 3 (bidang)
+		$bidang = DB::table('users')
+			->where('user_id', $bidangId)
+			->where('role_id', 3)
+			->first();
+
+		if (!$bidang) {
+			return response()->json([
+				'status' => 403,
+				'message' => 'Akses ditolak. Hanya user dengan role_id = 3 (Bidang) yang dapat mengakses.',
+				'data' => []
+			], 403);
+		}
+
+		// Ambil parameter filter dari input
+		$date     = $request->input('date');
+		$time     = $request->input('time');
+		$place    = $request->input('place');
+		$asesorId = $request->input('asesor_id');
+		$status   = $request->input('status');
+
+		// Query data dari schedule_interview
+		$query = DB::table('schedule_interview');
+
+		// Filter berdasarkan input jika ada
+		if (!empty($date)) {
+			$query->whereDate('date', $date);
+		}
+		if (!empty($time)) {
+			$query->where('time', $time);
+		}
+		if (!empty($place)) {
+			$query->where('place', 'like', '%' . $place . '%');
+		}
+		if (!empty($asesorId)) {
+			$query->where('asesor_id', $asesorId);
+		}
+		if (!empty($status)) {
+			$query->where('status', $status);
+		}
+
+		// Ambil data dan urutkan
+		$jadwal = $query->orderBy('date')
+						->orderBy('time')
+						->get();
+
+		return response()->json([
+			'status' => 200,
+			'message' => 'Data jadwal interview berhasil diambil.',
+			'data' => $jadwal
+		]);
+	}
+	
+	public function getLangkahDanKegiatan()
+	{
+		try {
+			$data = LangkahForm5::with(['kegiatans'])
+				->orderBy('nomor_langkah')
+				->get();
+
+			return response()->json([
+				'status' => 200,
+				'message' => 'Data langkah dan kegiatan berhasil diambil.',
+				'data' => $data
+			]);
+		} catch (\Exception $e) {
+			// Log kesalahan ke file log Laravel
+			Log::error('Gagal mengambil data langkah dan kegiatan: ' . $e->getMessage());
+
+			return response()->json([
+				'status' => 500,
+				'message' => 'Terjadi kesalahan saat mengambil data.',
+				'error' => $e->getMessage()
+			], 500);
+		}
+	}
+	
+	public function simpanJawabanKegiatan(Request $request)
+	{
+		// Validasi format data 'jawaban'
+		$validator = Validator::make($request->all(), [
+			'jawaban' => 'required|array|min:1',
+			'jawaban.*.form_5_id'   => 'required|integer|exists:form_5,form_5_id',
+			'jawaban.*.kegiatan_id' => 'required|integer|exists:kegiatan_form5,id',
+			'jawaban.*.is_tercapai' => 'required|boolean',
+			'jawaban.*.catatan'     => 'nullable|string|max:1000'
+		]);
+
+		if ($validator->fails()) {
+			return response()->json([
+				'status' => 422,
+				'message' => 'Validasi gagal.',
+				'errors' => $validator->errors()
+			], 422);
+		}
+
+		try {
+			$data = $request->input('jawaban');
+
+			foreach ($data as $item) {
+				Form5KegiatanUser::updateOrCreate(
+					[
+						'form_5_id'   => $item['form_5_id'],
+						'kegiatan_id' => $item['kegiatan_id']
+					],
+					[
+						'is_tercapai' => (int) $item['is_tercapai'], // Konversi boolean ke 0/1
+						'catatan'     => $item['catatan'] ?? null,
+						'updated_at'  => now()
+					]
+				);
+			}
+
+			return response()->json([
+				'status' => 200,
+				'message' => 'Jawaban kegiatan berhasil disimpan.'
+			]);
+		} catch (\Exception $e) {
+			Log::error('Gagal menyimpan jawaban kegiatan: ' . $e->getMessage());
+
+			return response()->json([
+				'status' => 500,
+				'message' => 'Terjadi kesalahan saat menyimpan data.',
+				'error' => $e->getMessage()
+			], 500);
+		}
 	}
 }

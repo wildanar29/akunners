@@ -506,22 +506,43 @@
             }
         },
         "/get-form1": {
-            "get": {
+            "post": {
                 "tags": [
                     "Bidang"
                 ],
-                "summary": "Mengambil Semua form_1 data",
-                "operationId": "f988c7f6b317c5c4c3c4a864aafbf10c",
+                "summary": "Ambil semua data Form1 (opsional filter status)",
+                "operationId": "eb3ce36412798011422cfff2f25300ad",
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "status": {
+                                        "description": "Opsional filter berdasarkan status: Waiting, ApprovedBy_Asesor, ApprovedBy_Bidang, Cancel, Completed",
+                                        "type": "string",
+                                        "example": "Waiting"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
-                        "description": "Data form_1 berhasil diambil",
+                        "description": "Data berhasil diambil",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "OK"
+                                        },
                                         "message": {
                                             "type": "string",
-                                            "example": "Data form_1 berhasil diambil"
+                                            "example": "Data berhasil diambil."
                                         },
                                         "data": {
                                             "type": "array",
@@ -529,30 +550,73 @@
                                                 "properties": {
                                                     "form_1_id": {
                                                         "type": "integer",
-                                                        "example": 19
+                                                        "example": 53
+                                                    },
+                                                    "user_id": {
+                                                        "type": "integer",
+                                                        "example": 39
                                                     },
                                                     "asesi_name": {
                                                         "type": "string",
-                                                        "example": "I Gede Daiva Andika"
+                                                        "example": "Testing99"
                                                     },
                                                     "asesi_date": {
                                                         "type": "string",
-                                                        "format": "date",
-                                                        "example": "2025-02-11"
+                                                        "format": "date-time"
                                                     },
                                                     "asesor_name": {
                                                         "type": "string",
-                                                        "example": null
+                                                        "example": "Dalia Novitasari"
+                                                    },
+                                                    "asesor_date": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    },
+                                                    "no_reg": {
+                                                        "type": "string",
+                                                        "example": "ASK.123456"
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "example": "Cancel"
+                                                    },
+                                                    "ijazah_id": {
+                                                        "type": "integer",
+                                                        "example": 38
+                                                    },
+                                                    "spk_id": {
+                                                        "type": "integer",
+                                                        "example": null,
+                                                        "nullable": true
+                                                    },
+                                                    "sip_id": {
+                                                        "type": "integer",
+                                                        "example": 17
+                                                    },
+                                                    "str_id": {
+                                                        "type": "integer",
+                                                        "example": 14
+                                                    },
+                                                    "ujikom_id": {
+                                                        "type": "integer",
+                                                        "example": 14
+                                                    },
+                                                    "sertifikat_id": {
+                                                        "type": "integer",
+                                                        "example": 23
                                                     },
                                                     "created_at": {
                                                         "type": "string",
-                                                        "format": "date-time",
-                                                        "example": "2025-02-11T00:00:00.000000Z"
+                                                        "format": "date-time"
                                                     },
                                                     "updated_at": {
                                                         "type": "string",
-                                                        "format": "date-time",
-                                                        "example": "2025-02-11T00:00:00.000000Z"
+                                                        "format": "date-time"
+                                                    },
+                                                    "foto": {
+                                                        "type": "string",
+                                                        "format": "url",
+                                                        "example": "http://yourdomain.com/storage/foto_nurse/foto.jpg"
                                                     }
                                                 },
                                                 "type": "object"
@@ -564,15 +628,47 @@
                             }
                         }
                     },
-                    "404": {
-                        "description": "Data form_1 tidak ditemukan",
+                    "400": {
+                        "description": "Status tidak valid",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "ERR"
+                                        },
                                         "message": {
                                             "type": "string",
-                                            "example": "Data form_1 tidak ditemukan"
+                                            "example": "Status tidak valid."
+                                        },
+                                        "data": {
+                                            "type": "string",
+                                            "example": null
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Kesalahan server",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "ERR"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Terjadi kesalahan: ..."
+                                        },
+                                        "data": {
+                                            "type": "string",
+                                            "example": null
                                         }
                                     },
                                     "type": "object"
@@ -7722,6 +7818,352 @@
                 }
             }
         },
+        "/jadwal/interview/asesor": {
+            "get": {
+                "tags": [
+                    "FORM 5"
+                ],
+                "summary": "Ambil Jadwal Interview Asesor",
+                "description": "Endpoint ini digunakan untuk mengambil daftar jadwal interview berdasarkan asesor_id, no_reg, atau user login (jika tidak ada parameter).",
+                "operationId": "getJadwalInterviewByAsesor",
+                "parameters": [
+                    {
+                        "name": "asesor_id",
+                        "in": "query",
+                        "description": "User ID dari asesor",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 42
+                        }
+                    },
+                    {
+                        "name": "no_reg",
+                        "in": "query",
+                        "description": "Nomor registrasi asesor",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "REG-00123"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Data jadwal interview berhasil diambil",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Data jadwal interview berhasil diambil."
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "asesor_id": {
+                                                        "type": "integer",
+                                                        "example": 42
+                                                    },
+                                                    "date": {
+                                                        "type": "string",
+                                                        "format": "date",
+                                                        "example": "2025-06-20"
+                                                    },
+                                                    "time": {
+                                                        "type": "string",
+                                                        "example": "09:00"
+                                                    },
+                                                    "place": {
+                                                        "type": "string",
+                                                        "example": "Ruang Interview 3"
+                                                    },
+                                                    "form_1_id": {
+                                                        "type": "integer",
+                                                        "example": 101
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "example": "Scheduled"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "User tidak terautentikasi",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 401
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "User tidak terautentikasi."
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Akses ditolak. Hanya asesor yang dapat melihat jadwal ini.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 403
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Akses ditolak. Hanya asesor yang dapat melihat jadwal ini."
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Asesor tidak ditemukan",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 404
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Asesor tidak ditemukan berdasarkan no_reg."
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/interview/bidang": {
+            "post": {
+                "tags": [
+                    "FORM 5"
+                ],
+                "summary": "Ambil Jadwal Interview Berdasarkan Bidang",
+                "description": "Endpoint ini digunakan oleh pengguna dengan role 'Bidang' (role_id = 3) untuk melihat jadwal interview berdasarkan filter yang tersedia.",
+                "operationId": "getJadwalInterviewByBidang",
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "bidang_id": {
+                                        "description": "ID user bidang. Jika tidak dikirim, digunakan user login.",
+                                        "type": "integer",
+                                        "example": 1001
+                                    },
+                                    "date": {
+                                        "description": "Tanggal interview",
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2025-06-17"
+                                    },
+                                    "time": {
+                                        "description": "Waktu interview",
+                                        "type": "string",
+                                        "example": "10:00"
+                                    },
+                                    "place": {
+                                        "description": "Lokasi interview (opsional, akan dicari secara like)",
+                                        "type": "string",
+                                        "example": "Ruang A"
+                                    },
+                                    "asesor_id": {
+                                        "description": "ID user asesor",
+                                        "type": "integer",
+                                        "example": 201
+                                    },
+                                    "status": {
+                                        "description": "Status interview (Waiting, Accepted, Canceled, Rescheduled)",
+                                        "type": "string",
+                                        "example": "Waiting"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Data jadwal interview berhasil diambil",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Data jadwal interview berhasil diambil."
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "interview_id": {
+                                                        "type": "integer",
+                                                        "example": 10
+                                                    },
+                                                    "user_id": {
+                                                        "type": "integer",
+                                                        "example": 3001
+                                                    },
+                                                    "date": {
+                                                        "type": "string",
+                                                        "example": "2025-06-17"
+                                                    },
+                                                    "time": {
+                                                        "type": "string",
+                                                        "example": "10:00"
+                                                    },
+                                                    "place": {
+                                                        "type": "string",
+                                                        "example": "Ruang A"
+                                                    },
+                                                    "form_1_id": {
+                                                        "type": "integer",
+                                                        "example": 5
+                                                    },
+                                                    "asesor_id": {
+                                                        "type": "integer",
+                                                        "example": 201
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "example": "Waiting"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Akses ditolak. Hanya bidang yang dapat mengakses.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 403
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Akses ditolak. Hanya user dengan role_id = 3 (Bidang) yang dapat mengakses."
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "User tidak login",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 401
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "User tidak terautentikasi."
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/get-no-expired-sak/{nik}": {
             "get": {
                 "tags": [
@@ -7953,6 +8395,587 @@
                 }
             }
         },
+        "/konsultasi/pra-asesmen": {
+            "post": {
+                "tags": [
+                    "FORM 5"
+                ],
+                "summary": "Pengajuan Konsultasi Pra Asesmen oleh Asesi",
+                "description": "Endpoint ini digunakan oleh Asesi untuk mengajukan konsultasi pra asesmen berdasarkan Form 1 yang telah diisi.",
+                "operationId": "pengajuanKonsultasiPraAsesmen",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "date",
+                                    "time",
+                                    "place",
+                                    "form_1_id"
+                                ],
+                                "properties": {
+                                    "date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2025-06-17"
+                                    },
+                                    "time": {
+                                        "type": "string",
+                                        "example": "14:00"
+                                    },
+                                    "place": {
+                                        "type": "string",
+                                        "example": "Ruang Konsultasi 1"
+                                    },
+                                    "form_1_id": {
+                                        "type": "integer",
+                                        "example": 123
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Pengajuan konsultasi berhasil disimpan",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 201
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Pengajuan konsultasi pra asesmen berhasil disimpan."
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Pengguna belum login atau token tidak valid",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 401
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Pengguna belum login atau token tidak valid."
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Akses ditolak. Hanya asesi yang dapat melakukan pengajuan konsultasi.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 403
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Akses ditolak. Hanya asesi yang dapat melakukan pengajuan konsultasi."
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Pengajuan untuk form ini sudah ada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 409
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Pengajuan untuk form ini sudah ada. Anda tidak dapat mengajukan dua kali."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Data asesor tidak ditemukan",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 404
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Data asesor dengan no_reg tersebut tidak ditemukan."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validasi gagal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "example": {
+                                                "date": [
+                                                    "The date field is required."
+                                                ],
+                                                "form_1_id": [
+                                                    "The form_1_id field is required."
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/form5/jawaban-kegiatan": {
+            "post": {
+                "tags": [
+                    "FORM 5"
+                ],
+                "summary": "Simpan jawaban kegiatan Form 5",
+                "description": "Menyimpan status pencapaian kegiatan untuk Form 5 berdasarkan input dari user",
+                "operationId": "4d1d95aa005e16a1b2ba96e7fa1bcb0e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "jawaban"
+                                ],
+                                "properties": {
+                                    "jawaban": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "form_5_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "kegiatan_id": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "is_tercapai": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "catatan": {
+                                                    "type": "string",
+                                                    "example": "Sudah dilakukan sesuai standar"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Jawaban kegiatan berhasil disimpan",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Jawaban kegiatan berhasil disimpan."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validasi gagal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 422
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Validasi gagal."
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Kesalahan server",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 500
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Terjadi kesalahan saat menyimpan data."
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "SQLSTATE[23000]: Integrity constraint violation: ..."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/form5/langkah-kegiatan": {
+            "get": {
+                "tags": [
+                    "FORM 5"
+                ],
+                "summary": "Ambil data langkah dan kegiatan Form 5",
+                "description": "Mengambil daftar langkah dan kegiatan dalam Form 5",
+                "operationId": "f0a436843855058e7047aa92eb835c3d",
+                "responses": {
+                    "200": {
+                        "description": "Data berhasil diambil",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Data langkah dan kegiatan berhasil diambil."
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "nomor_langkah": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "judul_langkah": {
+                                                        "type": "string",
+                                                        "example": "Melakukan persiapan asesmen"
+                                                    },
+                                                    "form_parent": {
+                                                        "type": "string",
+                                                        "example": "form_5"
+                                                    },
+                                                    "catatan": {
+                                                        "type": "string",
+                                                        "example": "Langkah penting sebelum asesmen"
+                                                    },
+                                                    "kegiatans": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "example": 1
+                                                                },
+                                                                "langkah_id": {
+                                                                    "type": "integer",
+                                                                    "example": 1
+                                                                },
+                                                                "deskripsi": {
+                                                                    "type": "string",
+                                                                    "example": "Menyiapkan alat dan bahan asesmen"
+                                                                },
+                                                                "is_tercapai": {
+                                                                    "type": "boolean",
+                                                                    "example": true
+                                                                },
+                                                                "catatan": {
+                                                                    "type": "string",
+                                                                    "example": "Sesuai SOP"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal mengambil data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 500
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Terjadi kesalahan saat mengambil data."
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "SQLSTATE[42S02]: Table not found..."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/user/update-role": {
+            "post": {
+                "tags": [
+                    "Akun"
+                ],
+                "summary": "Ubah role user",
+                "operationId": "259738e6b607fd06e8d3782f2bccc96f",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "user_id",
+                                    "role_id"
+                                ],
+                                "properties": {
+                                    "user_id": {
+                                        "description": "ID user yang akan diubah rolenya",
+                                        "type": "integer",
+                                        "example": 12
+                                    },
+                                    "role_id": {
+                                        "description": "ID role baru (contoh: 2 = Asesor)",
+                                        "type": "integer",
+                                        "example": 2
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Berhasil mengubah role user",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Role user berhasil diubah."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "user_id": {
+                                                    "type": "integer",
+                                                    "example": 12
+                                                },
+                                                "nama": {
+                                                    "type": "string",
+                                                    "example": "Siti Nur"
+                                                },
+                                                "role_id_baru": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 200
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validasi gagal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Validasi gagal."
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 400
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "User bukan asesor aktif",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "User belum terdaftar sebagai asesor aktif."
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 403
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error server",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Terjadi kesalahan saat mengubah role."
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Exception message"
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 500
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/update-sak/{nik}": {
             "put": {
                 "tags": [
@@ -8146,6 +9169,221 @@
                         }
                     }
                 }
+            }
+        },
+        "/interview/update-status": {
+            "post": {
+                "tags": [
+                    "FORM 5"
+                ],
+                "summary": "Update Status Interview",
+                "description": "Endpoint ini digunakan oleh asesor untuk memperbarui status interview (Accepted, Canceled, Reschedule).",
+                "operationId": "updateStatusInterview",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "interview_id",
+                                    "action"
+                                ],
+                                "properties": {
+                                    "interview_id": {
+                                        "description": "ID dari jadwal interview",
+                                        "type": "integer",
+                                        "example": 12
+                                    },
+                                    "action": {
+                                        "description": "Tindakan yang diambil asesor",
+                                        "type": "string",
+                                        "enum": [
+                                            "accepted",
+                                            "canceled",
+                                            "reschedule"
+                                        ],
+                                        "example": "reschedule"
+                                    },
+                                    "date": {
+                                        "description": "Wajib diisi jika action = reschedule",
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2025-06-20"
+                                    },
+                                    "time": {
+                                        "description": "Wajib diisi jika action = reschedule",
+                                        "type": "string",
+                                        "example": "10:00"
+                                    },
+                                    "place": {
+                                        "description": "Wajib diisi jika action = reschedule",
+                                        "type": "string",
+                                        "example": "Ruang Konsultasi A"
+                                    },
+                                    "asesor_id": {
+                                        "description": "Opsional, jika tidak login",
+                                        "type": "integer",
+                                        "example": 42
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Status interview berhasil diperbarui",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Status interview berhasil diperbarui."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "Rescheduled"
+                                                },
+                                                "date": {
+                                                    "type": "string",
+                                                    "example": "2025-06-20"
+                                                },
+                                                "time": {
+                                                    "type": "string",
+                                                    "example": "10:00"
+                                                },
+                                                "place": {
+                                                    "type": "string",
+                                                    "example": "Ruang Konsultasi A"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "User tidak terautentikasi dan tidak ada asesor_id dikirim",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 401
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "User tidak terautentikasi dan asesor_id tidak disediakan."
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Akses ditolak atau bukan pemilik jadwal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 403
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Akses ditolak. Anda bukan pemilik jadwal interview ini."
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Data interview tidak ditemukan",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 404
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Data interview tidak ditemukan."
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validasi input gagal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "example": {
+                                                "interview_id": [
+                                                    "The interview_id field is required."
+                                                ],
+                                                "action": [
+                                                    "The action field is required."
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/upload-sak": {
@@ -8446,6 +9684,10 @@
         {
             "name": "SAK",
             "description": "SAK"
+        },
+        {
+            "name": "FORM 5",
+            "description": "FORM 5"
         },
         {
             "name": "PROGRESS",

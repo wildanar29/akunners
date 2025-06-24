@@ -25,6 +25,11 @@ $router->post('/get-form1-byasesor', 'AsesiPermohonanController@getForm1ByAsesor
 
 // Bagian API Form 5
 $router->post('/konsultasi/pra-asesmen', 'Form5Controller@pengajuanKonsultasiPraAsesmen');
+$router->get('/jadwal/interview/asesor', 'Form5Controller@getJadwalInterviewByAsesor');
+$router->post('/interview/update-status', 'Form5Controller@updateStatusInterview');
+$router->post('/interview/bidang', 'Form5Controller@getJadwalInterviewByBidang');
+$router->get('/form5/langkah-kegiatan', 'Form5Controller@getLangkahDanKegiatan');
+$router->post('/form5/jawaban-kegiatan', 'Form5Controller@simpanJawabanKegiatan');
 
 // Bagian API Form 3
 
@@ -199,6 +204,7 @@ $router->get('/send-notification-to-bidang', action: 'Notification@NotifToBidang
 });// buat Authentikasi
 
 
+$router->post('/user/update-role', 'BidangController@updateUserRole');
 
 
 $router->get('/swagger.json', function () {

@@ -1792,60 +1792,60 @@ public function deleteHistoryJabatan(Request $request, $nik)
 * )
 */
 
-public function insertHistoryJabatan(Request $request, $nik)
-{
-	try {
-		$validator = Validator::make($request->all(), [
-			'working_unit_id' => 'required|integer|exists:working_unit,working_unit_id',
-			'jabatan_id'      => 'required|integer|exists:jabatan,jabatan_id',
-			'dari'            => 'required|date',
-			'sampai'          => 'nullable|date',
-		]);
+	public function insertHistoryJabatan(Request $request, $nik)
+	{
+		try {
+			$validator = Validator::make($request->all(), [
+				'working_unit_id' => 'required|integer|exists:working_unit,working_unit_id',
+				'jabatan_id'      => 'required|integer|exists:jabatan,jabatan_id',
+				'dari'            => 'required|date',
+				'sampai'          => 'nullable|date',
+			]);
 
-		if ($validator->fails()) {
+			if ($validator->fails()) {
+				return response()->json([
+					'status' => 400,
+					'message' => 'Data validation failed.',
+					'errors' => $validator->errors(),
+				], 400);
+			}
+
+			$user = DaftarUser::where('nik', $nik)->first();
+			if (!$user) {
+				return response()->json([
+					'status' => 404,
+					'message' => 'User not found.',
+				], 404);
+			}
+
+			$history = HistoryJabatan::create([
+				'user_id'         => $user->user_id,
+				'working_unit_id' => $request->working_unit_id,
+				'jabatan_id'      => $request->jabatan_id,
+				'dari'            => $request->dari,
+				'sampai'          => $request->sampai,
+			]);
+
 			return response()->json([
-				'status' => 400,
-				'message' => 'Data validation failed.',
-				'errors' => $validator->errors(),
-			], 400);
-		}
+				'status' => 201,
+				'message' => 'History Jabatan inserted successfully.',
+				'data'    => [
+					'user_jabatan_id' => $history->user_jabatan_id, // ⬅️ Ini munculkan
+					'user_id'         => $history->user_id,
+					'working_unit_id' => $history->working_unit_id,
+					'jabatan_id'      => $history->jabatan_id,
+					'dari'            => $history->dari,
+					'sampai'          => $history->sampai,
+				],
+			], 201);
 
-		$user = DaftarUser::where('nik', $nik)->first();
-		if (!$user) {
+		} catch (\Exception $e) {
 			return response()->json([
-				'status' => 404,
-				'message' => 'User not found.',
-			], 404);
+				'status' => 500,
+				'message' => 'Failed to insert History Jabatan: ' . $e->getMessage(),
+			], 500);
 		}
-
-		$history = HistoryJabatan::create([
-			'user_id'         => $user->user_id,
-			'working_unit_id' => $request->working_unit_id,
-			'jabatan_id'      => $request->jabatan_id,
-			'dari'            => $request->dari,
-			'sampai'          => $request->sampai,
-		]);
-
-		return response()->json([
-			'status' => 201,
-			'message' => 'History Jabatan inserted successfully.',
-			'data'    => [
-				'user_jabatan_id' => $history->user_jabatan_id, // ⬅️ Ini munculkan
-				'user_id'         => $history->user_id,
-				'working_unit_id' => $history->working_unit_id,
-				'jabatan_id'      => $history->jabatan_id,
-				'dari'            => $history->dari,
-				'sampai'          => $history->sampai,
-			],
-		], 201);
-
-	} catch (\Exception $e) {
-		return response()->json([
-			'status' => 500,
-			'message' => 'Failed to insert History Jabatan: ' . $e->getMessage(),
-		], 500);
 	}
-}
 
 	
 }

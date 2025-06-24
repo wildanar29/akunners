@@ -79,87 +79,89 @@ class BidangController extends Controller
  * )  
  */   
     public function insertAsesor(Request $request)  
-    {  
-        // Validasi input  
-        $validation = Validator::make($request->all(), [  
-            'no_reg' => 'required|string|max:255',
-            'form_1_id' => 'required|exists:form_1,form_1_id', // Validasi form_1_id  
-        ]);  
+	{  
+		// Validasi hak akses: hanya role_id = 3 yang diizinkan
+		if (auth()->user()->role_id != 3) {
+			return response()->json([
+				'success' => false,
+				'message' => 'Anda tidak memiliki izin untuk melakukan aksi ini.',
+				'status_code' => 403,
+			], 403);
+		}
 
-        if ($validation->fails()) {  
-            return response()->json([  
-                'success' => false,  
-                'message' => 'Validation failed. Ensure no_reg and form_1_id are valid.',
-                'errors' => $validation->errors(),  
-                'status_code' => 400,  
-            ], 400);  
-        }  
+		// Validasi input
+		$validation = Validator::make($request->all(), [  
+			'no_reg' => 'required|string|max:255',
+			'form_1_id' => 'required|exists:form_1,form_1_id',
+		]);  
 
-        try {  
-            // Cari user berdasarkan no_reg di tabel data_asesor
-            $asesor = DataAsesorModel::where('no_reg', $request->no_reg)
-                        ->where('aktif', 1) // Hanya asesor yang aktif
-                        ->first();
+		if ($validation->fails()) {  
+			return response()->json([  
+				'success' => false,  
+				'message' => 'Validation failed. Ensure no_reg and form_1_id are valid.',
+				'errors' => $validation->errors(),  
+				'status_code' => 400,  
+			], 400);  
+		}  
 
-            // Cek apakah asesor ditemukan
-            if (!$asesor) {  
-                return response()->json([  
-                    'success' => false,  
-                    'message' => 'No active asesor found with the given no_reg.',
-                    'status_code' => 404,  
-                ], 404);  
-            }  
+		try {  
+			// Cari user berdasarkan no_reg di tabel data_asesor
+			$asesor = DataAsesorModel::where('no_reg', $request->no_reg)
+						->where('aktif', 1)
+						->first();
 
-            // Ambil nama asesor dari tabel users berdasarkan user_id
-            $user = DaftarUser::where('user_id', $asesor->user_id)->first();
+			if (!$asesor) {  
+				return response()->json([  
+					'success' => false,  
+					'message' => 'No active asesor found with the given no_reg.',
+					'status_code' => 404,  
+				], 404);  
+			}  
 
-            // Jika user tidak ditemukan
-            if (!$user) {  
-                return response()->json([  
-                    'success' => false,  
-                    'message' => 'User data not found for the given no_reg.',
-                    'status_code' => 404,  
-                ], 404);  
-            }  
+			$user = DaftarUser::where('user_id', $asesor->user_id)->first();
 
-            // Ambil asesor_name
-            $asesor_name = $user->nama;  
+			if (!$user) {  
+				return response()->json([  
+					'success' => false,  
+					'message' => 'User data not found for the given no_reg.',
+					'status_code' => 404,  
+				], 404);  
+			}  
 
-            // Mengatur asesor_date dengan waktu saat ini  
-            $asesor_date = Carbon::now();  
+			$asesor_name = $user->nama;  
+			$asesor_date = Carbon::now();  
 
-            // Cari entri berdasarkan form_1_id dan update  
-            $bidang = BidangModel::find($request->form_1_id);  
-            if (!$bidang) {  
-                return response()->json([  
-                    'success' => false,  
-                    'message' => 'Data not found for the given form_1_id.',
-                    'status_code' => 404,  
-                ], 404);  
-            }  
+			$bidang = BidangModel::find($request->form_1_id);  
+			if (!$bidang) {  
+				return response()->json([  
+					'success' => false,  
+					'message' => 'Data not found for the given form_1_id.',
+					'status_code' => 404,  
+				], 404);  
+			}  
 
-            // Update asesor_name dan asesor_date  
-            $bidang->asesor_name = $asesor_name;  
-            $bidang->asesor_date = $asesor_date;  
-            $bidang->no_reg = $request->no_reg;  
-            $bidang->save();  
+			$bidang->asesor_id = $user->user_id;
+			$bidang->asesor_name = $asesor_name;  
+			$bidang->asesor_date = $asesor_date;  
+			$bidang->no_reg = $request->no_reg;  
+			$bidang->save();  
 
-            return response()->json([  
-                'success' => true,  
-                'message' => 'Asesor data successfully updated.',
-                'data' => $bidang,  
-                'status_code' => 200,  
-            ], 200);  
+			return response()->json([  
+				'success' => true,  
+				'message' => 'Asesor data successfully updated.',
+				'data' => $bidang,  
+				'status_code' => 200,  
+			], 200);  
 
-        } catch (\Exception $e) {  
-            return response()->json([  
-                'success' => false,  
-                'message' => 'An error occurred while updating asesor data.',
-                'error' => $e->getMessage(),  
-                'status_code' => 500,  
-            ], 500);  
-        }  
-    }  
+		} catch (\Exception $e) {  
+			return response()->json([  
+				'success' => false,  
+				'message' => 'An error occurred while updating asesor data.',
+				'error' => $e->getMessage(),  
+				'status_code' => 500,  
+			], 500);  
+		}  
+	}
 
 
  /**  
@@ -294,51 +296,127 @@ class BidangController extends Controller
     }  
 
 
-    /**
- * @OA\Get(
+  /**
+ * @OA\Post(
  *     path="/get-form1",
- *     summary="Mengambil Semua form_1 data",
+ *     summary="Ambil semua data Form1 (opsional filter status)",
  *     tags={"Bidang"},
+ *     @OA\RequestBody(
+ *         required=false,
+ *         @OA\JsonContent(
+ *             @OA\Property(
+ *                 property="status",
+ *                 type="string",
+ *                 example="Waiting",
+ *                 description="Opsional filter berdasarkan status: Waiting, ApprovedBy_Asesor, ApprovedBy_Bidang, Cancel, Completed"
+ *             )
+ *         )
+ *     ),
  *     @OA\Response(
  *         response=200,
- *         description="Data form_1 berhasil diambil",
+ *         description="Data berhasil diambil",
  *         @OA\JsonContent(
- *             @OA\Property(property="message", type="string", example="Data form_1 berhasil diambil"),
+ *             @OA\Property(property="status", type="string", example="OK"),
+ *             @OA\Property(property="message", type="string", example="Data berhasil diambil."),
  *             @OA\Property(
  *                 property="data",
  *                 type="array",
  *                 @OA\Items(
  *                     type="object",
- *                     properties={
- *                         @OA\Property(property="form_1_id", type="integer", example=19),
- *                         @OA\Property(property="asesi_name", type="string", example="I Gede Daiva Andika"),
- *                         @OA\Property(property="asesi_date", type="date", example="2025-02-11"),
- *                         @OA\Property(property="asesor_name", type="string", example=null),
- *                         @OA\Property(property="created_at", type="string", format="date-time", example="2025-02-11T00:00:00.000000Z"),
- *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2025-02-11T00:00:00.000000Z")
- *                     }
+ *                     @OA\Property(property="form_1_id", type="integer", example=53),
+ *                     @OA\Property(property="user_id", type="integer", example=39),
+ *                     @OA\Property(property="asesi_name", type="string", example="Testing99"),
+ *                     @OA\Property(property="asesi_date", type="string", format="date-time"),
+ *                     @OA\Property(property="asesor_name", type="string", example="Dalia Novitasari"),
+ *                     @OA\Property(property="asesor_date", type="string", format="date-time"),
+ *                     @OA\Property(property="no_reg", type="string", example="ASK.123456"),
+ *                     @OA\Property(property="status", type="string", example="Cancel"),
+ *                     @OA\Property(property="ijazah_id", type="integer", example=38),
+ *                     @OA\Property(property="spk_id", type="integer", nullable=true, example=null),
+ *                     @OA\Property(property="sip_id", type="integer", example=17),
+ *                     @OA\Property(property="str_id", type="integer", example=14),
+ *                     @OA\Property(property="ujikom_id", type="integer", example=14),
+ *                     @OA\Property(property="sertifikat_id", type="integer", example=23),
+ *                     @OA\Property(property="created_at", type="string", format="date-time"),
+ *                     @OA\Property(property="updated_at", type="string", format="date-time"),
+ *                     @OA\Property(property="foto", type="string", format="url", example="http://yourdomain.com/storage/foto_nurse/foto.jpg")
  *                 )
  *             )
  *         )
  *     ),
  *     @OA\Response(
- *         response=404,
- *         description="Data form_1 tidak ditemukan",
+ *         response=400,
+ *         description="Status tidak valid",
  *         @OA\JsonContent(
- *             @OA\Property(property="message", type="string", example="Data form_1 tidak ditemukan")
+ *             @OA\Property(property="status", type="string", example="ERR"),
+ *             @OA\Property(property="message", type="string", example="Status tidak valid."),
+ *             @OA\Property(property="data", type="string", example=null)
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=500,
+ *         description="Kesalahan server",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="status", type="string", example="ERR"),
+ *             @OA\Property(property="message", type="string", example="Terjadi kesalahan: ..."),
+ *             @OA\Property(property="data", type="string", example=null)
  *         )
  *     )
  * )
  */
 
-    public function getAllForm1()
-    {
-        $form1Data = BidangModel::all();
 
-        return response()->json([
-            'data' => $form1Data, // Tetap mengirim array kosong jika tidak ada data
-        ], 200);
-    }
+   public function getAllForm1(Request $request)
+	{
+		try {
+			$status = $request->input('status');
+
+			$allowedStatus = [
+				'Waiting',
+				'ApprovedBy_Asesor',
+				'ApprovedBy_Bidang',
+				'Cancel',
+				'Completed'
+			];
+
+			if ($status && !in_array($status, $allowedStatus)) {
+				return response()->json([
+					'status' => 'ERR',
+					'message' => 'Status tidak valid.',
+					'data' => null
+				], 400);
+			}
+
+			$form1Data = $status
+				? BidangModel::where('status', $status)->get()
+				: BidangModel::all();
+
+			// Tambahkan foto dari DaftarUser berdasarkan user_id
+			$form1Data = $form1Data->map(function ($item) {
+				$user = DaftarUser::find($item->user_id);
+
+				$item->foto = $user && $user->foto
+					? url('storage/foto_nurse/' . basename($user->foto))
+					: null;
+
+				return $item;
+			});
+
+			return response()->json([
+				'status' => 'OK',
+				'message' => 'Data berhasil diambil.',
+				'data' => $form1Data,
+			], 200);
+
+		} catch (\Exception $e) {
+			return response()->json([
+				'status' => 'ERR',
+				'message' => 'Terjadi kesalahan: ' . $e->getMessage(),
+				'data' => null
+			], 500);
+		}
+	}
+
 
     /**
  * @OA\Get(
@@ -379,136 +457,136 @@ class BidangController extends Controller
  * )
  */
 
- public function getForm1ById($form_1_id)
- {
-     try {
-         $form1Data = BidangModel::find($form_1_id);
- 
-         $userData = null;
-         if ($form1Data && $form1Data->user_id) {
-             $userData = DaftarUser::where('user_id', $form1Data->user_id)->first();
-         }
- 
-         $form1Array = $form1Data ? $form1Data->toArray() : [];
-         $userArray = [];
- 
-         if ($userData) {
-             // Ambil data role
-             $role = DB::table('user_role')->where('role_id', $userData->role_id)->first();
-             $role_name = $role ? $role->role_name : null;
- 
-             // Ambil semua history jabatan
-             $historyJabatan = HistoryJabatan::where('user_id', $userData->user_id)->get();
-             $jabatanData = $historyJabatan->map(function ($history) {
-                 $working_unit = DB::table('working_unit')->where('working_unit_id', $history->working_unit_id)->first();
-                 $jabatan = DB::table('jabatan')->where('jabatan_id', $history->jabatan_id)->first();
- 
-                 return [
-                     'working_unit_id' => $history->working_unit_id,
-                     'working_unit_name' => $working_unit ? $working_unit->working_unit_name : null,
-                     'jabatan_id' => $history->jabatan_id,
-                     'nama_jabatan' => $jabatan ? $jabatan->nama_jabatan : null,
-                     'dari' => $history->dari,
-                     'sampai' => $history->sampai
-                 ];
-             });
- 
-             // Ambil dokumen berdasarkan ID di form1Data
-             $ijazahFile = DB::table('users_ijazah_file')->where('ijazah_id', $form1Data->ijazah_id)->first();
-             $ujikomFile = DB::table('users_ujikom_file')->where('ujikom_id', $form1Data->ujikom_id)->first();
-             $strFile = DB::table('users_str_file')->where('str_id', $form1Data->str_id)->first();
-             $sipFile = DB::table('users_sip_file')->where('sip_id', $form1Data->sip_id)->first();
-             $spkFile = DB::table('users_spk_file')->where('spk_id', $form1Data->spk_id)->first(); // jika diperlukan
- 
-             $ijazah = [
-                 'url' => $ijazahFile ? url('storage/' . $ijazahFile->path_file) : null
-             ];
- 
-             $ujikom = [
-                 'url' => $ujikomFile ? url('storage/' . $ujikomFile->path_file) : null,
-                 'nomor' => $ujikomFile->nomor_kompetensi ?? null,
-                 'masa_berlaku' => $ujikomFile->masa_berlaku_kompetensi ?? null
-             ];
- 
-             $str = [
-                 'url' => $strFile ? url('storage/' . $strFile->path_file) : null,
-                 'nomor' => $strFile->nomor_str ?? null,
-                 'masa_berlaku' => $strFile->masa_berlaku_str ?? null
-             ];
- 
-             $sip = [
-                 'url' => $sipFile ? url('storage/' . $sipFile->path_file) : null,
-                 'nomor' => $sipFile->nomor_sip ?? null,
-                 'masa_berlaku' => $sipFile->masa_berlaku_sip ?? null
-             ];
- 
-             $spk = [
-                 'url' => $spkFile ? url('storage/' . $spkFile->path_file) : null,
-                 'nomor' => $spkFile->nomor_spk ?? null,
-                 'masa_berlaku' => $spkFile->masa_berlaku_spk ?? null
-             ];
- 
-             // Pastikan userData memiliki sertifikat yang valid
-             $sertifikat = [];
-             if ($form1Data->user_id) {
-                 // Ambil data sertifikat berdasarkan user_id dari form1Data
-                 $sertifikatData = DB::table('users_sertifikat_pendukung')
-                                     ->where('user_id', $form1Data->user_id)
-                                     ->first();
- 
-                 if ($sertifikatData) {
-                     $sertifikat = [
-                         'url' => url('storage/' . $sertifikatData->path_file),
-                         'nomor' => $sertifikatData->nomor_sertifikat ?? null,
-                         'masa_berlaku' => $sertifikatData->masa_berlaku_sertifikat ?? null
-                     ];
-                 }
-             }
- 
-             // Susun user array
-             $userArray = [
-                 'nama' => $userData->nama,
-                 'email' => $userData->email,
-                 'no_telp' => $userData->no_telp,
-                 'tempat_lahir' => $userData->tempat_lahir,
-                 'tanggal_lahir' => $userData->tanggal_lahir,
-                 'kewarganegaraan' => $userData->kewarganegaraan,
-                 'jenis_kelamin' => $userData->jenis_kelamin,
-                 'pendidikan' => $userData->pendidikan,
-                 'tahun_lulus' => $userData->tahun_lulus,
-                 'provinsi' => $userData->provinsi,
-                 'kota' => $userData->kota,
-                 'alamat' => $userData->alamat,
-                 'kode_pos' => $userData->kode_pos,
-                 'role_id' => $userData->role_id,
-                 'role_name' => $role_name,
-                 'jabatan_history' => $jabatanData,
-                 'foto' => $userData->foto ? url('storage/foto_nurse/' . basename($userData->foto)) : null,
-                 'ijazah' => $ijazah,
-                 'ujikom' => $ujikom,
-                 'str' => $str,
-                 'sip' => $sip,
-                 'spk' => $spk,
-                 'sertifikat' => $sertifikat,
-             ];
-         }
- 
-         // Gabungkan data form1Data dan userData
-         $mergedData = array_merge($form1Array, $userArray);
- 
-         return response()->json([
-             'status' => 200,
-             'message' => 'Data berhasil ditemukan.',
-             'data' => $mergedData
-         ], 200);
-     } catch (\Exception $e) {
-         return response()->json([
-             'status' => 500,
-             'message' => 'Terjadi kesalahan pada server.',
-             'error' => $e->getMessage()
-         ], 500);
-     }
- }
+	 public function getForm1ById($form_1_id)
+	 {
+		 try {
+			 $form1Data = BidangModel::find($form_1_id);
+	 
+			 $userData = null;
+			 if ($form1Data && $form1Data->user_id) {
+				 $userData = DaftarUser::where('user_id', $form1Data->user_id)->first();
+			 }
+	 
+			 $form1Array = $form1Data ? $form1Data->toArray() : [];
+			 $userArray = [];
+	 
+			 if ($userData) {
+				 // Ambil data role
+				 $role = DB::table('user_role')->where('role_id', $userData->role_id)->first();
+				 $role_name = $role ? $role->role_name : null;
+	 
+				 // Ambil semua history jabatan
+				 $historyJabatan = HistoryJabatan::where('user_id', $userData->user_id)->get();
+				 $jabatanData = $historyJabatan->map(function ($history) {
+					 $working_unit = DB::table('working_unit')->where('working_unit_id', $history->working_unit_id)->first();
+					 $jabatan = DB::table('jabatan')->where('jabatan_id', $history->jabatan_id)->first();
+	 
+					 return [
+						 'working_unit_id' => $history->working_unit_id,
+						 'working_unit_name' => $working_unit ? $working_unit->working_unit_name : null,
+						 'jabatan_id' => $history->jabatan_id,
+						 'nama_jabatan' => $jabatan ? $jabatan->nama_jabatan : null,
+						 'dari' => $history->dari,
+						 'sampai' => $history->sampai
+					 ];
+				 });
+	 
+				 // Ambil dokumen berdasarkan ID di form1Data
+				 $ijazahFile = DB::table('users_ijazah_file')->where('ijazah_id', $form1Data->ijazah_id)->first();
+				 $ujikomFile = DB::table('users_ujikom_file')->where('ujikom_id', $form1Data->ujikom_id)->first();
+				 $strFile = DB::table('users_str_file')->where('str_id', $form1Data->str_id)->first();
+				 $sipFile = DB::table('users_sip_file')->where('sip_id', $form1Data->sip_id)->first();
+				 $spkFile = DB::table('users_spk_file')->where('spk_id', $form1Data->spk_id)->first(); // jika diperlukan
+	 
+				 $ijazah = [
+					 'url' => $ijazahFile ? url('storage/' . $ijazahFile->path_file) : null
+				 ];
+	 
+				 $ujikom = [
+					 'url' => $ujikomFile ? url('storage/' . $ujikomFile->path_file) : null,
+					 'nomor' => $ujikomFile->nomor_kompetensi ?? null,
+					 'masa_berlaku' => $ujikomFile->masa_berlaku_kompetensi ?? null
+				 ];
+	 
+				 $str = [
+					 'url' => $strFile ? url('storage/' . $strFile->path_file) : null,
+					 'nomor' => $strFile->nomor_str ?? null,
+					 'masa_berlaku' => $strFile->masa_berlaku_str ?? null
+				 ];
+	 
+				 $sip = [
+					 'url' => $sipFile ? url('storage/' . $sipFile->path_file) : null,
+					 'nomor' => $sipFile->nomor_sip ?? null,
+					 'masa_berlaku' => $sipFile->masa_berlaku_sip ?? null
+				 ];
+	 
+				 $spk = [
+					 'url' => $spkFile ? url('storage/' . $spkFile->path_file) : null,
+					 'nomor' => $spkFile->nomor_spk ?? null,
+					 'masa_berlaku' => $spkFile->masa_berlaku_spk ?? null
+				 ];
+	 
+				 // Pastikan userData memiliki sertifikat yang valid
+				 $sertifikat = [];
+				 if ($form1Data->user_id) {
+					 // Ambil data sertifikat berdasarkan user_id dari form1Data
+					 $sertifikatData = DB::table('users_sertifikat_pendukung')
+										 ->where('user_id', $form1Data->user_id)
+										 ->first();
+	 
+					 if ($sertifikatData) {
+						 $sertifikat = [
+							 'url' => url('storage/' . $sertifikatData->path_file),
+							 'nomor' => $sertifikatData->nomor_sertifikat ?? null,
+							 'masa_berlaku' => $sertifikatData->masa_berlaku_sertifikat ?? null
+						 ];
+					 }
+				 }
+	 
+				 // Susun user array
+				 $userArray = [
+					 'nama' => $userData->nama,
+					 'email' => $userData->email,
+					 'no_telp' => $userData->no_telp,
+					 'tempat_lahir' => $userData->tempat_lahir,
+					 'tanggal_lahir' => $userData->tanggal_lahir,
+					 'kewarganegaraan' => $userData->kewarganegaraan,
+					 'jenis_kelamin' => $userData->jenis_kelamin,
+					 'pendidikan' => $userData->pendidikan,
+					 'tahun_lulus' => $userData->tahun_lulus,
+					 'provinsi' => $userData->provinsi,
+					 'kota' => $userData->kota,
+					 'alamat' => $userData->alamat,
+					 'kode_pos' => $userData->kode_pos,
+					 'role_id' => $userData->role_id,
+					 'role_name' => $role_name,
+					 'jabatan_history' => $jabatanData,
+					 'foto' => $userData->foto ? url('storage/foto_nurse/' . basename($userData->foto)) : null,
+					 'ijazah' => $ijazah,
+					 'ujikom' => $ujikom,
+					 'str' => $str,
+					 'sip' => $sip,
+					 'spk' => $spk,
+					 'sertifikat' => $sertifikat,
+				 ];
+			 }
+	 
+			 // Gabungkan data form1Data dan userData
+			 $mergedData = array_merge($form1Array, $userArray);
+	 
+			 return response()->json([
+				 'status' => 200,
+				 'message' => 'Data berhasil ditemukan.',
+				 'data' => $mergedData
+			 ], 200);
+		 } catch (\Exception $e) {
+			 return response()->json([
+				 'status' => 500,
+				 'message' => 'Terjadi kesalahan pada server.',
+				 'error' => $e->getMessage()
+			 ], 500);
+		 }
+	 }
 
 
     /**
@@ -669,6 +747,66 @@ class BidangController extends Controller
         ]);
     }
 
+	public function updateUserRole(Request $request)
+	{
+		// Validasi input dari request
+		$validator = Validator::make($request->all(), [
+			'user_id' => 'required|exists:users,user_id',
+			'role_id' => 'required|integer',
+		]);
+
+		if ($validator->fails()) {
+			return response()->json([
+				'success' => false,
+				'message' => 'Validasi gagal.',
+				'errors' => $validator->errors(),
+				'status_code' => 400,
+			], 400);
+		}
+
+		try {
+			// Cari user
+			$user = DaftarUser::find($request->user_id);
+
+			// Jika ingin mengubah role menjadi Asesor (role_id = 2), validasi data_asesor
+			if ($request->role_id == 2) {
+				$asesorTerdaftar = DataAsesorModel::where('user_id', $user->user_id)
+									->where('aktif', 1)
+									->exists();
+
+				if (!$asesorTerdaftar) {
+					return response()->json([
+						'success' => false,
+						'message' => 'User belum terdaftar sebagai asesor aktif.',
+						'status_code' => 403,
+					], 403);
+				}
+			}
+
+			// Update role_id user
+			$user->role_id = $request->role_id;
+			$user->save();
+
+			return response()->json([
+				'success' => true,
+				'message' => 'Role user berhasil diubah.',
+				'data' => [
+					'user_id' => $user->user_id,
+					'nama' => $user->nama,
+					'role_id_baru' => $user->role_id,
+				],
+				'status_code' => 200,
+			], 200);
+
+		} catch (\Exception $e) {
+			return response()->json([
+				'success' => false,
+				'message' => 'Terjadi kesalahan saat mengubah role.',
+				'error' => $e->getMessage(),
+				'status_code' => 500,
+			], 500);
+		}
+	}
 
 
 
