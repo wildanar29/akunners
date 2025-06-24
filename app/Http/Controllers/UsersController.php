@@ -129,7 +129,7 @@ use Illuminate\Support\Facades\Log;
 			}
 
 			// Ambil role_name dari database berdasarkan role_id
-			$role = \DB::table('user_role')->where('role_id', $request->role_id)->first();
+			$role = UserRole::where('role_id', $request->role_id)->first();
 			$roleName = $role ? $role->role_name : null;
 
 
@@ -1123,7 +1123,7 @@ use Illuminate\Support\Facades\Log;
 			}
 	
 			// Ambil data tambahan (role, working_unit, working_area)
-			$role = DB::table('user_role')->where('role_id', $user->role_id)->first();
+			$role = UserRole::where('role_id', $user->role_id)->first();
 			$role_name = $role ? $role->role_name : null;
 	
 			 // Ambil semua history jabatan
@@ -1384,7 +1384,7 @@ use Illuminate\Support\Facades\Log;
 				], 400);
 			}
 
-			$role = DB::table('user_role')->where('role_id', $user->role_id)->first();
+			$role = UserRole::where('role_id', $user->role_id)->first();
 			$role_name = $role ? $role->role_name : null;
 
 			$working_unit = DB::table('working_unit')->where('working_unit_id', $user->working_unit_id)->first();

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
   
 use Illuminate\Http\Request;  
 use App\Models\BidangModel;  
+use App\Models\UserRole;
 use App\Models\DaftarUser; // Pastikan untuk mengimpor model User  
 use App\Models\IjazahModel; // Model untuk users_ijazah_file  
 use App\Models\TranskripModel; // Model untuk users_transkrip_file  
