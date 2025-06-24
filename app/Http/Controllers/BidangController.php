@@ -473,7 +473,7 @@ class BidangController extends Controller
 	 
 			 if ($userData) {
 				 // Ambil data role
-				 $role = DB::table('user_role')->where('role_id', $userData->role_id)->first();
+				 $role = UserRole::where('role_id', $userData->role_id)->first();
 				 $role_name = $role ? $role->role_name : null;
 	 
 				 // Ambil semua history jabatan
