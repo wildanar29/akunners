@@ -14,4 +14,9 @@ class Role extends Model
     protected $fillable = [
         'role_name', // Pastikan kolom ini ada
     ];
+
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'user_role', 'role_id', 'user_id');
+    }
 }

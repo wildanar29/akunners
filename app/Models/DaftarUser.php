@@ -60,6 +60,10 @@ class DaftarUser extends Model implements AuthenticatableContract, JWTSubject
         return $this->hasOne(DataAsesorModel::class, 'user_id', 'user_id');
     }
 
+    public function roles()
+    {
+        return $this->belongsToMany(Role::class, 'user_role', 'user_id', 'role_id');
+    }
   
     // Relasi dengan WorkingUnit  
     public function workingUnit()  
