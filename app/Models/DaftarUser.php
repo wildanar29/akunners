@@ -3,7 +3,7 @@
 namespace App\Models;  
   
 use Illuminate\Database\Eloquent\Model;  
-use App\Models\UserRole;  
+use App\Models\Role;  
 use App\Models\WorkingUnit;  
 use Tymon\JWTAuth\Contracts\JWTSubject; // Tambahkan ini    
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;    
@@ -49,10 +49,10 @@ class DaftarUser extends Model implements AuthenticatableContract, JWTSubject
         'password',  
     ];  
       
-    // Relasi dengan UserRole  
+    // Relasi dengan Role  
     public function role()  
     {  
-        return $this->belongsTo(UserRole::class, 'role_id');  
+        return $this->belongsTo(Role::class, 'role_id');  
     }  
 
     public function dataAsesor()

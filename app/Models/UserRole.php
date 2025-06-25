@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class UserRole extends Model
+class Role extends Model
 {
     protected $table = 'roles'; // Nama tabel
     protected $primaryKey = 'role_id'; // Pastikan ini adalah primary key yang benar

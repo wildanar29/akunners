@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Hash; // Pastikan ini ditambahkan di atas kontrol
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB; // Tambahkan DB untuk query manual
 use Illuminate\Support\Facades\Storage;
-use App\Models\UserRole;
+use App\Models\Role;
 use App\Models\UsersOtp;
 use App\Models\DataAsesorModel;
 use App\Models\PasswordReset;
@@ -129,7 +129,7 @@ use Illuminate\Support\Facades\Log;
 			}
 
 			// Ambil role_name dari database berdasarkan role_id
-			$role = UserRole::where('role_id', $request->role_id)->first();
+			$role = Role::where('role_id', $request->role_id)->first();
 			$roleName = $role ? $role->role_name : null;
 
 
@@ -682,7 +682,7 @@ use Illuminate\Support\Facades\Log;
 				}
 
                 // Ambil nama role berdasarkan role_id
-                $role = UserRole::where('role_id', $user->role_id)->first();
+                $role = Role::where('role_id', $user->role_id)->first();
 				// Pastikan role_name ada
                 $roleName = $role ? $role->role_name : null;
 
@@ -1123,7 +1123,7 @@ use Illuminate\Support\Facades\Log;
 			}
 	
 			// Ambil data tambahan (role, working_unit, working_area)
-			$role = UserRole::where('role_id', $user->role_id)->first();
+			$role = Role::where('role_id', $user->role_id)->first();
 			$role_name = $role ? $role->role_name : null;
 	
 			 // Ambil semua history jabatan
@@ -1384,7 +1384,7 @@ use Illuminate\Support\Facades\Log;
 				], 400);
 			}
 
-			$role = UserRole::where('role_id', $user->role_id)->first();
+			$role = Role::where('role_id', $user->role_id)->first();
 			$role_name = $role ? $role->role_name : null;
 
 			$working_unit = DB::table('working_unit')->where('working_unit_id', $user->working_unit_id)->first();
