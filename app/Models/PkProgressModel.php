@@ -15,6 +15,7 @@ class PkProgressModel extends Model
 
     protected $fillable = [
         'user_id',
+		'asesor_id',
         'form_1_id',
         'form_2_id',
         'form_3_id',

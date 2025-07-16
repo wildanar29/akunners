@@ -6,71 +6,6 @@
         "version": "1.0.0"
     },
     "paths": {
-        "/form1/asesor/{asesorName}": {
-            "get": {
-                "tags": [
-                    "Asesor"
-                ],
-                "summary": "Ambil data Form 1 berdasarkan nama asesor",
-                "operationId": "d932a5e9a554afaaeabc8c70fbc83658",
-                "parameters": [
-                    {
-                        "name": "asesorName",
-                        "in": "path",
-                        "description": "Nama asesor untuk filter data",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Data form_1 berhasil diambil",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "integer",
-                                            "example": 200
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Data form_1 berdasarkan asesor_name berhasil diambil."
-                                        },
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "integer",
-                                                        "example": 1
-                                                    },
-                                                    "asesor_name": {
-                                                        "type": "string",
-                                                        "example": "John Doe"
-                                                    },
-                                                    "field_name": {
-                                                        "type": "string",
-                                                        "example": "Isi Field Lainnya"
-                                                    }
-                                                },
-                                                "type": "object"
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Data tidak ditemukan"
-                    }
-                }
-            }
-        },
         "/form1/approve/{form_1_id}": {
             "put": {
                 "tags": [
@@ -240,37 +175,44 @@
             }
         },
         "/input-asesor": {
-            "put": {
+            "post": {
                 "tags": [
                     "Bidang"
                 ],
-                "summary": "Update nama Asesor yang akan menilai Asesi berdarkan nik, form_1_id dan Input no_reg",
-                "operationId": "592e6b65688764b8c82067f9cb10a9f8",
+                "summary": "Menentukan status asesor pada form 1",
+                "description": "Fungsi ini digunakan untuk meng-approve (Process) atau menolak (Cancel) asesor pada form_1.",
+                "operationId": "insertAsesor",
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "nik",
-                                    "form_1_id",
-                                    "no_reg"
+                                    "status"
                                 ],
                                 "properties": {
-                                    "nik": {
-                                        "description": "NIK of the user to be updated as Asesor",
-                                        "type": "integer",
-                                        "example": 102
-                                    },
-                                    "form_1_id": {
-                                        "description": "ID of the form_1 record to be updated",
-                                        "type": "integer",
-                                        "example": 12
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "Process",
+                                            "Cancel"
+                                        ],
+                                        "example": "Process"
                                     },
                                     "no_reg": {
-                                        "description": "Registration number of the Asesor",
+                                        "description": "Wajib jika status Process",
                                         "type": "string",
-                                        "example": "REG123456"
+                                        "example": "REG123"
+                                    },
+                                    "form_1_id": {
+                                        "description": "ID Form 1 yang akan di-update",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "keterangan": {
+                                        "description": "Wajib jika status Cancel",
+                                        "type": "string",
+                                        "example": "Dokumen tidak lengkap"
                                     }
                                 },
                                 "type": "object"
@@ -280,7 +222,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Data asesor berhasil diperbarui.",
+                        "description": "Berhasil memproses status asesor",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -291,7 +233,10 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Data asesor berhasil diperbarui."
+                                            "example": "Data asesor berhasil diupdate."
+                                        },
+                                        "data": {
+                                            "type": "object"
                                         },
                                         "status_code": {
                                             "type": "integer",
@@ -304,7 +249,7 @@
                         }
                     },
                     "400": {
-                        "description": "Validasi gagal.",
+                        "description": "Validasi gagal",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -315,7 +260,7 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Validasi gagal. Pastikan NIK dan form_1_id valid."
+                                            "example": "Validasi gagal. Pastikan input sesuai."
                                         },
                                         "errors": {
                                             "type": "object"
@@ -330,8 +275,8 @@
                             }
                         }
                     },
-                    "404": {
-                        "description": "User tidak ditemukan atau bukan Asesor.",
+                    "403": {
+                        "description": "Tidak punya akses",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -342,7 +287,31 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "User tidak ditemukan atau bukan Asesor."
+                                            "example": "Anda tidak memiliki izin untuk melakukan aksi ini."
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 403
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Data tidak ditemukan",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Data tidak ditemukan untuk form_1_id."
                                         },
                                         "status_code": {
                                             "type": "integer",
@@ -355,7 +324,7 @@
                         }
                     },
                     "500": {
-                        "description": "Terjadi kesalahan saat memperbarui data asesor.",
+                        "description": "Kesalahan server",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -366,10 +335,11 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Terjadi kesalahan saat memperbarui data asesor."
+                                            "example": "Terjadi kesalahan saat memproses data."
                                         },
                                         "error": {
-                                            "type": "string"
+                                            "type": "string",
+                                            "example": "Exception message"
                                         },
                                         "status_code": {
                                             "type": "integer",
@@ -381,7 +351,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/input-status/{form_1_id}": {
@@ -6084,7 +6059,7 @@
                 ],
                 "summary": "Memperbarui password pengguna saat melakukan Reset Password",
                 "description": "API ini digunakan untuk memperbarui password pengguna setelah verifikasi.",
-                "operationId": "451d845c926760d8e9b75c8377b29342",
+                "operationId": "4a35525b170b6b19a1d80001789994c6",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -6230,191 +6205,6 @@
                                             "items": {}
                                         },
                                         "data": {
-                                            "type": "array",
-                                            "items": {}
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/login-akun": {
-            "get": {
-                "tags": [
-                    "Akun"
-                ],
-                "summary": "Login untuk akun nurse",
-                "description": "API ini digunakan untuk otentikasi pengguna berdasarkan NIK dan password.",
-                "operationId": "7193c79176fdf22c75467550bbd2ba05",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "nik",
-                                    "password"
-                                ],
-                                "properties": {
-                                    "nik": {
-                                        "description": "Nomor Induk Karyawan (NIK) pengguna.",
-                                        "type": "string",
-                                        "example": "240076"
-                                    },
-                                    "password": {
-                                        "description": "Password pengguna untuk autentikasi.",
-                                        "type": "string",
-                                        "example": "123456"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Login successful.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "integer",
-                                            "example": 200
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Login successful."
-                                        },
-                                        "data": {
-                                            "properties": {
-                                                "name": {
-                                                    "type": "string",
-                                                    "example": "John Doe"
-                                                },
-                                                "user_id": {
-                                                    "type": "integer",
-                                                    "example": "10"
-                                                },
-                                                "role_id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "role_name": {
-                                                    "type": "string",
-                                                    "example": "Nurse"
-                                                },
-                                                "working_unit_id": {
-                                                    "type": "integer",
-                                                    "example": 101
-                                                },
-                                                "working_unit_name": {
-                                                    "type": "string",
-                                                    "example": "Pediatrics Unit"
-                                                },
-                                                "working_area_id": {
-                                                    "type": "integer",
-                                                    "example": 201
-                                                },
-                                                "working_area_name": {
-                                                    "type": "string",
-                                                    "example": "Hospital A"
-                                                },
-                                                "jabatan_id": {
-                                                    "type": "integer",
-                                                    "example": "2"
-                                                },
-                                                "nama_jabatan": {
-                                                    "type": "string",
-                                                    "example": "PJ SHIFT"
-                                                },
-                                                "token": {
-                                                    "type": "string",
-                                                    "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgzL2xvZ2luLWFrdW4iLCJpYXQiOjE3Mzc1OTYwNzcsImV4cCI6MTczNzU5OTY3NywibmJmIjoxNzM3NTk2MDc3LCJqdGkiOiI0QjBMQmpGTUxhS0FVT3BvIiwic3ViIjoiMTAiLCJwcnYiOiIzODliYmRmNjI3ZjYwNDc5ODdhNDUzMmExNzdmYTY1MWRhMDQ1YTMxIn0.AsdE8YkcNEzV-sOn5hpwCG0simXmwTj3nkmWT2Y7XBA"
-                                                }
-                                            },
-                                            "type": "object"
-                                        },
-                                        "detailed_message": {
-                                            "type": "string",
-                                            "example": "Login successful"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Data validation failed.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "integer",
-                                            "example": 400
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Validation failed. Please check your input."
-                                        },
-                                        "errors": {
-                                            "type": "object",
-                                            "additionalProperties": {
-                                                "type": "string"
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized access.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "integer",
-                                            "example": 401
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Unauthorized. Incorrect NIK or password."
-                                        },
-                                        "errors": {
-                                            "type": "array",
-                                            "items": {}
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "integer",
-                                            "example": 500
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "An error occurred on the server."
-                                        },
-                                        "errors": {
                                             "type": "array",
                                             "items": {}
                                         }
@@ -7629,21 +7419,26 @@
                 "tags": [
                     "FORM 1"
                 ],
-                "summary": "Ambil daftar Form1 berdasarkan user_id asesor",
+                "summary": "Ambil data form_1 berdasarkan user asesor",
                 "operationId": "e42eb24659d1df78512b198fc5cafe19",
                 "requestBody": {
                     "required": true,
                     "content": {
-                        "application/x-www-form-urlencoded": {
+                        "application/json": {
                             "schema": {
                                 "required": [
                                     "user_id"
                                 ],
                                 "properties": {
                                     "user_id": {
-                                        "description": "ID dari user asesor",
-                                        "type": "integer",
-                                        "example": 123
+                                        "description": "ID user asesor",
+                                        "type": "string",
+                                        "example": "123"
+                                    },
+                                    "status": {
+                                        "description": "(Opsional) Status form",
+                                        "type": "string",
+                                        "example": "approved"
                                     }
                                 },
                                 "type": "object"
@@ -7653,7 +7448,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Data form_1 berhasil diambil",
+                        "description": "Berhasil mengambil data form_1",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -7668,85 +7463,18 @@
                                         },
                                         "no_reg": {
                                             "type": "string",
-                                            "example": "REG-2024-001"
+                                            "example": "ASE-001"
                                         },
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "properties": {
-                                                    "form_1_id": {
-                                                        "type": "integer",
-                                                        "example": 1
-                                                    },
-                                                    "user_id": {
-                                                        "type": "integer",
-                                                        "example": 123
-                                                    },
-                                                    "asesi_name": {
-                                                        "type": "string",
-                                                        "example": "John Doe"
-                                                    },
-                                                    "asesi_date": {
-                                                        "type": "string",
-                                                        "format": "date",
-                                                        "example": "2024-05-01"
-                                                    },
-                                                    "asesor_name": {
-                                                        "type": "string",
-                                                        "example": "Jane Asesor"
-                                                    },
-                                                    "asesor_date": {
-                                                        "type": "string",
-                                                        "format": "date",
-                                                        "example": "2024-05-02"
-                                                    },
-                                                    "no_reg": {
-                                                        "type": "string",
-                                                        "example": "REG-2024-001"
-                                                    },
-                                                    "status": {
-                                                        "type": "string",
-                                                        "enum": [
-                                                            "Waiting",
-                                                            "Approved",
-                                                            "Cancel"
-                                                        ],
-                                                        "example": "Approved"
-                                                    },
-                                                    "ijazah_id": {
-                                                        "type": "integer",
-                                                        "nullable": true
-                                                    },
-                                                    "spk_id": {
-                                                        "type": "integer",
-                                                        "nullable": true
-                                                    },
-                                                    "sip_id": {
-                                                        "type": "integer",
-                                                        "nullable": true
-                                                    },
-                                                    "str_id": {
-                                                        "type": "integer",
-                                                        "nullable": true
-                                                    },
-                                                    "ujikom_id": {
-                                                        "type": "integer",
-                                                        "nullable": true
-                                                    },
-                                                    "sertifikat_id": {
-                                                        "type": "integer",
-                                                        "nullable": true
-                                                    },
-                                                    "created_at": {
-                                                        "type": "string",
-                                                        "format": "date-time"
-                                                    },
-                                                    "updated_at": {
-                                                        "type": "string",
-                                                        "format": "date-time"
-                                                    }
-                                                },
-                                                "type": "object"
+                                                "type": "object",
+                                                "example": {
+                                                    "id": 1,
+                                                    "no_reg": "ASE-001",
+                                                    "status": "approved",
+                                                    "created_at": "2025-06-01T00:00:00"
+                                                }
                                             }
                                         }
                                     },
@@ -7756,7 +7484,7 @@
                         }
                     },
                     "400": {
-                        "description": "Parameter user_id tidak diisi",
+                        "description": "Parameter user_id wajib diisi",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -7776,7 +7504,7 @@
                         }
                     },
                     "403": {
-                        "description": "User bukan asesor",
+                        "description": "User ini bukan asesor",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -8164,6 +7892,144 @@
                 ]
             }
         },
+        "/notification": {
+            "post": {
+                "tags": [
+                    "Notifikasi"
+                ],
+                "summary": "Mengambil daftar notifikasi untuk user yang login",
+                "description": "Endpoint ini mengembalikan daftar notifikasi berdasarkan user yang sedang login. Opsional bisa memfilter notifikasi berdasarkan status `is_read`.",
+                "operationId": "getNotifications",
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "is_read": {
+                                        "description": "Filter berdasarkan status baca (true atau false)",
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Berhasil mengambil daftar notifikasi",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "OK"
+                                        },
+                                        "errorCode": {
+                                            "type": "string",
+                                            "example": ""
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Notifikasi berhasil diambil."
+                                        },
+                                        "errorMessages": {
+                                            "type": "string",
+                                            "example": ""
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "notifications": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "user_id": {
+                                                                "type": "integer",
+                                                                "example": 123
+                                                            },
+                                                            "title": {
+                                                                "type": "string",
+                                                                "example": "Judul Notifikasi"
+                                                            },
+                                                            "description": {
+                                                                "type": "string",
+                                                                "example": "Isi notifikasi"
+                                                            },
+                                                            "is_read": {
+                                                                "type": "boolean",
+                                                                "example": false
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2025-07-15T07:30:00Z"
+                                                            },
+                                                            "updated_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2025-07-15T07:45:00Z"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized, token tidak valid atau belum login",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "ERROR"
+                                        },
+                                        "errorCode": {
+                                            "type": "string",
+                                            "example": "401"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized. Anda harus login terlebih dahulu."
+                                        },
+                                        "errorMessages": {
+                                            "type": "string",
+                                            "example": "Token tidak valid atau belum login."
+                                        },
+                                        "data": {
+                                            "type": "string",
+                                            "example": null,
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/get-no-expired-sak/{nik}": {
             "get": {
                 "tags": [
@@ -8385,6 +8251,135 @@
                                         "error": {
                                             "type": "string",
                                             "example": "SQLSTATE[HY000] ..."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/progress/asesi/{asesorId}": {
+            "get": {
+                "tags": [
+                    "PROGRESS"
+                ],
+                "summary": "Ambil daftar progres form dari semua asesi berdasarkan asesor",
+                "description": "Mengembalikan daftar user (asesi) dan status form mereka berdasarkan ID asesor.",
+                "operationId": "getAsesiProgressByAsesor",
+                "parameters": [
+                    {
+                        "name": "asesorId",
+                        "in": "path",
+                        "description": "ID user asesor",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 53
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Data progres berhasil diambil",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Berhasil mengambil data progres semua asesi untuk asesor ini."
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "user_id": {
+                                                        "type": "integer",
+                                                        "example": 101
+                                                    },
+                                                    "user_name": {
+                                                        "type": "string",
+                                                        "example": "Ahmad Fulan"
+                                                    },
+                                                    "form_statuses": {
+                                                        "properties": {
+                                                            "form_1": {
+                                                                "type": "string",
+                                                                "example": "Selesai"
+                                                            },
+                                                            "form_2": {
+                                                                "type": "string",
+                                                                "example": "Terkunci"
+                                                            },
+                                                            "form_3": {
+                                                                "type": "string",
+                                                                "example": "Terkunci"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Data tidak ditemukan",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Tidak ditemukan data progres untuk asesor ini."
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {}
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Kesalahan server",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Terjadi kesalahan saat mengambil data progres."
+                                        },
+                                        "data": {
+                                            "type": "string",
+                                            "example": null
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "SQLSTATE[42S22]: Column not found..."
                                         }
                                     },
                                     "type": "object"
@@ -8705,6 +8700,148 @@
                         }
                     }
                 }
+            }
+        },
+        "/notification/read": {
+            "post": {
+                "tags": [
+                    "Notifikasi"
+                ],
+                "summary": "Menandai notifikasi sebagai telah dibaca",
+                "description": "Menandai notifikasi sebagai sudah dibaca (is_read = true) berdasarkan notification_id.",
+                "operationId": "markAsRead",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "notification_id"
+                                ],
+                                "properties": {
+                                    "notification_id": {
+                                        "description": "ID notifikasi yang akan ditandai sebagai dibaca",
+                                        "type": "integer",
+                                        "example": 5
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Notifikasi berhasil ditandai sebagai dibaca",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "OK"
+                                        },
+                                        "errorCode": {
+                                            "type": "string",
+                                            "example": ""
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Notification marked as read successfully."
+                                        },
+                                        "errorMessages": {
+                                            "type": "string",
+                                            "example": ""
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "notification_id": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "is_read": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Request tidak valid, notification_id kosong",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "ERROR"
+                                        },
+                                        "errorCode": {
+                                            "type": "string",
+                                            "example": "400"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Notification ID is required"
+                                        },
+                                        "errorMessages": {
+                                            "type": "string",
+                                            "example": "The field notification_id is missing."
+                                        },
+                                        "data": {
+                                            "type": "string",
+                                            "example": null
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Notifikasi tidak ditemukan",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "ERROR"
+                                        },
+                                        "errorCode": {
+                                            "type": "string",
+                                            "example": "404"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Notification not found"
+                                        },
+                                        "errorMessages": {
+                                            "type": "string",
+                                            "example": "The notification with the given ID does not exist."
+                                        },
+                                        "data": {
+                                            "type": "string",
+                                            "example": null
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/form5/langkah-kegiatan": {
@@ -9598,6 +9735,122 @@
                     }
                 ]
             }
+        },
+        "/get-form1-byasesi": {
+            "post": {
+                "tags": [
+                    "Asesi"
+                ],
+                "summary": "Ambil daftar form_1 berdasarkan user_id asesi",
+                "description": "Endpoint ini digunakan oleh asesi untuk mengambil daftar form_1 miliknya berdasarkan user_id dan status tertentu (default: Waiting).",
+                "operationId": "getForm1ByAsesi",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "user_id"
+                                ],
+                                "properties": {
+                                    "user_id": {
+                                        "description": "ID user asesi",
+                                        "type": "integer",
+                                        "example": 101
+                                    },
+                                    "status": {
+                                        "description": "Filter berdasarkan status (optional, default: Waiting)",
+                                        "type": "string",
+                                        "example": "Waiting"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Data form_1 berhasil ditemukan",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "string",
+                                            "example": "OK"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Data form_1 berhasil diambil berdasarkan user_id asesi."
+                                        },
+                                        "user_id": {
+                                            "type": "integer",
+                                            "example": 101
+                                        },
+                                        "status_filter": {
+                                            "type": "string",
+                                            "example": "Waiting"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Parameter user_id tidak dikirim",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "string",
+                                            "example": "ERR"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Parameter user_id wajib diisi."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User tidak ditemukan",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "string",
+                                            "example": "ERR"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "User tidak ditemukan atau bukan asesi."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
         }
     },
     "tags": [
@@ -9690,8 +9943,16 @@
             "description": "FORM 5"
         },
         {
+            "name": "Notifikasi",
+            "description": "Notifikasi"
+        },
+        {
             "name": "PROGRESS",
             "description": "PROGRESS"
+        },
+        {
+            "name": "Asesi",
+            "description": "Asesi"
         }
     ]
 }

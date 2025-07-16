@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;  
   
 use Illuminate\Http\Request;  
-use App\Models\BidangModel;  
+use App\Models\BidangModel;
+use App\Models\Notification;
+use Illuminate\Support\Facades\Log;  
 use App\Models\HistoryJabatan;
 use App\Models\DaftarUser; // Pastikan untuk mengimpor model User  
 use App\Models\IjazahModel; // Model untuk users_ijazah_file  
@@ -18,47 +20,16 @@ use App\Models\User; // Model untuk user
 use Illuminate\Support\Facades\Validator;  
 use Illuminate\Support\Facades\DB; // Tambahkan DB untuk query manual
 use Carbon\Carbon; // Pastikan untuk mengimpor Carbon  
-
+use App\Service\OneSignalService;
   
 class AsesorController extends Controller  
 {  
-/**
- * @OA\Get(
- *     path="/form1/asesor/{asesorName}",
- *     summary="Ambil data Form 1 berdasarkan nama asesor",
- *     tags={"Asesor"},
- *     @OA\Parameter(
- *         name="asesorName",
- *         in="path",
- *         description="Nama asesor untuk filter data",
- *         required=true,
- *         @OA\Schema(type="string")
- *     ),
- *     @OA\Response(
- *         response=200,
- *         description="Data form_1 berhasil diambil",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="status", type="integer", example=200),
- *             @OA\Property(property="message", type="string", example="Data form_1 berdasarkan asesor_name berhasil diambil."),
- *             @OA\Property(
- *                 property="data",
- *                 type="array",
- *                 @OA\Items(
- *                     type="object",
- *                     @OA\Property(property="id", type="integer", example=1),
- *                     @OA\Property(property="asesor_name", type="string", example="John Doe"),
- *                     @OA\Property(property="field_name", type="string", example="Isi Field Lainnya")
- *                 )
- *             )
- *         )
- *     ),
- *     @OA\Response(
- *         response=404,
- *         description="Data tidak ditemukan"
- *     )
- * )
- */
+	protected $oneSignalService;
+
+	public function __construct(OneSignalService $oneSignalService)
+	{
+		$this->oneSignalService = $oneSignalService;
+	}
 
 	public function getForm1ByAsesorName($asesorName)
 	{
@@ -109,31 +80,134 @@ class AsesorController extends Controller
 
 	public function approveForm1ById($form_1_id)
 	{
-		// Cari data form_1 berdasarkan ID dan status Waiting
-		$form = DB::table('form_1')
-			->where('form_1_id', $form_1_id)
-			->where('status', 'Waiting')
-			->first();
+		$form_1_id = (int) $form_1_id;
+		$user = auth()->user();
 
-		// Jika data tidak ditemukan atau status bukan Waiting
-		if (!$form) {
-			return response()->json([
-				'status' => 404,
-				'message' => 'Data form_1 tidak ditemukan atau status bukan Waiting.'
-			]);
-		}
-
-		// Lakukan update status menjadi Approved
-		DB::table('form_1')
-			->where('form_1_id', $form_1_id)
-			->update(['status' => 'Approved']);
-
-		return response()->json([
-			'status' => 200,
-			'message' => 'Status form_1 berhasil diperbarui menjadi Approved.'
+		Log::info('Memulai proses approveForm1ById', [
+			'form_1_id' => $form_1_id,
+			'user_id' => $user->user_id ?? null,
 		]);
+
+		try {
+			// Ambil data form untuk logging perbandingan
+			$formDebug = DB::table('form_1')->where('form_1_id', $form_1_id)->first();
+			if ($formDebug) {
+				Log::debug('Data form_1 ditemukan', [
+					'form_1_id' => $form_1_id,
+					'status' => $formDebug->status ?? null,
+					'asesor_id' => $formDebug->asesor_id ?? null,
+					'user_id_pengaju' => $formDebug->user_id ?? null,
+					'current_user_id' => $user->user_id ?? null,
+				]);
+			}
+
+			// Validasi: hanya asesor yang ditugaskan dan status 'Process'
+			$form = DB::table('form_1')
+				->where('form_1_id', $form_1_id)
+				->where('status', 'Process')
+				->where('asesor_id', $user->user_id)
+				->first();
+
+			if (!$form) {
+				Log::warning('Form tidak ditemukan atau bukan asesor yang sesuai', [
+					'form_1_id' => $form_1_id,
+					'user_id' => $user->user_id,
+				]);
+
+				return response()->json([
+					'status' => 403,
+					'message' => 'Data tidak ditemukan atau Anda bukan asesor yang ditugaskan.'
+				], 403);
+			}
+
+			// Update status jadi Approved
+			DB::table('form_1')
+				->where('form_1_id', $form_1_id)
+				->update([
+					'status' => 'Process',
+					'updated_at' => Carbon::now(),
+				]);
+
+			Log::info('Form berhasil disetujui', [
+				'form_1_id' => $form_1_id,
+				'user_id' => $user->user_id,
+			]);
+
+			// Kirim notifikasi ke user pengaju (dipisahkan)
+			$this->kirimNotifikasiApprovalKePengaju($formDebug);
+
+			return response()->json([
+				'status' => 200,
+				'message' => 'Status berhasil diperbarui menjadi Approved dan notifikasi dikirim.'
+			]);
+
+		} catch (\Exception $e) {
+			Log::error('Terjadi error saat approveForm1ById', [
+				'form_1_id' => $form_1_id,
+				'user_id' => $user->user_id ?? null,
+				'error_message' => $e->getMessage(),
+			]);
+
+			return response()->json([
+				'status' => 500,
+				'message' => 'Terjadi kesalahan saat memproses data.',
+				'error' => $e->getMessage(),
+			], 500);
+		}
 	}
 
+	private function kirimNotifikasiApprovalKePengaju($formData)
+	{
+		if (!$formData || empty($formData->user_id)) {
+			Log::warning('Gagal kirim notifikasi: user_id pengaju kosong');
+			return;
+		}
+
+		$pengaju = DaftarUser::where('user_id', $formData->user_id)->first();
+
+		if (!$pengaju) {
+			Log::warning('User pengaju tidak ditemukan', ['user_id' => $formData->user_id]);
+			return;
+		}
+
+		if (empty($pengaju->device_token)) {
+			Log::warning("User pengaju tidak memiliki device_token", ['user_id' => $pengaju->user_id]);
+			return;
+		}
+
+		try {
+			$title = 'Pengajuan Disetujui';
+			$message = "Pengajuan Asesmen Anda telah disetujui oleh asesor. Lakukan pengisian Form 2 segera.";
+
+			// Kirim notifikasi ke OneSignal
+			$this->oneSignalService->sendNotification(
+				[$pengaju->device_token],
+				$title,
+				$message
+			);
+
+			Log::info('Notifikasi berhasil dikirim ke pengaju', [
+				'user_id' => $pengaju->user_id,
+				'nama' => $pengaju->nama ?? null,
+			]);
+
+			// Simpan ke tabel notification
+			Notification::create([
+				'user_id' => $pengaju->user_id,
+				'title' => $title,
+				'description' => $message,
+				'is_read' => 0,
+				'created_at' => Carbon::now(),
+				'updated_at' => Carbon::now(),
+			]);
+
+		} catch (\Exception $e) {
+			Log::error('Gagal kirim notifikasi ke pengaju', [
+				'user_id' => $pengaju->user_id,
+				'error' => $e->getMessage(),
+			]);
+		}
+	}
 
 	/**
 	 * @OA\Post(
@@ -184,15 +258,16 @@ class AsesorController extends Controller
 	 
 	public function updateJawabanForm2ByNoId(Request $request)
 	{
-		// Autentikasi user (misal pakai JWTAuth, bisa disesuaikan dengan sistem Anda)
-		$user = auth()->user(); // Jika pakai Laravel Sanctum atau default guard
-		// $user = JWTAuth::parseToken()->authenticate(); // Jika pakai JWT
+		// Autentikasi user
+		$user = auth()->user(); // atau JWTAuth::parseToken()->authenticate();
 
-		// Cek role_id
-		if (!$user || $user->role_id != 2) {
+		// Cek apakah user memiliki role dengan role_id = 2 (misalnya: Asesor)
+		$isAsesor = $user && $user->roles->contains('role_id', 2);
+
+		if (!$isAsesor) {
 			return response()->json([
 				'status' => 403,
-				'message' => 'Akses ditolak. Hanya pengguna dengan role_id 2 yang dapat mengupdate data.'
+				'message' => 'Akses ditolak. Hanya pengguna dengan role Asesor yang dapat mengupdate data.'
 			], 403);
 		}
 

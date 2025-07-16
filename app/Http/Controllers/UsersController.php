@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB; // Tambahkan DB untuk query manual
 use Illuminate\Support\Facades\Storage;
 use App\Models\Role;
+use App\Models\UserRole;
 use App\Models\UsersOtp;
 use App\Models\DataAsesorModel;
 use App\Models\PasswordReset;
@@ -99,27 +100,25 @@ use Illuminate\Support\Facades\Log;
      */
 	 
 	public function RegisterAkunNurse(Request $request)
-    {
-        try {
-           // Validasi umum
+	{
+		try {
+			// Validasi umum
 			$rules = [
 				'nik' => 'required|unique:users',
 				'nama' => 'required|string|max:255',
 				'email' => 'required|email|unique:users',
-				'role_id' => 'required|integer|exists:user_role,role_id',
+				'role_id' => 'required|integer|exists:roles,role_id',
 				'no_telp' => 'required|max:13|unique:users',
 			];
 
-			// Jika role_id = 2 (asesor), tambahkan validasi wajib untuk no_reg dan tanggal_berlaku
+			// Jika role_id = 2 (asesor), tambahkan validasi wajib
 			if ($request->role_id == 2) {
 				$rules['no_reg'] = 'required|string';
 				$rules['tanggal_berlaku'] = 'required|date';
 			}
-	
-			$validator = Validator::make($request->all(), $rules);
-	
 
-             // Jika validasi gagal
+			$validator = Validator::make($request->all(), $rules);
+
 			if ($validator->fails()) {
 				return response()->json([
 					'status' => 400,
@@ -128,13 +127,38 @@ use Illuminate\Support\Facades\Log;
 				], 400);
 			}
 
-			// Ambil role_name dari database berdasarkan role_id
+			// Ambil nama role dari tabel roles
 			$role = Role::where('role_id', $request->role_id)->first();
 			$roleName = $role ? $role->role_name : null;
 
+			// Simpan data user ke dalam database
+			$user = DaftarUser::create([
+				'nik' => $request->nik,
+				'nama' => $request->nama,
+				'email' => $request->email,
+				'no_telp' => $request->no_telp,
+				//'password' => bcrypt('password_default'), // Ganti sesuai kebutuhan
+			]);
 
+			// Simpan role ke tabel user_role
+			UserRole::create([
+				'user_id' => $user->user_id,
+				'role_id' => $request->role_id,
+			]);
+
+			// Jika asesor, simpan ke tabel data_asesor
+			if ($request->role_id == 2) {
+				DataAsesorModel::create([
+					'user_id' => $user->user_id,
+					'no_reg' => $request->no_reg,
+					'tanggal_berlaku' => $request->tanggal_berlaku,
+					'aktif' => 1,
+				]);
+			}
+
+			// Simpan data ke Redis (opsional)
 			$redisKey = 'user:' . $request->nik;
-			$redisEmailKey = 'user_by_email:' . $request->email; // Simpan referensi NIK berdasarkan email
+			$redisEmailKey = 'user_by_email:' . $request->email;
 
 			$data = [
 				'nik' => $request->nik,
@@ -142,81 +166,32 @@ use Illuminate\Support\Facades\Log;
 				'email' => $request->email,
 				'no_telp' => $request->no_telp,
 				'role_id' => $request->role_id,
-				'role_name' => $roleName
+				'role_name' => $roleName,
 			];
 
-			 // Jika role_id = 2 (asesor), tambahkan no_reg dan tanggal_berlaku
-			 if ($request->role_id == 2) {
+			if ($request->role_id == 2) {
 				$data['no_reg'] = $request->no_reg;
 				$data['tanggal_berlaku'] = $request->tanggal_berlaku;
 			}
 
 			Redis::set($redisKey, json_encode($data));
-			Redis::set($redisEmailKey, $request->nik); // Simpan referensi nik berdasarkan no_telp
+			Redis::set($redisEmailKey, $request->nik);
 
-
-             // Respons berbeda berdasarkan role_id
-			if ($request->role_id == 2) {
-				return response()->json([
-					'status' => 200,
-					'message' => 'Account registered successfully and stored in Redis.',
-					'data' => [
-						'nik' => $request->nik,
-						'name' => $request->nama,
-						'email' => $request->email,
-						'phone_number' => $request->no_telp,
-						'role_id' => $request->role_id,
-						'role_name' => $roleName,
-						'no_reg' => $request->no_reg,
-						'tanggal_berlaku' => $request->tanggal_berlaku,
-					],
-				], 200);
-			} else {
-				return response()->json([
-					'status' => 200,
-					'message' => 'Account registered successfully and stored in Redis.',
-					'data' => [
-						'nik' => $request->nik,
-						'name' => $request->nama,
-						'email' => $request->email,
-						'phone_number' => $request->no_telp,
-						'role_id' => $request->role_id,
-						'role_name' => $roleName,
-					],
-				], 200);
-			}
-
-
-		} catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-			// Kesalahan jika resource tidak ditemukan
 			return response()->json([
-				'status' => 404,
-				'message' => 'Resource not found.',
-			], 404);
+				'status' => 200,
+				'message' => 'Akun berhasil didaftarkan dan disimpan di Redis.',
+				'data' => $data,
+			], 200);
 
 		} catch (\Exception $e) {
 			return response()->json([
 				'status' => 500,
-				'message' => 'Internal Server Error',
+				'message' => 'Terjadi kesalahan saat mendaftarkan akun.',
 				'error' => $e->getMessage(),
 			], 500);
 		}
-
-
-		// Log atau cek hasil
-		if ($result) {
-			return response()->json([
-				'status' => 201,
-				'message' => 'Data berhasil disimpan di Redis.',
-				'data' => $request->all(),
-			]);
-		} else {
-			return response()->json([
-				'status' => 500,
-				'message' => 'Gagal menyimpan data ke Redis.',
-			]);
-		}
 	}
+
  
  
  /**
@@ -276,11 +251,10 @@ use Illuminate\Support\Facades\Log;
 		// Validasi input
 		$validator = Validator::make($request->all(), [
 			'email' => 'required|email',
-			'password' => 'required|min:6',  // Minimal panjang password 6 karakter
-			'confirm_password' => 'required|same:password',  // Password dan konfirmasi harus sama
+			'password' => 'required|min:6',
+			'confirm_password' => 'required|same:password',
 		]);
-	
-		// Jika validasi gagal
+
 		if ($validator->fails()) {
 			return response()->json([
 				'status' => 'ERROR',
@@ -290,16 +264,10 @@ use Illuminate\Support\Facades\Log;
 				'data' => []
 			], 400);
 		}
-	
-		// Ambil nomor telepon dari request
-		$noTelp = $request->input('email');
-		// Ambil NIK berdasarkan nomor telepon dari Redis
-		$nik = Redis::get('user_by_email:' . $noTelp);
-	
-		// Debugging: Log NIK
-		\Log::info("Redis found NIK for phone {$noTelp}: " . $nik);
-	
-		// Jika NIK tidak ditemukan
+
+		$email = $request->input('email');
+		$nik = Redis::get('user_by_email:' . $email);
+
 		if (!$nik) {
 			return response()->json([
 				'status' => 'ERROR',
@@ -308,14 +276,9 @@ use Illuminate\Support\Facades\Log;
 				'data' => []
 			], 400);
 		}
-	
-		// Ambil data user dari Redis berdasarkan NIK
+
 		$userData = Redis::get('user:' . $nik);
-	
-		// Debugging: Log user data
-		\Log::info("Redis data for user NIK {$nik}: " . $userData);
-	
-		// Pastikan data user ada di Redis
+
 		if (!$userData) {
 			return response()->json([
 				'status' => 'ERROR',
@@ -324,16 +287,17 @@ use Illuminate\Support\Facades\Log;
 				'data' => []
 			], 400);
 		}
-	
-		// Decode JSON dari Redis
+
 		$user = json_decode($userData, true);
-		$nama = $user['nama'] ?? null;
-		$email = $user['no_telp'] ?? null;
-		$role_id = $user['role_id'] ?? null;
-		$role_name = $user['role_name'] ?? null;
-	
-		// Validasi jika data masih ada yang kosong
-		if (!$nama || !$email || !$role_id) {
+
+		$nama         = $user['nama'] ?? null;
+		$no_telp      = $user['no_telp'] ?? null;
+		$role_id      = $user['role_id'] ?? null;
+		$role_name    = $user['role_name'] ?? null;
+		$no_reg       = $user['no_reg'] ?? null;
+		$tanggal_berlaku = $user['tanggal_berlaku'] ?? null;
+
+		if (!$nama || !$no_telp || !$role_id) {
 			return response()->json([
 				'status' => 'ERROR',
 				'errorCode' => 'MISSING_USER_INFO',
@@ -341,29 +305,25 @@ use Illuminate\Support\Facades\Log;
 				'data' => []
 			], 400);
 		}
-	
-		// Simpan data user ke dalam database
+
 		try {
-			$user = DaftarUser::create([
+			// Simpan user ke database
+			$newUser = DaftarUser::create([
 				'nik' => $nik,
 				'nama' => $nama,
-				'no_telp' => $email,
-				'email' => $noTelp,
-				'role_id' => $role_id,
-				'password' => Hash::make($request->password), // Hash password
+				'no_telp' => $no_telp,
+				'email' => $email,
+				'password' => Hash::make($request->password),
 			]);
 
-			  // Jika user adalah asesor (role_id = 2), simpan juga ke tabel data_asesor
-			  if ($role_id == 2) {
+			// Simpan role ke user_role
+			UserRole::create([
+				'user_id' => $newUser->user_id,
+				'role_id' => $role_id
+			]);
 
-				// Ambil data dari Redis
-				$userData = json_decode(Redis::get('user:' . $nik), true);
-
-				// Pastikan Redis menyimpan no_reg & tanggal_berlaku
-				$no_reg = $userData['no_reg'] ?? $request->input('no_reg');
-				$tanggal_berlaku = $userData['tanggal_berlaku'] ?? $request->input('tanggal_berlaku');
-	
-				// Pastikan data asesor ada
+			// Jika asesor, simpan ke data_asesor
+			if ($role_id == 2) {
 				if (!$no_reg || !$tanggal_berlaku) {
 					return response()->json([
 						'status' => 'ERROR',
@@ -372,37 +332,33 @@ use Illuminate\Support\Facades\Log;
 						'data' => []
 					], 400);
 				}
-	
-				// Simpan ke tabel data_asesor
+
 				DataAsesorModel::create([
-					'user_id' => $user->user_id,
+					'user_id' => $newUser->user_id,
 					'no_reg' => $no_reg,
 					'tanggal_berlaku' => $tanggal_berlaku,
 					'aktif' => 1,
 				]);
 			}
 
-			// Hapus cache di Redis setelah berhasil mendaftar
+			// Bersihkan cache Redis
 			Redis::del('user:' . $nik);
-			Redis::del('user_by_phone:' . $noTelp);
-		
-			
-			// Respons sukses
+			Redis::del('user_by_email:' . $email);
+
 			return response()->json([
 				'status' => 'SUCCESS',
 				'message' => 'Password created successfully and user registered.',
 				'data' => [
 					'nik' => $nik,
 					'name' => $nama,
-					'no_telp' => $email,
-					'email' => $noTelp,
+					'no_telp' => $no_telp,
+					'email' => $email,
 					'role_id' => $role_id,
 					'role_name' => $role_name,
 				],
 			], 200);
-	
+
 		} catch (\Exception $e) {
-			// Kesalahan server
 			return response()->json([
 				'status' => 'ERROR',
 				'message' => 'Server error.',
@@ -410,7 +366,7 @@ use Illuminate\Support\Facades\Log;
 			], 500);
 		}
 	}
- 
+
 	
 /**
  * @OA\Post(
@@ -488,75 +444,139 @@ use Illuminate\Support\Facades\Log;
  */
 
 
-    public function newPassword(Request $request)
-    {
-        // Validasi input
-        $validator = Validator::make($request->all(), [
-            'no_telp' => 'required|string',          // Nomor telepon wajib diisi
-            'password' => 'required|min:6',         // Minimal panjang password 6 karakter
-            'confirm_password' => 'required|same:password', // Konfirmasi password harus sama dengan password
-        ]);
+   public function LoginAkunNurse(Request $request)
+	{
+		try {
+			// Validasi input
+			$validator = Validator::make($request->all(), [
+				'nik' => 'required',
+				'password' => 'required',
+				'device_token' => 'nullable'
+			]);
 
-        if ($validator->fails()) {
+			if ($validator->fails()) {
+				return response()->json([
+					'status' => 400,
+					'message' => 'Data validation failed. Please check your input.',
+					'errors' => $validator->errors(),
+					'solution' => 'Ensure all required fields are filled. NIK and password cannot be empty.'
+				], 400);
+			}
+
+			// Cari user berdasarkan NIK
+			$user = DaftarUser::where('nik', $request->nik)->first();
+
+			if (!$user) {
+				return response()->json([
+					'status' => 404,
+					'message' => 'User not found.',
+					'details' => "An account with NIK '{$request->nik}' is not registered in the system.",
+					'solution' => 'Check your NIK again or ensure you have registered.'
+				], 404);
+			}
+
+			// Periksa password
+			if (!Hash::check($request->password, $user->password)) {
+				return response()->json([
+					'status' => 401,
+					'message' => 'Incorrect password.',
+					'details' => 'The password you entered does not match the database.',
+					'solution' => 'Ensure you enter the correct password. If forgotten, contact the admin to reset.'
+				], 401);
+			}
+
+			// ✅ Ambil semua role yang dimiliki user
+			$userRoles = DB::table('user_role')
+				->join('roles', 'user_role.role_id', '=', 'roles.role_id')
+				->where('user_role.user_id', $user->user_id)
+				->select('roles.role_id', 'roles.role_name')
+				->get();
+
+			// ✅ Ambil current_role dari field current_role_id di tabel users
+			$currentRole = null;
+			if ($user->current_role_id) {
+				$currentRole = DB::table('roles')
+					->where('role_id', $user->current_role_id)
+					->select('role_id', 'role_name')
+					->first();
+			} else {
+				// Jika current_role_id belum di-set, pakai role pertama lalu simpan
+				$defaultRole = $userRoles->first();
+				if ($defaultRole) {
+					$user->current_role_id = $defaultRole->role_id;
+					$user->save();
+					$currentRole = $defaultRole;
+				}
+			}
+
+			// Ambil data jabatan terakhir & unit kerja
+			$latestHistory = DB::table('history_jabatan_user')
+				->where('user_id', $user->user_id)
+				->latest('created_at')
+				->first();
+
+			$working_unit_id = $latestHistory->working_unit_id ?? null;
+			$jabatan_id = $latestHistory->jabatan_id ?? null;
+
+			$workingUnit = DB::table('working_unit')
+				->join('working_area', 'working_unit.working_area_id', '=', 'working_area.working_area_id')
+				->where('working_unit.working_unit_id', $working_unit_id)
+				->select(
+					'working_unit.working_unit_id',
+					'working_unit.working_unit_name',
+					'working_area.working_area_id',
+					'working_area.working_area_name'
+				)
+				->first();
+
+			$jabatan = DB::table('jabatan')
+				->where('jabatan_id', $jabatan_id)
+				->select('jabatan_id', 'nama_jabatan')
+				->first();
+
+			// Generate token
+			$token = JWTAuth::fromUser($user);
+			$user->token = $token;
+			if ($request->filled('device_token')) {
+				$user->device_token = $request->device_token;
+				$user->save();
+			}
+
 			return response()->json([
-				'status' => 'ERROR',
-				'errorCode' => 'INVALID_INPUT',
-				'message' => 'Invalid data.',
-				'errorMessages' => $validator->errors(),
-				'data' => []
-			], 400);
-		}
-
-        // Ambil data dari request
-        $noTelp = $request->input('no_telp');
-        $password = $request->input('password');
-
-        // Cari record di tabel password_reset untuk memvalidasi OTP
-        $otpRecord = PasswordReset::where('no_telp', $noTelp)
-            ->where('validate_otp_password', true) // OTP harus sudah divalidasi
-            ->first();
-
-        // Check if the OTP has been validated
-		if (!$otpRecord) {
+				'status' => 200,
+				'message' => 'Login successful.',
+				'data' => [
+					'name' => $user->nama,
+					'nik' => $user->nik,
+					'user_id' => $user->user_id,
+					'roles' => $userRoles,
+					'current_role' => $currentRole,
+					'working_unit' => $workingUnit ? [
+						'working_unit_id' => $workingUnit->working_unit_id,
+						'working_unit_name' => $workingUnit->working_unit_name,
+						'working_area_id' => $workingUnit->working_area_id,
+						'working_area_name' => $workingUnit->working_area_name
+					] : null,
+					'jabatan' => $jabatan ? [
+						'jabatan_id' => $jabatan->jabatan_id,
+						'nama_jabatan' => $jabatan->nama_jabatan
+					] : null,
+					'token' => $token,
+				]
+			], 200);
+		} catch (\Exception $e) {
+			Log::error("LoginAkunNurse Error: " . $e->getMessage());
 			return response()->json([
-				'status' => 'ERROR',
-				'errorCode' => 'OTP_NOT_VALIDATED',
-				'message' => 'OTP code has not been validated or was not found.',
-				'errorMessages' => [],
-				'data' => []
-			], 404);
+				'status' => 500,
+				'message' => 'Server error occurred.',
+				'details' => $e->getMessage(),
+				'solution' => 'Please contact the system administrator for support.'
+			], 500);
 		}
+	}
 
-        // Cari pengguna berdasarkan nomor telepon di tabel users (DaftarUser)
-        $user = DaftarUser::where('no_telp', $noTelp)->first();
 
-        if (!$user) {
-			return response()->json([
-				'status' => 'ERROR',
-				'errorCode' => 'USER_NOT_FOUND',
-				'message' => 'User not found.',
-				'errorMessages' => [],
-				'data' => []
-			], 404);
-		}
 
-        // Perbarui password pengguna
-        $user->update([
-            'password' => Hash::make($password) // Enkripsi password sebelum menyimpan
-        ]);
-
-        // Hapus record dari tabel password_reset setelah digunakan
-        $otpRecord->delete();
-
-        // Berikan respon sukses
-        return response()->json([
-			'status' => 'SUCCESS',
-			'errorCode' => null,
-			'message' => 'Password has been successfully created or updated.',
-			'errorMessages' => [],
-			'data' => []
-		], 200);
-    }
 	
 	
 /**
@@ -640,127 +660,7 @@ use Illuminate\Support\Facades\Log;
  * )
  */
 
-    public function LoginAkunNurse(Request $request)
-        {
-            try {
-                // Validasi data
-                $validator = Validator::make($request->all(), [
-                    'nik' => 'required',
-                    'password' => 'required',
-					//'player_id' => 'required' // Pastikan frontend mengirim Player ID OneSignal
-                ]);
-
-                if ($validator->fails()) {
-					return response()->json([
-						'status' => 400,
-						'message' => 'Data validation failed. Please check your input.',
-						'errors' => $validator->errors(),
-						'solution' => 'Ensure all required fields are filled. NIK, password, and Player ID cannot be empty.'
-					], 400);
-				}
-
-                // Cari pengguna berdasarkan NIK
-                $user = DaftarUser::where('nik', $request->nik)->first();
-
-                if (!$user) {
-					return response()->json([
-						'status' => 404,
-						'message' => 'User not found.',
-						'details' => "An account with NIK '{$request->nik}' is not registered in the system.",
-						'solution' => 'Check your NIK again or ensure you have registered.'
-					], 404);
-				}
-
-                // Periksa password
-                if (!Hash::check($request->password, $user->password)) {
-					return response()->json([
-						'status' => 401,
-						'message' => 'Incorrect password.',
-						'details' => 'The password you entered does not match the data in the database.',
-						'solution' => 'Ensure you enter the correct password. If forgotten, contact the admin to reset your password.'
-					], 401);
-				}
-
-                // Ambil nama role berdasarkan role_id
-                $role = Role::where('role_id', $user->role_id)->first();
-				// Pastikan role_name ada
-                $roleName = $role ? $role->role_name : null;
-
-
-             	 // Ambil history jabatan terbaru untuk mendapatkan working_unit_id dan jabatan_id
-				$latestHistory = DB::table('history_jabatan_user')
-				->where('user_id', $user->user_id)
-				->latest('created_at') // Ambil yang terbaru berdasarkan tanggal
-				->first();
-
-				$working_unit_id = $latestHistory->working_unit_id ?? null;
-				$jabatan_id = $latestHistory->jabatan_id ?? null;
-
-				// Ambil nama working unit dan area kerja
-				$workingUnit = DB::table('working_unit')
-					->join('working_area', 'working_unit.working_area_id', '=', 'working_area.working_area_id')
-					->where('working_unit.working_unit_id', $working_unit_id)
-					->select(
-						'working_unit.working_unit_name',
-						'working_area.working_area_id',
-						'working_area.working_area_name'
-					)
-					->first();
-
-				// Ambil nama jabatan
-				$jabatan = DB::table('jabatan')
-					->where('jabatan_id', $jabatan_id)
-					->select('nama_jabatan')
-					->first();
-
-				$nama_jabatan = $jabatan ? $jabatan->nama_jabatan : null;
-                
-                 // Generate JWT token  
-                $token = JWTAuth::fromUser($user); 
-
-                // Simpan token ke dalam tabel users  
-                $user->token = $token; // Menyimpan token ke dalam kolom token  
-                $user->save(); // Simpan perubahan ke database  
-
-				 // Simpan Player ID (OneSignal) ke dalam kolom device_token
-				 $user->device_token = $request->player_id;
-				 $user->save();
-		
-				
-                // Berhasil login
-                return response()->json([
-					'status' => 200,
-					'message' => 'Login successful.',
-					'data' => [
-						'name' => $user->nama,
-						'nik' => $user->nik,
-						'user_id' => $user->user_id, // Return user_id
-						'role_id' => $user->role_id,
-						'role_name' => $roleName, // Add role_name if available
-						'working_unit' => $workingUnit ? [
-							'working_unit_id' => $working_unit_id,
-							'working_unit_name' => $workingUnit->working_unit_name,
-							'working_area_id' => $workingUnit->working_area_id,
-							'working_area_name' => $workingUnit->working_area_name
-						] : null,
-						'jabatan' => [
-							'jabatan_id' => $jabatan_id,
-							'nama_jabatan' => $nama_jabatan
-						],
-
-						'token' => $token,
-					]
-				], 200);
-             } catch (\Exception $e) {
-				return response()->json([
-					'status' => 500,
-					'message' => 'An error occurred on the server.',
-					'details' => $e->getMessage(),
-					'solution' => 'Please contact the system administrator for further assistance.'
-				], 500);
-            }
-        }  
-
+    
 		
 /**
  * @OA\Post(
@@ -1105,136 +1005,8 @@ use Illuminate\Support\Facades\Log;
  *     )
  * )
  */
-	public function GetAkunNurseByNIK($nik)
-	{
-		try {
+	
 
-	
-			// Jika tidak ada di Redis, ambil dari database
-			$user = DaftarUser::where('nik', $nik)->first();
-			
-			if (!$user) {
-				return response()->json([
-					'status' => 404,
-					'message' => 'User not found.',
-					'detail' => "Account with NIK '{$nik}' is not registered in the system.",
-					'solution' => 'Please check your NIK or make sure you are registered.'
-				], 404);
-			}
-	
-			// Ambil data tambahan (role, working_unit, working_area)
-			$role = Role::where('role_id', $user->role_id)->first();
-			$role_name = $role ? $role->role_name : null;
-	
-			 // Ambil semua history jabatan
-			 $historyJabatan = HistoryJabatan::where('user_id', $user->user_id)->get();
-
-			 // Siapkan array untuk menampung hasilnya
-			 $jabatanData = $historyJabatan->map(function ($history) {
-				 // Ambil nama working unit
-				 $working_unit = DB::table('working_unit')->where('working_unit_id', $history->working_unit_id)->first();
-				 $working_unit_name = $working_unit ? $working_unit->working_unit_name : null;
-	 
-				 // Ambil nama jabatan
-				 $jabatan = DB::table('jabatan')->where('jabatan_id', $history->jabatan_id)->first();
-				 $nama_jabatan = $jabatan ? $jabatan->nama_jabatan : null;
-	 
-				 // Kembalikan array yang berisi data jabatan
-				 return [
-					 'working_unit_id' => $history->working_unit_id,
-					 'user_jabatan_id' => $history->user_jabatan_id,
-					 'working_unit_name' => $working_unit_name,
-					 'jabatan_id' => $history->jabatan_id,
-					 'nama_jabatan' => $nama_jabatan,
-					 'dari' => $history->dari,
-					 'sampai' => $history->sampai
-				 ];
-			 });
-			Log::info('ini user data', ['user' => $user->toArray()]);
-			// Ambil URL dokumen dan masa berlaku berdasarkan NIK
-			$ijazah = [
-				'url' => isset($user->ijazah->path_file) ? url('storage/' . $user->ijazah->path_file) : null,
-			];
-	
-			$ujikom = [
-				'url' => isset($user->ujikom->path_file) ? url('storage/' . $user->ujikom->path_file) : null,
-				'nomor' => $user->ujikom->nomor_kompetensi ?? null,
-				'masa_berlaku' => $user->ujikom->masa_berlaku_kompetensi ?? null
-			];
-	
-			$str = [
-				'url' => isset($user->str->path_file) ? url('storage/' . $user->str->path_file) : null,
-				'nomor' => $user->str->nomor_str ?? null,
-				'masa_berlaku' => $user->str->masa_berlaku_str ?? null
-				
-			];
-	
-			$sip = [
-				'url' => isset($user->sip->path_file) ? url('storage/' . $user->sip->path_file) : null,
-				'nomor' => $user->sip->nomor_sip ?? null,
-				'masa_berlaku' => $user->sip->masa_berlaku_sip ?? null
-				
-			];
-
-			$spk = [
-				'url' => isset($user->spk->path_file) ? url('storage/' . $user->spk->path_file) : null,
-				'nomor' => $user->spk->nomor_spk ?? null,
-				'masa_berlaku' => $user->spk->masa_berlaku_spk ?? null
-				
-			];
-	
-			// Ambil semua sertifikat beserta masa berlakunya
-			$sertifikat = $user->sertifikat->map(function ($item) {
-				return [
-					'url' => url('storage/' . $item->path_file),
-					'type' => $item->type_sertifikat,
-					'nomor' => $item->nomor_sertifikat,
-					'masa_berlaku' => $item->masa_berlaku_sertifikat ?? null
-					
-				];
-			});
-	
-			// Format data user
-			$userData = [
-				'nama' => $user->nama,
-				'email' => $user->email,
-				'no_telp' => $user->no_telp,
-				'tempat_lahir' => $user->tempat_lahir,
-				'tanggal_lahir' => $user->tanggal_lahir,
-				'kewarganegaraan' => $user->kewarganegaraan,
-				'jenis_kelamin' => $user->jenis_kelamin,
-				'pendidikan' => $user->pendidikan,
-				'tahun_lulus' => $user->tahun_lulus,
-				'provinsi' => $user->provinsi,
-				'kota' => $user->kota,
-				'alamat' => $user->alamat,
-				'kode_pos' => $user->kode_pos,
-				'role_id' => $user->role_id,
-				'role_name' => $role_name,
-				'jabatan_history' => $jabatanData, // ⬅️ Data history jabatan dimasukkan di sini
-				'foto' => $user->foto ? url('storage/foto_nurse/' . basename($user->foto)) : null,
-				'ijazah' => $ijazah,
-				'ujikom' => $ujikom,
-				'str' => $str,
-				'sip' => $sip,
-				'spk' => $spk,
-				'sertifikat' => $sertifikat,
-			];
-		
-			return response()->json([
-				'status' => 200,
-				'message' => 'User data found from database.',
-				'data' => $userData,
-				'message_detail' => 'User data successfully retrieved and stored in cache.'
-			], 200);
-		} catch (\Exception $e) {
-			return response()->json([
-				'status' => 500,
-				'message' => 'Server error.',
-				'error' => $e->getMessage()
-			], 500);
-		}
-	}
 /**
  * @OA\Get(
  *     path="/check-profile/{nik}",
@@ -1303,7 +1075,6 @@ use Illuminate\Support\Facades\Log;
 	public function CheckDataCompleteness($nik)
 	{
 		try {
-
 			$user = DaftarUser::where('nik', $nik)->first();
 
 			if (!$user) {
@@ -1322,7 +1093,8 @@ use Illuminate\Support\Facades\Log;
 			$requiredFields = [
 				'nama', 'email', 'no_telp', 'tempat_lahir', 'tanggal_lahir',
 				'kewarganegaraan', 'jenis_kelamin', 'pendidikan', 'tahun_lulus',
-				'provinsi', 'kota', 'alamat', 'kode_pos', 'role_id'
+				'provinsi', 'kota', 'alamat', 'kode_pos'
+				// role_id dikeluarkan karena kita ambil dari tabel relasi
 			];
 
 			$missingFields = [];
@@ -1340,7 +1112,6 @@ use Illuminate\Support\Facades\Log;
 				$missingFields[] = 'jabatan_id';
 			}
 
-			// Dokumen yang diperiksa
 			$documentFields = [
 				'ijazah' => isset($user->ijazah->path_file) ? url('storage/' . $user->ijazah->path_file) : null,
 				'sip' => isset($user->sip->path_file) ? [
@@ -1353,12 +1124,6 @@ use Illuminate\Support\Facades\Log;
 					'masa_berlaku' => $user->str->masa_berlaku_str ?? null,
 					'nomor' => $user->str->nomor_str ?? null
 				] : null,
-
-				// 'ujikom' => isset($user->ujikom->path_file) ? [
-				// 	'url' => url('storage/' . $user->ujikom->path_file),
-				// 	'masa_berlaku' => $user->ujikom->masa_berlaku_kompetensi ?? null,
-				// 	'nomor' => $user->ujikom->nomor_kompetensi ?? null
-				// ] : null
 			];
 
 			$missingDocuments = [];
@@ -1367,10 +1132,6 @@ use Illuminate\Support\Facades\Log;
 					$missingDocuments[] = $key;
 				}
 			}
-
-			// if (empty($user->ujikom?->path_file)) {
-			// 	$missingDocuments[] = 'ujikom';
-			// }
 
 			if (count($missingFields) > 0 || count($missingDocuments) > 0) {
 				return response()->json([
@@ -1384,8 +1145,15 @@ use Illuminate\Support\Facades\Log;
 				], 400);
 			}
 
-			$role = Role::where('role_id', $user->role_id)->first();
-			$role_name = $role ? $role->role_name : null;
+			// ✅ Ambil role dari tabel user_role → roles (BUKAN role)
+			$userRole = DB::table('user_role')
+				->join('roles', 'user_role.role_id', '=', 'roles.role_id')
+				->where('user_role.user_id', $user->user_id)
+				->select('user_role.role_id', 'roles.role_name')
+				->first();
+
+			$role_id = $userRole->role_id ?? null;
+			$role_name = $userRole->role_name ?? null;
 
 			$working_unit = DB::table('working_unit')->where('working_unit_id', $user->working_unit_id)->first();
 			$working_unit_name = $working_unit ? $working_unit->working_unit_name : null;
@@ -1425,7 +1193,7 @@ use Illuminate\Support\Facades\Log;
 				'kota' => $user->kota,
 				'alamat' => $user->alamat,
 				'kode_pos' => $user->kode_pos,
-				'role_id' => $user->role_id,
+				'role_id' => $role_id,
 				'role_name' => $role_name,
 				'working_unit_id' => $user->working_unit_id,
 				'working_unit_name' => $working_unit_name,
@@ -1436,7 +1204,6 @@ use Illuminate\Support\Facades\Log;
 				'ijazah' => $documentFields['ijazah'],
 				'sip' => $documentFields['sip'],
 				'str' => $documentFields['str'],
-				// 'ujikom' => $documentFields['ujikom'],
 				'sertifikat' => $sertifikat,
 				'foto' => $user->foto ? url('storage/foto_nurse/' . basename($user->foto)) : null,
 			];
@@ -1458,6 +1225,7 @@ use Illuminate\Support\Facades\Log;
 			], 500);
 		}
 	}
+
 
 
 	/**
@@ -1846,6 +1614,128 @@ public function deleteHistoryJabatan(Request $request, $nik)
 			], 500);
 		}
 	}
+
+	public function GetAkunNurseByNIK($nik)
+	{
+		try {
+			$user = DaftarUser::where('nik', $nik)->first();
+
+			if (!$user) {
+				return response()->json([
+					'status' => 404,
+					'message' => 'User not found.',
+					'detail' => "Account with NIK '{$nik}' is not registered in the system.",
+					'solution' => 'Please check your NIK or make sure you are registered.'
+				], 404);
+			}
+
+			// ✅ Ambil semua role user dari tabel user_role dan roles
+			$roles = DB::table('user_role')
+				->join('roles', 'user_role.role_id', '=', 'roles.role_id')
+				->where('user_role.user_id', $user->user_id)
+				->select('roles.role_id', 'roles.role_name')
+				->get();
+
+			// Ambil history jabatan
+			$historyJabatan = HistoryJabatan::where('user_id', $user->user_id)->get();
+
+			$jabatanData = $historyJabatan->map(function ($history) {
+				$working_unit = DB::table('working_unit')->where('working_unit_id', $history->working_unit_id)->first();
+				$working_unit_name = $working_unit?->working_unit_name;
+
+				$jabatan = DB::table('jabatan')->where('jabatan_id', $history->jabatan_id)->first();
+				$nama_jabatan = $jabatan?->nama_jabatan;
+
+				return [
+					'working_unit_id' => $history->working_unit_id,
+					'user_jabatan_id' => $history->user_jabatan_id,
+					'working_unit_name' => $working_unit_name,
+					'jabatan_id' => $history->jabatan_id,
+					'nama_jabatan' => $nama_jabatan,
+					'dari' => $history->dari,
+					'sampai' => $history->sampai
+				];
+			});
+
+			Log::info('ini user data', ['user' => $user->toArray()]);
+
+			$ijazah = [
+				'url' => $user->ijazah?->path_file ? url('storage/' . $user->ijazah->path_file) : null,
+			];
+
+			$ujikom = [
+				'url' => $user->ujikom?->path_file ? url('storage/' . $user->ujikom->path_file) : null,
+				'nomor' => $user->ujikom->nomor_kompetensi ?? null,
+				'masa_berlaku' => $user->ujikom->masa_berlaku_kompetensi ?? null
+			];
+
+			$str = [
+				'url' => $user->str?->path_file ? url('storage/' . $user->str->path_file) : null,
+				'nomor' => $user->str->nomor_str ?? null,
+				'masa_berlaku' => $user->str->masa_berlaku_str ?? null
+			];
+
+			$sip = [
+				'url' => $user->sip?->path_file ? url('storage/' . $user->sip->path_file) : null,
+				'nomor' => $user->sip->nomor_sip ?? null,
+				'masa_berlaku' => $user->sip->masa_berlaku_sip ?? null
+			];
+
+			$spk = [
+				'url' => $user->spk?->path_file ? url('storage/' . $user->spk->path_file) : null,
+				'nomor' => $user->spk->nomor_spk ?? null,
+				'masa_berlaku' => $user->spk->masa_berlaku_spk ?? null
+			];
+
+			$sertifikat = $user->sertifikat->map(function ($item) {
+				return [
+					'url' => url('storage/' . $item->path_file),
+					'type' => $item->type_sertifikat,
+					'nomor' => $item->nomor_sertifikat,
+					'masa_berlaku' => $item->masa_berlaku_sertifikat ?? null
+				];
+			});
+
+			$userData = [
+				'nama' => $user->nama,
+				'email' => $user->email,
+				'no_telp' => $user->no_telp,
+				'tempat_lahir' => $user->tempat_lahir,
+				'tanggal_lahir' => $user->tanggal_lahir,
+				'kewarganegaraan' => $user->kewarganegaraan,
+				'jenis_kelamin' => $user->jenis_kelamin,
+				'pendidikan' => $user->pendidikan,
+				'tahun_lulus' => $user->tahun_lulus,
+				'provinsi' => $user->provinsi,
+				'kota' => $user->kota,
+				'alamat' => $user->alamat,
+				'kode_pos' => $user->kode_pos,
+				'roles' => $roles, // ⬅️ roles sebagai array
+				'jabatan_history' => $jabatanData,
+				'foto' => $user->foto ? url('storage/foto_nurse/' . basename($user->foto)) : null,
+				'ijazah' => $ijazah,
+				'ujikom' => $ujikom,
+				'str' => $str,
+				'sip' => $sip,
+				'spk' => $spk,
+				'sertifikat' => $sertifikat,
+			];
+
+			return response()->json([
+				'status' => 200,
+				'message' => 'User data found from database.',
+				'data' => $userData,
+				'message_detail' => 'User data successfully retrieved.'
+			], 200);
+		} catch (\Exception $e) {
+			return response()->json([
+				'status' => 500,
+				'message' => 'Server error.',
+				'error' => $e->getMessage()
+			], 500);
+		}
+	}
+
 
 	
 }

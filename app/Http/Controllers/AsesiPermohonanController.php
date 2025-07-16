@@ -3,7 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\IjazahModel;
+use Illuminate\Support\Facades\Log;
+use App\Service\OneSignalService;
+use App\Models\DaftarUser;
+use App\Models\UserRole;
 use App\Models\SipModel;
+use App\Models\Notification;
 use App\Models\StrModel;
 use App\Models\SertifikatModel;
 use App\Models\UjikomModel;
@@ -18,6 +23,12 @@ use App\Http\Controllers\UsersController; // Ganti dengan nama controller yang b
 class AsesiPermohonanController extends Controller
 {
 
+	protected $oneSignalService;
+
+    public function __construct(OneSignalService $oneSignalService)
+    {
+        $this->oneSignalService = $oneSignalService;
+    }
    public function AjuanPermohonanAsesi(Request $request)
     {
         try {
@@ -85,7 +96,7 @@ class AsesiPermohonanController extends Controller
 
             if ($existingBidang) {
                 $existingBidang->update($dataUpdate);
-
+				$this->kirimNotifikasiKeBidang($user->nama);
                 return response()->json([
                     'success' => true,
                     'message' => 'Data successfully updated in Form_1.',
@@ -137,14 +148,61 @@ class AsesiPermohonanController extends Controller
             ], 201);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'An unexpected error occurred while processing data.',
-                'error' => $e->getMessage(),
-                'status_code' => 500,
-            ], 500);
-        }
+			\Log::error('Gagal melakukan pengajuan asesi.', [
+				'user_id' => auth()->check() ? auth()->user()->user_id : null,
+				'nama' => auth()->check() ? auth()->user()->nama : null,
+				'error_message' => $e->getMessage(),
+				'error_trace' => $e->getTraceAsString(), // log jejak error secara lengkap
+				'line' => $e->getLine(),
+				'file' => $e->getFile(),
+			]);
+
+			return response()->json([
+				'success' => false,
+				'message' => 'An unexpected error occurred while processing data.',
+				'error' => $e->getMessage(),
+				'status_code' => 500,
+			], 500);
+		}
+
     }
+
+	private function kirimNotifikasiKeBidang($namaAsesi)
+	{
+		$bidangUsers = DaftarUser::whereHas('roles', function ($query) {
+			$query->where('user_role.role_id', 3);
+		})->get();
+
+		$title = 'Pengajuan Asessmen';
+		$message = "Ada pengajuan baru dari Asesi $namaAsesi.";
+
+		foreach ($bidangUsers as $bidangUser) {
+			// Hanya kirim dan simpan notifikasi jika user memiliki device_token
+			if (!empty($bidangUser->device_token)) {
+				// Kirim OneSignal
+				$this->oneSignalService->sendNotification(
+					[$bidangUser->device_token],
+					$title,
+					$message
+				);
+
+				// Simpan ke database
+				Notification::create([
+					'user_id' => $bidangUser->user_id,
+					'title' => $title,
+					'description' => $message,
+					'is_read' => 0,
+					'created_at' => Carbon::now(),
+					'updated_at' => Carbon::now(),
+				]);
+
+				Log::info("Notifikasi dikirim ke user_id={$bidangUser->user_id}, nama={$bidangUser->nama}");
+			} else {
+				Log::warning("User bidang user_id={$bidangUser->user_id} tidak memiliki device_token.");
+			}
+		}
+	}
+
 
    public function getUserFormProgress($userId)
 	{
@@ -200,9 +258,69 @@ class AsesiPermohonanController extends Controller
 		}
 	}
 
+	public function getAsesiProgressByAsesor($asesorId)
+	{
+		try {
+			// Ambil semua data progres asesi yang dibimbing oleh asesor ini
+			$progressList = DB::table('pk_progress')
+				->where('pk_progress.asesor_id', $asesorId)
+				->leftJoin('form_1', 'pk_progress.form_1_id', '=', 'form_1.form_1_id')
+				->leftJoin('form_2', 'pk_progress.form_2_id', '=', 'form_2.form_2_id')
+				->leftJoin('form_3', 'pk_progress.form_3_id', '=', 'form_3.form_3_id')
+				->leftJoin('users', 'pk_progress.user_id', '=', 'users.user_id') // asesi info
+				->select(
+					'pk_progress.user_id',
+					'users.nama as user_name',
+					'users.foto as user_foto', // pastikan kolom 'foto' ada di tabel 'users'
+					'form_1.status as form_1_status',
+					'form_2.status as form_2_status',
+					'form_3.status as form_3_status'
+				)
+				->get();
+
+			if ($progressList->isEmpty()) {
+				return response()->json([
+					'status' => false,
+					'message' => 'Tidak ditemukan data progres untuk asesor ini.',
+					'data' => []
+				], 404);
+			}
+
+			// Siapkan array hasil
+			$data = $progressList->map(function ($progress) {
+				return [
+					'user_id' => $progress->user_id,
+					'user_name' => $progress->user_name,
+					'user_foto' => $progress->user_foto
+						? url('storage/foto/' . $progress->user_foto)
+						: null,
+					'form_statuses' => [
+						'form_1' => $progress->form_1_status ?? 'Terkunci',
+						'form_2' => $progress->form_2_status ?? 'Terkunci',
+						'form_3' => $progress->form_3_status ?? 'Terkunci',
+					]
+				];
+			});
+
+			return response()->json([
+				'status' => true,
+				'message' => 'Berhasil mengambil data progres semua asesi untuk asesor ini.',
+				'data' => $data
+			]);
+		} catch (\Exception $e) {
+			return response()->json([
+				'status' => false,
+				'message' => 'Terjadi kesalahan saat mengambil data progres.',
+				'data' => null,
+				'error' => $e->getMessage()
+			], 500);
+		}
+	}
+
 	public function getForm1ByAsesor(Request $request) 
 	{
 		$userId = $request->input('user_id');
+		$status = $request->input('status'); // Tambahkan input status
 
 		// Validasi input user_id
 		if (!$userId) {
@@ -232,16 +350,74 @@ class AsesiPermohonanController extends Controller
 			], 404);
 		}
 
-		// Ambil semua data form_1 berdasarkan no_reg asesor
-		$formList = DB::table('form_1')
-			->where('no_reg', $noReg)
-			->orderBy('created_at', 'desc')
-			->get();
+		// Query dasar
+		$query = DB::table('form_1')->where('no_reg', $noReg);
+
+		// Tambahkan filter status jika diberikan
+		if (!is_null($status)) {
+			$query->where('status', $status);
+		}
+
+		// Eksekusi query
+		$formList = $query->orderBy('created_at', 'desc')->get();
+
+		// Map foto berdasarkan user_id
+		$formList = $formList->map(function ($item) {
+			$user = DaftarUser::find($item->user_id);
+
+			$item->foto = $user && $user->foto
+				? url('storage/foto_nurse/' . basename($user->foto))
+				: null;
+
+			return $item;
+		});
 
 		return response()->json([
 			'success' => "OK",
 			'message' => 'Data form_1 berhasil diambil berdasarkan no_reg asesor.',
 			'no_reg' => $noReg,
+			'data' => $formList
+		]);
+	}
+
+
+	public function getForm1ByAsesi(Request $request)
+	{
+		$userId = $request->input('user_id');
+		$status = $request->input('status', 'Waiting'); // Default status ke "Waiting"
+
+		// Validasi input user_id
+		if (!$userId) {
+			return response()->json([
+				'success' => "ERR",
+				'message' => 'Parameter user_id wajib diisi.',
+			], 400);
+		}
+
+		// Cek apakah user terdaftar sebagai asesi
+		$user = DB::table('users')->where('user_id', $userId)->first();
+
+		if (!$user) {
+			return response()->json([
+				'success' => "ERR",
+				'message' => 'User tidak ditemukan atau bukan asesi.',
+			], 404);
+		}
+
+		// Ambil form_1 berdasarkan user_id dan status (default: Waiting)
+		$query = DB::table('form_1')->where('user_id', $userId);
+
+		if (!is_null($status)) {
+			$query->where('status', $status);
+		}
+
+		$formList = $query->orderBy('created_at', 'desc')->get();
+
+		return response()->json([
+			'success' => "OK",
+			'message' => 'Data form_1 berhasil diambil berdasarkan user_id asesi.',
+			'user_id' => $userId,
+			'status_filter' => $status,
 			'data' => $formList
 		]);
 	}

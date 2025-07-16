@@ -629,60 +629,63 @@ class Form3Controller extends BaseController
 
 
     public function Form3Input(Request $request, $user_id)
-    {
-        // Validasi apakah user_id ada di form_2
-        $form2 = PenilaianForm2Model::where('user_jawab_form_2_id', $user_id)->first();
-    
-        // Jika Form2 tidak ditemukan
-        if (!$form2) {
-            return response()->json([
-                'status' => 404,
-                'message' => 'No data found for the given user_id.'
-            ], 404);
-        }
-    
-        // Periksa apakah user yang login adalah asesor (role_id = 2)
-        if (auth()->user()->role_id !== 2) {
-            return response()->json([
-                'status' => 403,
-                'message' => 'Unauthorized. Only assessors (role_id = 2) can input Form3.'
-            ], 403);
-        }
-    
-        // Buat data baru di Form3
-        $form3 = Form3Model::create([
-            'user_id' => $form2->user_jawab_form_2_id, // Ambil dari form_2
-            'no_reg' => $form2->no_reg,   // Ambil no_reg dari Form2
-            'asesi_name' => $form2->asesi_name,
-            'asesor_name' => $form2->asesor_name,
-            'asesi_date' => Carbon::now(), // Timestamp otomatis
-            'asesor_date' => Carbon::now(), // Timestamp otomatis
-            'status' => 'Approved' // Status otomatis "Approved"
-        ]);
+	{
+		// Validasi apakah user_id ada di form_2
+		$form2 = PenilaianForm2Model::where('user_jawab_form_2_id', $user_id)->first();
 
+		if (!$form2) {
+			return response()->json([
+				'status' => 404,
+				'message' => 'No data found for the given user_id.'
+			], 404);
+		}
 
-        // **Update pk_progress (form_3_id) berdasarkan user_id**
-        $progress = PkProgressModel::where('user_id', $user_id)->first();
-        if ($progress) {
-            $progress->form_3_id = $form3->form_3_id;
-            $progress->save();
-        }
+		// Ambil user login
+		$loggedUser = auth()->user();
 
-        // **Update pk_status (form_3_status)**
-        DB::table('pk_status')
-            ->where('progress_id', $progress->progress_id)
-            ->update(['form_3_status' => 'Completed']);
-    
-        return response()->json([
-            'status' => 201,
-            'message' => 'Form3 created successfully with status Approved.',
-            'data' => $form3
-        ], 201);
-    }
+		// Periksa apakah user login memiliki role asesor (role_id = 2)
+		$isAsesor = $loggedUser->roles()->where('role_id', 2)->exists();
+
+		if (!$isAsesor) {
+			return response()->json([
+				'status' => 403,
+				'message' => 'Unauthorized. Only assessors can input Form3.'
+			], 403);
+		}
+
+		// Buat data baru di Form3
+		$form3 = Form3Model::create([
+			'user_id'      => $form2->user_jawab_form_2_id,
+			'no_reg'       => $form2->no_reg,
+			'asesi_name'   => $form2->asesi_name,
+			'asesor_name'  => $form2->asesor_name,
+			'asesi_date'   => Carbon::now(),
+			'asesor_date'  => Carbon::now(),
+			'status'       => 'Approved'
+		]);
+
+		// Update pk_progress (form_3_id)
+		$progress = PkProgressModel::where('user_id', $user_id)->first();
+		if ($progress) {
+			$progress->form_3_id = $form3->form_3_id;
+			$progress->save();
+
+			// Update pk_status (form_3_status)
+			DB::table('pk_status')
+				->where('progress_id', $progress->progress_id)
+				->update(['form_3_status' => 'Completed']);
+		}
+
+		return response()->json([
+			'status' => 201,
+			'message' => 'Form3 created successfully with status Approved.',
+			'data' => $form3
+		], 201);
+	}
     
 	public function ApproveAsesiForm3()
 	{
-		$user = Auth::user(); // Ambil user yang sedang login
+		$user = auth()->user(); // Ambil user yang sedang login
 
 		if (!$user) {
 			return response()->json([
@@ -692,8 +695,10 @@ class Form3Controller extends BaseController
 			], 401);
 		}
 
-		// Cek role_id harus 1
-		if ($user->role_id != 1) {
+		// Validasi apakah user punya role_id = 1 (asesi)
+		$isAsesi = $user->roles()->where('role_id', 1)->exists();
+
+		if (!$isAsesi) {
 			return response()->json([
 				'status' => 403,
 				'message' => 'Anda tidak memiliki izin untuk mengisi Form3.',
@@ -718,19 +723,19 @@ class Form3Controller extends BaseController
 		$form3->asesi_name = $user->nama;
 		$form3->asesi_date = Carbon::now();
 		$form3->status = 'Waiting';
-
 		$form3->save();
 
 		return response()->json([
 			'status' => 201,
-			'message' => 'Form3 created successfully with status Approved.',
+			'message' => 'Form3 created successfully with status Waiting.',
 			'data' => $form3
 		], 201);
 	}
 
+
 	public function UpdateAsesorForm3($form3_id)
 	{
-		$user = Auth::user(); // Ambil user yang sedang login
+		$user = auth()->user(); // Ambil user yang sedang login
 
 		if (!$user) {
 			return response()->json([
@@ -740,8 +745,9 @@ class Form3Controller extends BaseController
 			], 401);
 		}
 
-		// Cek role_id harus 2 (asesor)
-		if ($user->role_id != 2) {
+		// Validasi apakah user memiliki role Asesor (role_id = 2)
+		$isAsesor = $user->roles()->where('role_id', 2)->exists();
+		if (!$isAsesor) {
 			return response()->json([
 				'status' => 403,
 				'message' => 'Anda tidak memiliki izin untuk mengisi bagian asesor.',
@@ -749,9 +755,8 @@ class Form3Controller extends BaseController
 			], 403);
 		}
 
-		// Cari data Form3 yang akan diupdate
+		// Cari Form3 berdasarkan ID
 		$form3 = Form3Model::find($form3_id);
-
 		if (!$form3) {
 			return response()->json([
 				'status' => 404,
@@ -760,9 +765,8 @@ class Form3Controller extends BaseController
 			], 404);
 		}
 
-		// Ambil no_reg dari DataAsesorModel berdasarkan user_id asesor
-		$asesor = DataAsesorModel::where('user_id', $user->user_id)->first();
-
+		// Ambil data asesor aktif berdasarkan user_id
+		$asesor = DataAsesorModel::where('user_id', $user->user_id)->where('aktif', 1)->first();
 		if (!$asesor) {
 			return response()->json([
 				'status' => 404,
@@ -771,12 +775,11 @@ class Form3Controller extends BaseController
 			], 404);
 		}
 
-		// Update field asesor dan status
+		// Update data asesor ke Form3
 		$form3->asesor_name = $user->nama;
 		$form3->asesor_date = Carbon::now();
 		$form3->no_reg = $asesor->no_reg;
 		$form3->status = 'Approved';
-
 		$form3->save();
 
 		return response()->json([

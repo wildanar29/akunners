@@ -21,9 +21,9 @@ class Form5Controller extends BaseController
 {
 	public function pengajuanKonsultasiPraAsesmen(Request $request)
 	{
-		$user = Auth::user();
+		$user = auth()->user();
 
-		 if (!$user) {
+		if (!$user) {
 			return response()->json([
 				'status' => 401,
 				'message' => 'Pengguna belum login atau token tidak valid.',
@@ -31,8 +31,9 @@ class Form5Controller extends BaseController
 			], 401);
 		}
 
-		// Cek jika bukan asesi (role_id != 1)
-		if ($user->role_id != 1) {
+		// Cek apakah user memiliki role Asesi (role_id = 1)
+		$isAsesi = $user->roles()->where('role_id', 1)->exists();
+		if (!$isAsesi) {
 			return response()->json([
 				'status' => 403,
 				'message' => 'Akses ditolak. Hanya asesi yang dapat melakukan pengajuan konsultasi.',
@@ -60,7 +61,16 @@ class Form5Controller extends BaseController
 			]);
 		}
 
-		// Ambil data asesor dari DataAsesorModel
+		// Ambil no_reg dari form_1 (BidangModel)
+		$bidang = BidangModel::find($request->form_1_id);
+		if (!$bidang) {
+			return response()->json([
+				'status' => 404,
+				'message' => 'Data form_1 tidak ditemukan.'
+			], 404);
+		}
+
+		// Ambil data asesor dari DataAsesorModel berdasarkan no_reg
 		$asesorData = DataAsesorModel::where('no_reg', $bidang->no_reg)->first();
 
 		if (!$asesorData) {
@@ -70,7 +80,7 @@ class Form5Controller extends BaseController
 			]);
 		}
 
-		// Ambil nama asesor dari DaftarUser berdasarkan user_id
+		// Ambil nama asesor dari tabel users
 		$userAsesor = DaftarUser::where('user_id', $asesorData->user_id)->first();
 		$asesorName = $userAsesor ? $userAsesor->nama : 'Nama tidak tersedia';
 
@@ -84,15 +94,16 @@ class Form5Controller extends BaseController
 		$interview->form_1_id = $request->form_1_id;
 		$interview->asesor_id = $asesorData->user_id;
 		$interview->asesor_name = $asesorName;
-		$interview->status = 'Waiting'; // <-- Tambahan di sini
+		$interview->status = 'Waiting';
 		$interview->save();
 
 		return response()->json([
 			'status' => 201,
 			'message' => 'Pengajuan konsultasi pra asesmen berhasil disimpan.',
 			'data' => $interview
-		]);
+		], 201);
 	}
+
 	
 	public function getJadwalInterviewByAsesor(Request $request)
 	{
@@ -251,22 +262,22 @@ class Form5Controller extends BaseController
 	
 	public function getJadwalInterviewByBidang(Request $request)
 	{
-		// Cek apakah user login
-		$authUser = Auth::user();
+		$authUser = auth()->user();
 
-		// Ambil bidang_id dari input jika ada, default ke user yang sedang login
-		$bidangId = $request->input('bidang_id', optional($authUser)->user_id);
+		if (!$authUser) {
+			return response()->json([
+				'status' => 401,
+				'message' => 'User belum login.',
+				'data' => []
+			], 401);
+		}
 
-		// Validasi apakah user yang dimaksud punya role_id = 3 (bidang)
-		$bidang = DB::table('users')
-			->where('user_id', $bidangId)
-			->where('role_id', 3)
-			->first();
-
-		if (!$bidang) {
+		// Cek apakah user memiliki role Bidang (role_id = 3)
+		$isBidang = $authUser->roles()->where('role_id', 3)->exists();
+		if (!$isBidang) {
 			return response()->json([
 				'status' => 403,
-				'message' => 'Akses ditolak. Hanya user dengan role_id = 3 (Bidang) yang dapat mengakses.',
+				'message' => 'Akses ditolak. Hanya user dengan role Bidang yang dapat mengakses.',
 				'data' => []
 			], 403);
 		}
@@ -309,6 +320,7 @@ class Form5Controller extends BaseController
 			'data' => $jadwal
 		]);
 	}
+
 	
 	public function getLangkahDanKegiatan()
 	{

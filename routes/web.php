@@ -18,10 +18,13 @@ $router->get('/', function () use ($router) {
     return $router->app->version();
 });
 
+// PROGRES TRACKING
+$router->get('/progress/asesi/{asesorId}', 'AsesiPermohonanController@getAsesiProgressByAsesor');
 
 // FORM 1 ATAU FORM PENGAJUAN
 $router->get('/progress/{userId}', 'AsesiPermohonanController@getUserFormProgress');
 $router->post('/get-form1-byasesor', 'AsesiPermohonanController@getForm1ByAsesor');
+$router->post('/get-form1-byasesi', 'AsesiPermohonanController@getForm1ByAsesi');
 
 // Bagian API Form 5
 $router->post('/konsultasi/pra-asesmen', 'Form5Controller@pengajuanKonsultasiPraAsesmen');
@@ -169,8 +172,8 @@ $router->put('/form1/approve/{form_1_id}', 'AsesorController@approveForm1ById');
 $router->post('/jawaban-form2/update/asesor', 'AsesorController@updateJawabanForm2ByNoId');
 // akhir baru
 $router->put('/jawaban-form2/update-if-empty/{user_jawab_form2_id}', 'AsesorController@updateIfEmptyByUserJawabForm2Id');
-
-
+$router->post('/notification', 'NotificationController@getNotifications');
+$router->post('/notification/read', 'NotificationController@markAsRead');
 // Cukup Sampai Sini Form 1
 
  
@@ -200,7 +203,7 @@ $router->post('/input-form3/{user_id}', 'Form3Controller@Form3Input');
 
 
 //Notifikasi 
-$router->get('/send-notification-to-bidang', action: 'Notification@NotifToBidang');
+$router->get('/send-notification-to-bidang', action: 'NotificationController@notifikasiPengajuankeBidang');
 });// buat Authentikasi
 
 
