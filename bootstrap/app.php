@@ -22,7 +22,7 @@ date_default_timezone_set(env('APP_TIMEZONE', 'UTC'));
 |
 */
 
-$app = new Laravel\Lumen\Application(
+$app = new App\CustomLumenApp(
     dirname(__DIR__)
 );
 
