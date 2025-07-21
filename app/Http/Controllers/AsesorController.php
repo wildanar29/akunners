@@ -49,37 +49,6 @@ class AsesorController extends Controller
 		]);
 	}
 	
-	    /**
-     * @OA\Put(
-     *     path="/form1/approve/{form_1_id}",
-     *     summary="Setujui (approve) Form 1 berdasarkan ID",
-     *     tags={"Asesor"},
-     *     @OA\Parameter(
-     *         name="form_1_id",
-     *         in="path",
-     *         description="ID Form 1 yang akan disetujui",
-     *         required=true,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Status form_1 berhasil diperbarui menjadi Approved",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="status", type="integer", example=200),
-     *             @OA\Property(property="message", type="string", example="Status form_1 berhasil diperbarui menjadi Approved.")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Data form_1 tidak ditemukan atau status bukan Waiting",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="status", type="integer", example=404),
-     *             @OA\Property(property="message", type="string", example="Data form_1 tidak ditemukan atau status bukan Waiting.")
-     *         )
-     *     )
-     * )
-     */
-
 	public function approveForm1ById($form_1_id)
 	{
 		$form_1_id = (int) $form_1_id;
@@ -98,12 +67,11 @@ class AsesorController extends Controller
 					'form_1_id' => $form_1_id,
 					'status' => $formDebug->status ?? null,
 					'asesor_id' => $formDebug->asesor_id ?? null,
-					'user_id_pengaju' => $formDebug->user_id ?? null,
+					'user_id_pengaju' => $formDebug->asesi_id ?? null,
 					'current_user_id' => $user->user_id ?? null,
 				]);
 			}
 
-			// Validasi: hanya asesor yang ditugaskan dan status 'Process'
 			$form = BidangModel::where('form_1_id', $form_1_id)
 				->where('status', 'Assigned')
 				->where('asesor_id', $user->user_id)
@@ -189,15 +157,15 @@ class AsesorController extends Controller
 
 	private function kirimNotifikasiApprovalKePengaju($formData)
 	{
-		if (!$formData || empty($formData->user_id)) {
+		if (!$formData || empty($formData->asesi_id)) {
 			Log::warning('Gagal kirim notifikasi: user_id pengaju kosong');
 			return;
 		}
 
-		$pengaju = DaftarUser::where('user_id', $formData->user_id)->first();
+		$pengaju = DaftarUser::where('user_id', $formData->asesi_id)->first();
 
 		if (!$pengaju) {
-			Log::warning('User pengaju tidak ditemukan', ['user_id' => $formData->user_id]);
+			Log::warning('User pengaju tidak ditemukan', ['user_id' => $formData->asesi_id]);
 			return;
 		}
 

@@ -77,7 +77,7 @@ class AsesiPermohonanController extends Controller
 				}
 			}
 
-			$alreadySubmitted = BidangModel::where('asesi_id', $user->asesi_id)
+			$alreadySubmitted = BidangModel::where('asesi_id', $user->user_id)
 				->where('pk_id', $pkId)
 				->first();
 

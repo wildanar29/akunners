@@ -34,80 +34,8 @@ class BidangController extends Controller
 	{
 		$this->oneSignalService = $oneSignalService;
 	}
-/**
- * @OA\Post(
- *     path="/input-asesor",
- *     summary="Menentukan status asesor pada form 1",
- *     description="Fungsi ini digunakan untuk meng-approve (Process) atau menolak (Cancel) asesor pada form_1.",
- *     operationId="insertAsesor",
- *     tags={"Bidang"},
- *     security={{"bearerAuth": {}}},
- *
- *     @OA\RequestBody(
- *         required=true,
- *         @OA\JsonContent(
- *             required={"status"},
- *             @OA\Property(property="status", type="string", enum={"Process", "Cancel"}, example="Process"),
- *             @OA\Property(property="no_reg", type="string", example="REG123", description="Wajib jika status Process"),
- *             @OA\Property(property="form_1_id", type="integer", example=1, description="ID Form 1 yang akan di-update"),
- *             @OA\Property(property="keterangan", type="string", example="Dokumen tidak lengkap", description="Wajib jika status Cancel")
- *         )
- *     ),
- *
- *     @OA\Response(
- *         response=200,
- *         description="Berhasil memproses status asesor",
- *         @OA\JsonContent(
- *             @OA\Property(property="success", type="boolean", example=true),
- *             @OA\Property(property="message", type="string", example="Data asesor berhasil diupdate."),
- *             @OA\Property(property="data", type="object"),
- *             @OA\Property(property="status_code", type="integer", example=200)
- *         )
- *     ),
- *
- *     @OA\Response(
- *         response=400,
- *         description="Validasi gagal",
- *         @OA\JsonContent(
- *             @OA\Property(property="success", type="boolean", example=false),
- *             @OA\Property(property="message", type="string", example="Validasi gagal. Pastikan input sesuai."),
- *             @OA\Property(property="errors", type="object"),
- *             @OA\Property(property="status_code", type="integer", example=400)
- *         )
- *     ),
- *
- *     @OA\Response(
- *         response=403,
- *         description="Tidak punya akses",
- *         @OA\JsonContent(
- *             @OA\Property(property="success", type="boolean", example=false),
- *             @OA\Property(property="message", type="string", example="Anda tidak memiliki izin untuk melakukan aksi ini."),
- *             @OA\Property(property="status_code", type="integer", example=403)
- *         )
- *     ),
- *
- *     @OA\Response(
- *         response=404,
- *         description="Data tidak ditemukan",
- *         @OA\JsonContent(
- *             @OA\Property(property="success", type="boolean", example=false),
- *             @OA\Property(property="message", type="string", example="Data tidak ditemukan untuk form_1_id."),
- *             @OA\Property(property="status_code", type="integer", example=404)
- *         )
- *     ),
- *
- *     @OA\Response(
- *         response=500,
- *         description="Kesalahan server",
- *         @OA\JsonContent(
- *             @OA\Property(property="success", type="boolean", example=false),
- *             @OA\Property(property="message", type="string", example="Terjadi kesalahan saat memproses data."),
- *             @OA\Property(property="error", type="string", example="Exception message"),
- *             @OA\Property(property="status_code", type="integer", example=500)
- *         )
- *     )
- * )
- */
+
+	
 
    public function insertAsesor(Request $request)  
 	{
