@@ -177,8 +177,6 @@ class MailController extends Controller
         ], 200);
     }
 
-	
-
     public function resetOtpPassword(Request $request)
     {
         // Validasi input
