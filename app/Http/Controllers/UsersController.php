@@ -5,22 +5,21 @@ namespace App\Http\Controllers;
 use App\Models\DaftarUser;
 use App\Models\HistoryJabatan;
 use App\Models\WorkingUnit;
-use App\Models\JabatanModel; 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash; // Pastikan ini ditambahkan di atas kontroler Anda
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\DB; // Tambahkan DB untuk query manual
-use Illuminate\Support\Facades\Storage;
+use App\Models\JabatanModel;
 use App\Models\Role;
 use App\Models\UserRole;
 use App\Models\UsersOtp;
 use App\Models\DataAsesorModel;
 use App\Models\PasswordReset;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Log;
 use OpenApi\Annotations as OA;
 use Tymon\JWTAuth\Facades\JWTAuth; 
-use Illuminate\Support\Facades\Redis; // Tambahkan Redis facade
-use Illuminate\Support\Facades\Log;
-
 
 	/**
 	* @OA\Info(
@@ -29,95 +28,30 @@ use Illuminate\Support\Facades\Log;
 	*     description="Dokumentasi API untuk aplikasi Akunurse", 
 	* )
 	*/
-	class UsersController extends Controller
-	{
-	/**
-     * @OA\Post(
-     *     path="/register-akun",
-     *     summary="Mendaftarkan akun baru untuk Pengguna dan disimpan ke Redis",
-     *     operationId="RegisterAkunNurse",
-     *     tags={"Akun"},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"nik", "nama", "email", "role_id", "no_telp"},
-     *             type="object",
-     *             @OA\Property(property="nik", type="string", example="240076", description="Nomor Induk Karyawan (NIK)"),
-     *             @OA\Property(property="nama", type="string", example="I Gede Daiva Andika", description="Nama lengkap perawat."),
-     *             @OA\Property(property="email", type="string", example="igededaivaa@gmail.com", description="Email untuk akun."),
-	 *             @OA\Property(property="role_id", type="id", example="1", description="Asesi"),
-     *             @OA\Property(property="no_telp", type="string", example="089665795500", description="Nomor telepon akun.")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Akun berhasil didaftarkan.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="status", type="integer", example=200),
-     *             @OA\Property(property="pesan", type="string", example="Akun Registrasi Berhasil dan disimpan di Redis."),
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(property="nik", type="string", example="240076"),
-     *                 @OA\Property(property="nama", type="string", example="I Gede Daiva Andika"),
-     *                 @OA\Property(property="email", type="string", example="igededaivaa@gmail.com"),
-	 *                 @OA\Property(property="role_id", type="id", example="1"),
-     *                 @OA\Property(property="no_telp", type="string", example="089665795500")
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=400,
-     *         description="Validasi data gagal.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="status", type="integer", example=400),
-     *             @OA\Property(property="pesan", type="string", example="Validasi data gagal. Silakan periksa input Anda."),
-     *             @OA\Property(property="kesalahan", type="object")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Resource yang diminta tidak ditemukan.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="status", type="integer", example=404),
-     *             @OA\Property(property="pesan", type="string", example="Resource yang diminta tidak ditemukan.")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Terjadi kesalahan pada server.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="status", type="integer", example=500),
-     *             @OA\Property(property="pesan", type="string", example="Terjadi kesalahan pada server."),
-     *             @OA\Property(property="kesalahan", type="string", example="Database connection failed.")
-     *         )
-     *     )
-     * )
-     */
-	 
+class UsersController extends Controller
+{
 	public function RegisterAkunNurse(Request $request)
 	{
 		try {
-			// Validasi umum
+			// Gunakan role_id dari request, tapi akan diproses sebagai current_role_id
+			$requestData = $request->all();
+			$roleId = $requestData['role_id'] ?? null;
+
 			$rules = [
 				'nik' => 'required|unique:users',
 				'nama' => 'required|string|max:255',
 				'email' => 'required|email|unique:users',
-				'role_id' => 'required|integer|exists:roles,role_id',
+				'role_id' => 'required|integer|exists:roles,role_id', // tetap role_id untuk input
 				'no_telp' => 'required|max:13|unique:users',
 			];
 
-			// Jika role_id = 2 (asesor), tambahkan validasi wajib
-			if ($request->role_id == 2) {
+			if (in_array($roleId, [2, 3])) {
 				$rules['no_reg'] = 'required|string';
-				$rules['tanggal_berlaku'] = 'required|date';
+				$rules['valid_from'] = 'required|date';
+				$rules['valid_until'] = 'required|date|after_or_equal:valid_from';
 			}
 
-			$validator = Validator::make($request->all(), $rules);
+			$validator = Validator::make($requestData, $rules);
 
 			if ($validator->fails()) {
 				return response()->json([
@@ -127,124 +61,51 @@ use Illuminate\Support\Facades\Log;
 				], 400);
 			}
 
-			// Ambil nama role dari tabel roles
-			$role = Role::where('role_id', $request->role_id)->first();
+			// Ambil role name berdasarkan role_id dari request
+			$role = Role::where('role_id', $roleId)->first();
 			$roleName = $role ? $role->role_name : null;
 
-			// Simpan data user ke dalam database
-			$user = DaftarUser::create([
-				'nik' => $request->nik,
-				'nama' => $request->nama,
-				'email' => $request->email,
-				'no_telp' => $request->no_telp,
-				//'password' => bcrypt('password_default'), // Ganti sesuai kebutuhan
-			]);
-
-			// Simpan role ke tabel user_role
-			UserRole::create([
-				'user_id' => $user->user_id,
-				'role_id' => $request->role_id,
-			]);
-
-			// Jika asesor, simpan ke tabel data_asesor
-			if ($request->role_id == 2) {
-				DataAsesorModel::create([
-					'user_id' => $user->user_id,
-					'no_reg' => $request->no_reg,
-					'tanggal_berlaku' => $request->tanggal_berlaku,
-					'aktif' => 1,
-				]);
-			}
-
-			// Simpan data ke Redis (opsional)
-			$redisKey = 'user:' . $request->nik;
-			$redisEmailKey = 'user_by_email:' . $request->email;
-
+			// Data yang akan disimpan ke Redis
 			$data = [
-				'nik' => $request->nik,
-				'nama' => $request->nama,
-				'email' => $request->email,
-				'no_telp' => $request->no_telp,
-				'role_id' => $request->role_id,
-				'role_name' => $roleName,
+				'nik' => $requestData['nik'],
+				'nama' => $requestData['nama'],
+				'email' => $requestData['email'],
+				'no_telp' => $requestData['no_telp'],
+				'current_role_id' => $roleId, // simpan sebagai current_role_id
+				'role_name' => $roleName
 			];
 
-			if ($request->role_id == 2) {
-				$data['no_reg'] = $request->no_reg;
-				$data['tanggal_berlaku'] = $request->tanggal_berlaku;
+			if (in_array($roleId, [2, 3])) {
+				$data['no_reg'] = $requestData['no_reg'];
+				$data['valid_from'] = $requestData['valid_from'];
+				$data['valid_until'] = $requestData['valid_until'];
 			}
 
-			Redis::set($redisKey, json_encode($data));
-			Redis::set($redisEmailKey, $request->nik);
+			// Simpan ke Redis
+			Redis::set('user:' . $requestData['nik'], json_encode($data));
+			Redis::set('user_by_email:' . $requestData['email'], $requestData['nik']);
 
+			// Response
 			return response()->json([
 				'status' => 200,
-				'message' => 'Akun berhasil didaftarkan dan disimpan di Redis.',
-				'data' => $data,
+				'message' => 'Account registered successfully and stored in Redis.',
+				'data' => $data
 			], 200);
+
+		} catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+			return response()->json([
+				'status' => 404,
+				'message' => 'Resource not found.',
+			], 404);
 
 		} catch (\Exception $e) {
 			return response()->json([
 				'status' => 500,
-				'message' => 'Terjadi kesalahan saat mendaftarkan akun.',
+				'message' => 'Internal Server Error',
 				'error' => $e->getMessage(),
 			], 500);
 		}
 	}
-
- 
- 
- /**
- * @OA\Post(
- *     path="/create-password",
- *     summary="Membuat password pengguna untuk Register Akun",
- *     description="API ini digunakan untuk membuat password pengguna berdasarkan nomor telepon setelah OTP terverifikasi.",
- *     tags={"Akun"},
- *     @OA\RequestBody(
- *         required=true,
- *         @OA\JsonContent(
- *             type="object",
- *             required={"no_telp", "password", "confirm_password"},
- *             @OA\Property(property="no_telp", type="string", example="08123456789"),
- *             @OA\Property(property="password", type="string", example="Password123"),
- *             @OA\Property(property="confirm_password", type="string", example="Password123")
- *         )
- *     ),
- *     @OA\Response(
- *         response=200,
- *         description="Password created successfully.",
- *         @OA\JsonContent(
- *             @OA\Property(property="success", type="boolean", example=true),
- *             @OA\Property(property="message", type="string", example="Password created successfully and user registered.")
- *         )
- *     ),
- *     @OA\Response(
- *         response=400,
- *         description="Validation failed.",
- *         @OA\JsonContent(
- *             @OA\Property(property="success", type="boolean", example=false),
- *             @OA\Property(property="message", type="string", example="Validation failed. Please check your input.")
- *         )
- *     ),
- *     @OA\Response(
- *         response=401,
- *         description="MISSING_USER_DATA",
- *         @OA\JsonContent(
- *             @OA\Property(property="success", type="boolean", example=false),
- *             @OA\Property(property="message", type="string", example="User data not found in Redis.")
- *         )
- *     ),
- *     @OA\Response(
- *         response=500,
- *         description="Server error.",
- *         @OA\JsonContent(
- *             @OA\Property(property="success", type="boolean", example=false),
- *             @OA\Property(property="message", type="string", example="An error occurred on the server.")
- *         )
- *     )
- * )
- */
-
 
 	public function createPassword(Request $request)
 	{
@@ -256,6 +117,11 @@ use Illuminate\Support\Facades\Log;
 		]);
 
 		if ($validator->fails()) {
+			\Log::warning('Password creation failed: Invalid input.', [
+				'errors' => $validator->errors(),
+				'request' => $request->all()
+			]);
+
 			return response()->json([
 				'status' => 'ERROR',
 				'errorCode' => 'INVALID_INPUT',
@@ -265,10 +131,11 @@ use Illuminate\Support\Facades\Log;
 			], 400);
 		}
 
-		$email = $request->input('email');
-		$nik = Redis::get('user_by_email:' . $email);
+		$emailInput = $request->input('email');
+		$nik = Redis::get('user_by_email:' . $emailInput);
 
 		if (!$nik) {
+			\Log::error('NIK not found in Redis for email.', ['email' => $emailInput]);
 			return response()->json([
 				'status' => 'ERROR',
 				'errorCode' => 'MISSING_USER_DATA',
@@ -278,8 +145,8 @@ use Illuminate\Support\Facades\Log;
 		}
 
 		$userData = Redis::get('user:' . $nik);
-
 		if (!$userData) {
+			\Log::error('User data not found in Redis by NIK.', ['nik' => $nik]);
 			return response()->json([
 				'status' => 'ERROR',
 				'errorCode' => 'MISSING_USER_DATA',
@@ -289,15 +156,13 @@ use Illuminate\Support\Facades\Log;
 		}
 
 		$user = json_decode($userData, true);
+		$nama = $user['nama'] ?? null;
+		$no_telp = $user['no_telp'] ?? null;
+		$current_role_id = $user['current_role_id'] ?? $user['role_id'] ?? null;
+		$role_name = $user['role_name'] ?? null;
 
-		$nama         = $user['nama'] ?? null;
-		$no_telp      = $user['no_telp'] ?? null;
-		$role_id      = $user['role_id'] ?? null;
-		$role_name    = $user['role_name'] ?? null;
-		$no_reg       = $user['no_reg'] ?? null;
-		$tanggal_berlaku = $user['tanggal_berlaku'] ?? null;
-
-		if (!$nama || !$no_telp || !$role_id) {
+		if (!$nama || !$no_telp || !$current_role_id) {
+			\Log::error('Incomplete user data from Redis.', compact('nik', 'nama', 'no_telp', 'current_role_id', 'user'));
 			return response()->json([
 				'status' => 'ERROR',
 				'errorCode' => 'MISSING_USER_INFO',
@@ -307,58 +172,72 @@ use Illuminate\Support\Facades\Log;
 		}
 
 		try {
-			// Simpan user ke database
-			$newUser = DaftarUser::create([
+			// Mulai transaction
+			DB::beginTransaction();
+
+			$user = DaftarUser::create([
 				'nik' => $nik,
 				'nama' => $nama,
 				'no_telp' => $no_telp,
-				'email' => $email,
+				'email' => $emailInput,
+				'current_role_id' => $current_role_id,
 				'password' => Hash::make($request->password),
 			]);
 
-			// Simpan role ke user_role
-			UserRole::create([
-				'user_id' => $newUser->user_id,
-				'role_id' => $role_id
-			]);
+			// Simpan role sesuai current_role_id dan semua role di bawahnya
+			for ($role = 1; $role <= $current_role_id; $role++) {
+				UserRole::create([
+					'user_id' => $user->user_id,
+					'role_id' => $role,
+				]);
+			}
 
-			// Jika asesor, simpan ke data_asesor
-			if ($role_id == 2) {
-				if (!$no_reg || !$tanggal_berlaku) {
+			// Jika asesor
+			if (in_array($current_role_id, [2, 3])) {
+				$userData = json_decode(Redis::get('user:' . $nik), true);
+				$no_reg = $userData['no_reg'] ?? $request->input('no_reg');
+				$valid_from = $userData['valid_from'] ?? $request->input('valid_from');
+				$valid_until = $userData['valid_until'] ?? $request->input('valid_until');
+
+				if (!$no_reg || !$valid_from || !$valid_until) {
+					\Log::error('Asesor data incomplete.', compact('nik', 'no_reg', 'valid_from', 'valid_until', 'userData'));
+					DB::rollBack();
 					return response()->json([
 						'status' => 'ERROR',
 						'errorCode' => 'MISSING_ASESOR_DATA',
-						'message' => 'No_reg or tanggal_berlaku is missing for asesor.',
+						'message' => 'No_reg, valid_from, or valid_until is missing for asesor.',
 						'data' => []
 					], 400);
 				}
 
 				DataAsesorModel::create([
-					'user_id' => $newUser->user_id,
+					'user_id' => $user->user_id,
 					'no_reg' => $no_reg,
-					'tanggal_berlaku' => $tanggal_berlaku,
+					'valid_from' => $valid_from,
+					'valid_until' => $valid_until,
 					'aktif' => 1,
 				]);
 			}
 
-			// Bersihkan cache Redis
+			DB::commit(); // Sukses
+
+			// Bersihkan Redis
 			Redis::del('user:' . $nik);
-			Redis::del('user_by_email:' . $email);
+			Redis::del('user_by_email:' . $emailInput);
 
 			return response()->json([
 				'status' => 'SUCCESS',
 				'message' => 'Password created successfully and user registered.',
-				'data' => [
-					'nik' => $nik,
-					'name' => $nama,
-					'no_telp' => $no_telp,
-					'email' => $email,
-					'role_id' => $role_id,
-					'role_name' => $role_name,
-				],
+				'data' => compact('nik', 'nama', 'no_telp', 'emailInput', 'current_role_id', 'role_name')
 			], 200);
 
 		} catch (\Exception $e) {
+			DB::rollBack(); // Gagal, rollback semua query
+			\Log::error('Exception during user registration.', [
+				'error' => $e->getMessage(),
+				'trace' => $e->getTraceAsString()
+			]);
+
 			return response()->json([
 				'status' => 'ERROR',
 				'message' => 'Server error.',
@@ -367,91 +246,14 @@ use Illuminate\Support\Facades\Log;
 		}
 	}
 
-	
-/**
- * @OA\Post(
- *     path="/new-password",
- *     summary="Memperbarui password pengguna saat melakukan Reset Password",
- *     description="API ini digunakan untuk memperbarui password pengguna setelah verifikasi.",
- *     tags={"Akun"},
- *     @OA\RequestBody(
- *         required=true,
- *         @OA\JsonContent(
- *             required={"no_telp", "new_password", "confirm_password"},
- *             @OA\Property(
- *                 property="no_telp",
- *                 type="string",
- *                 example="089665795500",
- *                 description="Nomor telepon pengguna yang terdaftar."
- *             ),
- *             @OA\Property(
- *                 property="new_password",
- *                 type="string",
- *                 example="strongpassword123",
- *                 description="Password baru untuk pengguna."
- *             ),
- *             @OA\Property(
- *                 property="confirm_password",
- *                 type="string",
- *                 example="strongpassword123",
- *                 description="Konfirmasi password yang harus sama dengan password baru."
- *             )
- *         )
- *     ),
- *     @OA\Response(
- *         response=200,
- *         description="Password updated successfully.",
- *         @OA\JsonContent(
- *             @OA\Property(property="status", type="string", example="SUCCESS"),
- *             @OA\Property(property="message", type="string", example="Password updated successfully."),
- *             @OA\Property(property="data", type="object", additionalProperties={"type": "string"})
- *         )
- *     ),
- *     @OA\Response(
- *         response=400,
- *         description="Invalid data.",
- *         @OA\JsonContent(
- *             @OA\Property(property="status", type="string", example="ERROR"),
- *             @OA\Property(property="errorCode", type="string", example="INVALID_INPUT"),
- *             @OA\Property(property="message", type="string", example="Invalid data."),
- *             @OA\Property(property="errorMessages", type="object"),
- *             @OA\Property(property="data", type="array", @OA\Items())
- *         )
- *     ),
- *     @OA\Response(
- *         response=404,
- *         description="User not found.",
- *         @OA\JsonContent(
- *             @OA\Property(property="status", type="string", example="ERROR"),
- *             @OA\Property(property="errorCode", type="string", example="USER_NOT_FOUND"),
- *             @OA\Property(property="message", type="string", example="User not found."),
- *             @OA\Property(property="errorMessages", type="array", @OA\Items()),
- *             @OA\Property(property="data", type="array", @OA\Items())
- *         )
- *     ),
- *     @OA\Response(
- *         response=500,
- *         description="Server error.",
- *         @OA\JsonContent(
- *             @OA\Property(property="status", type="string", example="ERROR"),
- *             @OA\Property(property="errorCode", type="string", example="SERVER_ERROR"),
- *             @OA\Property(property="message", type="string", example="An error occurred on the server."),
- *             @OA\Property(property="errorMessages", type="array", @OA\Items()),
- *             @OA\Property(property="data", type="array", @OA\Items())
- *         )
- *     )
- * )
- */
-
-
-   public function LoginAkunNurse(Request $request)
+	public function LoginAkunNurse(Request $request)
 	{
 		try {
-			// Validasi input
+			// Validasi data
 			$validator = Validator::make($request->all(), [
 				'nik' => 'required',
 				'password' => 'required',
-				'device_token' => 'nullable'
+				//'player_id' => 'required' // Pastikan frontend mengirim Player ID OneSignal
 			]);
 
 			if ($validator->fails()) {
@@ -459,11 +261,11 @@ use Illuminate\Support\Facades\Log;
 					'status' => 400,
 					'message' => 'Data validation failed. Please check your input.',
 					'errors' => $validator->errors(),
-					'solution' => 'Ensure all required fields are filled. NIK and password cannot be empty.'
+					'solution' => 'Ensure all required fields are filled. NIK, password, and Player ID cannot be empty.'
 				], 400);
 			}
 
-			// Cari user berdasarkan NIK
+			// Cari pengguna berdasarkan NIK
 			$user = DaftarUser::where('nik', $request->nik)->first();
 
 			if (!$user) {
@@ -480,273 +282,159 @@ use Illuminate\Support\Facades\Log;
 				return response()->json([
 					'status' => 401,
 					'message' => 'Incorrect password.',
-					'details' => 'The password you entered does not match the database.',
-					'solution' => 'Ensure you enter the correct password. If forgotten, contact the admin to reset.'
+					'details' => 'The password you entered does not match the data in the database.',
+					'solution' => 'Ensure you enter the correct password. If forgotten, contact the admin to reset your password.'
 				], 401);
 			}
 
-			// ✅ Ambil semua role yang dimiliki user
-			$userRoles = DB::table('user_role')
-				->join('roles', 'user_role.role_id', '=', 'roles.role_id')
-				->where('user_role.user_id', $user->user_id)
-				->select('roles.role_id', 'roles.role_name')
-				->get();
+			// Ambil nama role berdasarkan role_id
+			$role = Role::where('role_id', $user->current_role_id)->first();
+			// Pastikan role_name ada
+			$roleName = $role ? $role->role_name : null;
 
-			// ✅ Ambil current_role dari field current_role_id di tabel users
-			$currentRole = null;
-			if ($user->current_role_id) {
-				$currentRole = DB::table('roles')
-					->where('role_id', $user->current_role_id)
-					->select('role_id', 'role_name')
-					->first();
-			} else {
-				// Jika current_role_id belum di-set, pakai role pertama lalu simpan
-				$defaultRole = $userRoles->first();
-				if ($defaultRole) {
-					$user->current_role_id = $defaultRole->role_id;
-					$user->save();
-					$currentRole = $defaultRole;
-				}
-			}
 
-			// Ambil data jabatan terakhir & unit kerja
+				// Ambil history jabatan terbaru untuk mendapatkan working_unit_id dan jabatan_id
 			$latestHistory = DB::table('history_jabatan_user')
-				->where('user_id', $user->user_id)
-				->latest('created_at')
-				->first();
+			->where('user_id', $user->user_id)
+			->latest('created_at') // Ambil yang terbaru berdasarkan tanggal
+			->first();
 
 			$working_unit_id = $latestHistory->working_unit_id ?? null;
 			$jabatan_id = $latestHistory->jabatan_id ?? null;
 
+			// Ambil nama working unit dan area kerja
 			$workingUnit = DB::table('working_unit')
 				->join('working_area', 'working_unit.working_area_id', '=', 'working_area.working_area_id')
 				->where('working_unit.working_unit_id', $working_unit_id)
 				->select(
-					'working_unit.working_unit_id',
 					'working_unit.working_unit_name',
 					'working_area.working_area_id',
 					'working_area.working_area_name'
 				)
 				->first();
 
+			// Ambil nama jabatan
 			$jabatan = DB::table('jabatan')
 				->where('jabatan_id', $jabatan_id)
-				->select('jabatan_id', 'nama_jabatan')
+				->select('nama_jabatan')
 				->first();
 
-			// Generate token
-			$token = JWTAuth::fromUser($user);
-			$user->token = $token;
-			if ($request->filled('device_token')) {
-				$user->device_token = $request->device_token;
-				$user->save();
-			}
+			$nama_jabatan = $jabatan ? $jabatan->nama_jabatan : null;
+			
+				// Generate JWT token  
+			$token = JWTAuth::fromUser($user); 
 
+			// Simpan token ke dalam tabel users  
+			$user->token = $token; // Menyimpan token ke dalam kolom token  
+			$user->save(); // Simpan perubahan ke database  
+
+				// Simpan Player ID (OneSignal) ke dalam kolom device_token
+				$user->device_token = $request->player_id;
+				$user->save();
+	
+			
+			// Berhasil login
 			return response()->json([
 				'status' => 200,
 				'message' => 'Login successful.',
 				'data' => [
 					'name' => $user->nama,
 					'nik' => $user->nik,
-					'user_id' => $user->user_id,
-					'roles' => $userRoles,
-					'current_role' => $currentRole,
+					'user_id' => $user->user_id, // Return user_id
+					'role_id' => $user->current_role_id, // Return current_role_id
+					'role_name' => $roleName, // Add role_name if available
 					'working_unit' => $workingUnit ? [
-						'working_unit_id' => $workingUnit->working_unit_id,
+						'working_unit_id' => $working_unit_id,
 						'working_unit_name' => $workingUnit->working_unit_name,
 						'working_area_id' => $workingUnit->working_area_id,
 						'working_area_name' => $workingUnit->working_area_name
 					] : null,
-					'jabatan' => $jabatan ? [
-						'jabatan_id' => $jabatan->jabatan_id,
-						'nama_jabatan' => $jabatan->nama_jabatan
-					] : null,
+					'jabatan' => [
+						'jabatan_id' => $jabatan_id,
+						'nama_jabatan' => $nama_jabatan
+					],
+
 					'token' => $token,
 				]
 			], 200);
-		} catch (\Exception $e) {
-			Log::error("LoginAkunNurse Error: " . $e->getMessage());
+			} catch (\Exception $e) {
 			return response()->json([
 				'status' => 500,
-				'message' => 'Server error occurred.',
+				'message' => 'An error occurred on the server.',
 				'details' => $e->getMessage(),
-				'solution' => 'Please contact the system administrator for support.'
+				'solution' => 'Please contact the system administrator for further assistance.'
 			], 500);
 		}
+	}  
+
+    public function newPassword(Request $request)
+	{
+		// Validasi input
+		$validator = Validator::make($request->all(), [
+			'email' => 'required|email',                   // Email wajib diisi dan valid
+			'password' => 'required|min:6',                // Password minimal 6 karakter
+			'confirm_password' => 'required|same:password' // Konfirmasi password harus cocok
+		]);
+
+		if ($validator->fails()) {
+			return response()->json([
+				'status' => 'ERROR',
+				'errorCode' => 'INVALID_INPUT',
+				'message' => 'Invalid data.',
+				'errorMessages' => $validator->errors(),
+				'data' => []
+			], 400);
+		}
+
+		// Ambil data dari request
+		$email = $request->input('email');
+		$password = $request->input('password');
+
+		// Cari record di tabel password_reset berdasarkan email
+		$otpRecord = PasswordReset::where('email', $email)
+			->where('validate_otp_password', true)
+			->first();
+
+		if (!$otpRecord) {
+			return response()->json([
+				'status' => 'ERROR',
+				'errorCode' => 'OTP_NOT_VALIDATED',
+				'message' => 'OTP code has not been validated or was not found.',
+				'errorMessages' => [],
+				'data' => []
+			], 404);
+		}
+
+		// Cari pengguna berdasarkan email di tabel users (DaftarUser)
+		$user = DaftarUser::where('email', $email)->first();
+
+		if (!$user) {
+			return response()->json([
+				'status' => 'ERROR',
+				'errorCode' => 'USER_NOT_FOUND',
+				'message' => 'User not found.',
+				'errorMessages' => [],
+				'data' => []
+			], 404);
+		}
+
+		// Update password
+		$user->update([
+			'password' => Hash::make($password)
+		]);
+
+		// Hapus record OTP setelah dipakai
+		$otpRecord->delete();
+
+		// Respon sukses
+		return response()->json([
+			'status' => 'SUCCESS',
+			'errorCode' => null,
+			'message' => 'Password has been successfully created or updated.',
+			'errorMessages' => [],
+			'data' => []
+		], 200);
 	}
-
-
-
-	
-	
-/**
- * @OA\Get(
- *     path="/login-akun",
- *     summary="Login untuk akun nurse",
- *     description="API ini digunakan untuk otentikasi pengguna berdasarkan NIK dan password.",
- *     tags={"Akun"},
- *     @OA\RequestBody(
- *         required=true,
- *         @OA\JsonContent(
- *             type="object",
- *             required={"nik", "password"},
- *             @OA\Property(
- *                 property="nik",
- *                 type="string",
- *                 example="240076",
- *                 description="Nomor Induk Karyawan (NIK) pengguna."
- *             ),
- *             @OA\Property(
- *                 property="password",
- *                 type="string",
- *                 example="123456",
- *                 description="Password pengguna untuk autentikasi."
- *             )
- *         )
- *     ),
- *     @OA\Response(
- *         response=200,
- *         description="Login successful.",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="status", type="integer", example=200),
- *             @OA\Property(property="message", type="string", example="Login successful."),
- *             @OA\Property(property="data", type="object",
- *                 @OA\Property(property="name", type="string", example="John Doe"),
- *                 @OA\Property(property="user_id", type="int", example="10"),
- *                 @OA\Property(property="role_id", type="integer", example=1),
- *                 @OA\Property(property="role_name", type="string", example="Nurse"),
- *                 @OA\Property(property="working_unit_id", type="integer", example=101),
- *                 @OA\Property(property="working_unit_name", type="string", example="Pediatrics Unit"),
- *                 @OA\Property(property="working_area_id", type="integer", example=201),
- *                 @OA\Property(property="working_area_name", type="string", example="Hospital A"),
- *          	   @OA\Property(property="jabatan_id", type="integer", example="2"),
- * 				   @OA\Property(property="nama_jabatan", type="string", example="PJ SHIFT"),
- *                 @OA\Property(property="token", type="string", example="eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgzL2xvZ2luLWFrdW4iLCJpYXQiOjE3Mzc1OTYwNzcsImV4cCI6MTczNzU5OTY3NywibmJmIjoxNzM3NTk2MDc3LCJqdGkiOiI0QjBMQmpGTUxhS0FVT3BvIiwic3ViIjoiMTAiLCJwcnYiOiIzODliYmRmNjI3ZjYwNDc5ODdhNDUzMmExNzdmYTY1MWRhMDQ1YTMxIn0.AsdE8YkcNEzV-sOn5hpwCG0simXmwTj3nkmWT2Y7XBA")
- *             ),
- *             @OA\Property(property="detailed_message", type="string", example="Login successful")
- *         )
- *     ),
- *     @OA\Response(
- *         response=400,
- *         description="Data validation failed.",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="status", type="integer", example=400),
- *             @OA\Property(property="message", type="string", example="Validation failed. Please check your input."),
- *             @OA\Property(property="errors", type="object", additionalProperties={"type": "string"})
- *         )
- *     ),
- *     @OA\Response(
- *         response=401,
- *         description="Unauthorized access.",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="status", type="integer", example=401),
- *             @OA\Property(property="message", type="string", example="Unauthorized. Incorrect NIK or password."),
- *             @OA\Property(property="errors", type="array", @OA\Items())
- *         )
- *     ),
- *     @OA\Response(
- *         response=500,
- *         description="Internal server error.",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="status", type="integer", example=500),
- *             @OA\Property(property="message", type="string", example="An error occurred on the server."),
- *             @OA\Property(property="errors", type="array", @OA\Items())
- *         )
- *     )
- * )
- */
-
-    
-		
-/**
- * @OA\Post(
- *     path="/update-profile/{nik}",
- *     summary="Update data akun perawat berdasarkan Nomor Induk Karyawan.",
- *     description="API ini memungkinkan pembaruan data akun perawat berdasarkan Nomor Induk Karyawan (NIK).",
- *     tags={"Profile"},
- *     @OA\Parameter(
- *         name="nik",
- *         in="path",
- *         required=true,
- *         description="Nomor Induk Karyawan (NIK) perawat.",
- *         @OA\Schema(type="string", example="987654321001")
- *     ),
- *     @OA\RequestBody(
- *         required=true,
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="nama", type="string", example="Siti Aminah", description="Nama lengkap perawat."),
- *             @OA\Property(property="email", type="string", example="siti.aminah@example.com", description="Email perawat."),
- *             @OA\Property(property="no_telp", type="string", example="081234567890", description="Nomor telepon perawat."),
- *             @OA\Property(property="tempat_lahir", type="string", example="Jakarta", description="Tempat lahir perawat."),
- *             @OA\Property(property="tanggal_lahir", type="string", format="date", example="1992-02-15", description="Tanggal lahir dalam format YYYY-MM-DD."),
- *             @OA\Property(property="kewarganegaraan", type="string", example="Indonesia", description="Kewarganegaraan perawat."),
- *             @OA\Property(property="jenis_kelamin", type="string", enum={"L", "P"}, example="P", description="Jenis kelamin: L untuk laki-laki, P untuk perempuan."),
- *             @OA\Property(property="pendidikan", type="string", example="D3 Keperawatan", description="Pendidikan terakhir perawat."),
- *             @OA\Property(property="tahun_lulus", type="integer", example=2010, description="Tahun lulus."),
- *             @OA\Property(property="provinsi", type="string", example="DKI Jakarta", description="Provinsi tempat tinggal."),
- *             @OA\Property(property="kota", type="string", example="Jakarta Selatan", description="Kota tempat tinggal."),
- *             @OA\Property(property="alamat", type="string", example="Jl. Melati No. 5", description="Alamat tempat tinggal."),
- *             @OA\Property(property="kode_pos", type="string", example="12000", description="Kode pos tempat tinggal."),
- *             @OA\Property(property="working_unit_id", type="integer", example=8, description="ID unit kerja."),
- *  		   @OA\Property(property="jabatan_id", type="integer", example=8, description="ID Jabatan."),
- *             @OA\Property(property="foto", type="string", format="binary", description="File foto profil perawat.")
- *         )
- *     ),
- *     @OA\Response(
- *         response=200,
- *         description="Nurse account successfully updated.",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="status", type="integer", example=200),
- *             @OA\Property(property="message", type="string", example="Data successfully updated."),
- *             @OA\Property(property="data", type="object",
- *                 @OA\Property(property="nik", type="string", example="987654321001"),
- *                 @OA\Property(property="nama", type="string", example="Siti Aminah"),
- *                 @OA\Property(property="role_name", type="string", example="Nurse"),
- *                 @OA\Property(property="working_unit_name", type="string", example="UGD"),
- *                 @OA\Property(property="working_area_name", type="string", example="Intalasi Gawat Darurat")
- *             )
- *         )
- *     ),
- *     @OA\Response(
- *         response=400,
- *         description="Invalid input data.",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="status", type="integer", example=400),
- *             @OA\Property(property="message", type="string", example="Data validation failed. Please check your input."),
- *             @OA\Property(property="errors", type="object",
- *                 @OA\Property(property="email", type="string", example="The email field is required.")
- *             )
- *         )
- *     ),
- *     @OA\Response(
- *         response=404,
- *         description="Nurse account not found.",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="status", type="integer", example=404),
- *             @OA\Property(property="pesan", type="string", example="Data tidak ditemukan."),
- *             @OA\Property(property="message", type="string", example="Nurse account not found.")
- *         )
- *     ),
- *     @OA\Response(
- *         response=500,
- *         description="Terjadi kesalahan pada server.",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="status", type="integer", example=500),
- *             @OA\Property(property="pesan", type="string", example="Kesalahan server."),
- *             @OA\Property(property="deskripsi", type="string", example="An error occurred while updating the nurse account.")
- *         )
- *     )
- * )
- */
 
 	public function UpdateAkunNurse(Request $request, $nik)
 	{
@@ -789,20 +477,6 @@ use Illuminate\Support\Facades\Log;
 			}
 	
 			DB::beginTransaction();
-
-			// Update nomor telepon di tabel users_otps
-			//$userOtp = UsersOtp::where('no_telp', $user->no_telp)->first();
-
-			//if (!$userOtp) {
-				//return response()->json([
-					//'status' => 404,
-					//'message' => 'Phone number not found in users_otps.',
-				//], 404);
-
-			//}
-
-			// Update no_telp di users_otps
-			//$userOtp->update(['no_telp' => $request->no_telp]);
 
 			// Update data user
 			$user->update([
@@ -892,189 +566,141 @@ use Illuminate\Support\Facades\Log;
 		}
 	}
 
-/**
- * @OA\Get(
- *     path="/get-profile/{nik}",
- *     summary="Mendapatkan data akun perawat berdasarkan NIK",
- *     tags={"Profile"},
- *     description="API ini digunakan untuk mendapatkan data pengguna (perawat) berdasarkan NIK yang diberikan.",
- *     @OA\Parameter(
- *         name="nik",
- *         in="path",
- *         description="Nomor Induk Karyawan (NIK) perawat yang ingin diambil datanya.",
- *         required=true,
- *         @OA\Schema(
- *             type="string",
- *             example="1234567890"
- *         )
- *     ),
- *     @OA\Response(
- *         response=200,
- *         description="Nurse data successfully found.",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(
- *                 property="status",
- *                 type="integer",
- *                 example=200
- *             ),
- *             @OA\Property(
- *                 property="pesan",
- *                 type="string",
- *                 example="User data found."
- *             ),
- *             @OA\Property(
- *                 property="data",
- *                 type="object",
- *                 @OA\Property(
- *                     property="nama",
- *                     type="string",
- *                     example="I Gede Daiva Andika"
- *                 ),
- *                 @OA\Property(
- *                     property="email",
- *                     type="string",
- *                     example="igededaivaa@gmail.com"
- *                 ),
- *                 @OA\Property(
- *                     property="no_telp",
- *                     type="string",
- *                     example="081234567890"
- *                 ),
- *                 @OA\Property(
- *                     property="role_name",
- *                     type="string",
- *                     example="Asesi"
- *                 ),
- *                 @OA\Property(
- *                     property="foto",
- *                     type="string",
- *                     example="http://app.rsimmanuel.net:9091/storage/foto_nurse/nurse_12345.jpg"
- *                 )
- *    			  @OA\Property(
- *                     property="ijazah",
- *                     type="string",
- *                     example="http://app.rsimmanuel.net:9091/storage/ijazah/awgawghawhawhaw.jpg"
- *                 )
- *             )
- *         )
- *     ),
- *     @OA\Response(
- *         response=404,
- *         description="User not found.",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(
- *                 property="status",
- *                 type="integer",
- *                 example=404
- *             ),
- *             @OA\Property(
- *                 property="message",
- *                 type="string",
- *                 example="User not found."
- *             ),
- *             @OA\Property(
- *                 property="detail",
- *                 type="string",
- *                 example="Account with NIK '1234567890' is not registered in the system."
- *             )
- *         )
- *     ),
- *     @OA\Response(
- *         response=500,
- *         description="Server error occurred.",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(
- *                 property="status",
- *                 type="integer",
- *                 example=500
- *             ),
- *             @OA\Property(
- *                 property="message",
- *                 type="string",
- *                 example="A server error occurred."
- *             ),
- *             @OA\Property(
- *                 property="error",
- *                 type="string",
- *                 example="Error details"
- *             )
- *         )
- *     )
- * )
- */
-	
+	public function GetAkunNurseByNIK($nik)
+	{
+		try {
 
-/**
- * @OA\Get(
- *     path="/check-profile/{nik}",
- *     summary="Pengecekan Kelengkapan Data Pengguna Berdasarkan NIK",
- *     description="Fungsi ini digunakan untuk memeriksa apakah data pengguna berdasarkan NIK sudah lengkap atau tidak.",
- *     tags={"Profile"},
- *     @OA\Parameter(
- *         name="nik",
- *         in="path",
- *         required=true,
- *         description="Nomor Induk Kependudukan (NIK) dari pengguna yang ingin dicek kelengkapannya.",
- *         @OA\Schema(type="string")
- *     ),
- *     @OA\Response(
- *         response=200,
- *         description="Data pengguna ditemukan dan lengkap.",
- *         @OA\JsonContent(
- *             @OA\Property(property="status", type="integer", example=200),
- *             @OA\Property(property="message", type="string", example="User data found and complete."),
- *             @OA\Property(
- *                 property="data",
- *                 type="object",
- *                 @OA\Property(property="nama", type="string", example="John Doe"),
- *                 @OA\Property(property="email", type="string", example="johndoe@example.com"),
- *                 @OA\Property(property="no_telp", type="string", example="08123456789"),
- *                 @OA\Property(property="role_name", type="string", example="Administrator"),
- *                 @OA\Property(property="working_area_name", type="string", example="Bandung"),
- *                 @OA\Property(property="foto", type="string", example="http://example.com/storage/foto.jpg")
- *             ),
- *             @OA\Property(property="message_detail", type="string", example="User data successfully retrieved.")
- *         )
- *     ),
- *     @OA\Response(
- *         response=400,
- *         description="User data is incomplete.",
- *         @OA\JsonContent(
- *             @OA\Property(property="status", type="integer", example=400),
- *             @OA\Property(property="message", type="string", example="User data is incomplete."),
- *             @OA\Property(property="missing_fields", type="array", @OA\Items(type="string", example="email")),
- *             @OA\Property(property="solution", type="string", example="Please check the incomplete data.")
- *         )
- *     ),
- *     @OA\Response(
- *         response=404,
- *         description="Pengguna tidak ditemukan.",
- *         @OA\JsonContent(
- *             @OA\Property(property="status", type="integer", example=404),
- *             @OA\Property(property="message", type="string", example="User not found."),
- *             @OA\Property(property="detail", type="string", example="Account with NIK '1234567890123456' is not registered in the system."),
- *             @OA\Property(property="solution", type="string", example="Please check your NIK or ensure you have registered.")
- *         )
- *     ),
- *     @OA\Response(
- *         response=500,
- *         description="Server error occurred.",
- *         @OA\JsonContent(
- *             @OA\Property(property="status", type="integer", example=500),
- *             @OA\Property(property="message", type="string", example="An error occurred on the server."),
- *             @OA\Property(property="error", type="string", example="Error message details."),
- *             @OA\Property(property="solution", type="string", example="Please try again later. If the issue persists, contact the system admin.")
- *         )
- *     )
- * )
- */
+	
+			// Jika tidak ada di Redis, ambil dari database
+			$user = DaftarUser::where('nik', $nik)->first();
+			
+			if (!$user) {
+				return response()->json([
+					'status' => 404,
+					'message' => 'User not found.',
+					'detail' => "Account with NIK '{$nik}' is not registered in the system.",
+					'solution' => 'Please check your NIK or make sure you are registered.'
+				], 404);
+			}
+	
+			// Ambil data tambahan (role, working_unit, working_area)
+			$role = Role::where('role_id', $user->current_role_id)->first();
+			$role_name = $role ? $role->role_name : null;
+	
+			 // Ambil semua history jabatan
+			 $historyJabatan = HistoryJabatan::where('user_id', $user->user_id)->get();
+
+			 // Siapkan array untuk menampung hasilnya
+			 $jabatanData = $historyJabatan->map(function ($history) {
+				 // Ambil nama working unit
+				 $working_unit = DB::table('working_unit')->where('working_unit_id', $history->working_unit_id)->first();
+				 $working_unit_name = $working_unit ? $working_unit->working_unit_name : null;
+	 
+				 // Ambil nama jabatan
+				 $jabatan = DB::table('jabatan')->where('jabatan_id', $history->jabatan_id)->first();
+				 $nama_jabatan = $jabatan ? $jabatan->nama_jabatan : null;
+	 
+				 // Kembalikan array yang berisi data jabatan
+				 return [
+					 'working_unit_id' => $history->working_unit_id,
+					 'user_jabatan_id' => $history->user_jabatan_id,
+					 'working_unit_name' => $working_unit_name,
+					 'jabatan_id' => $history->jabatan_id,
+					 'nama_jabatan' => $nama_jabatan,
+					 'dari' => $history->dari,
+					 'sampai' => $history->sampai
+				 ];
+			 });
+			Log::info('ini user data', ['user' => $user->toArray()]);
+			// Ambil URL dokumen dan masa berlaku berdasarkan NIK
+			$ijazah = [
+				'url' => isset($user->ijazah->path_file) ? url('storage/' . $user->ijazah->path_file) : null,
+			];
+	
+			$ujikom = [
+				'url' => isset($user->ujikom->path_file) ? url('storage/' . $user->ujikom->path_file) : null,
+				'nomor' => $user->ujikom->nomor_kompetensi ?? null,
+				'masa_berlaku' => $user->ujikom->masa_berlaku_kompetensi ?? null
+			];
+	
+			$str = [
+				'url' => isset($user->str->path_file) ? url('storage/' . $user->str->path_file) : null,
+				'nomor' => $user->str->nomor_str ?? null,
+				'masa_berlaku' => $user->str->masa_berlaku_str ?? null
+				
+			];
+	
+			$sip = [
+				'url' => isset($user->sip->path_file) ? url('storage/' . $user->sip->path_file) : null,
+				'nomor' => $user->sip->nomor_sip ?? null,
+				'masa_berlaku' => $user->sip->masa_berlaku_sip ?? null
+				
+			];
+
+			$spk = [
+				'url' => isset($user->spk->path_file) ? url('storage/' . $user->spk->path_file) : null,
+				'nomor' => $user->spk->nomor_spk ?? null,
+				'masa_berlaku' => $user->spk->masa_berlaku_spk ?? null
+				
+			];
+	
+			// Ambil semua sertifikat beserta masa berlakunya
+			$sertifikat = $user->sertifikat->map(function ($item) {
+				return [
+					'url' => url('storage/' . $item->path_file),
+					'type' => $item->type_sertifikat,
+					'nomor' => $item->nomor_sertifikat,
+					'masa_berlaku' => $item->masa_berlaku_sertifikat ?? null
+					
+				];
+			});
+	
+			// Format data user
+			$userData = [
+				'nama' => $user->nama,
+				'email' => $user->email,
+				'no_telp' => $user->no_telp,
+				'tempat_lahir' => $user->tempat_lahir,
+				'tanggal_lahir' => $user->tanggal_lahir,
+				'kewarganegaraan' => $user->kewarganegaraan,
+				'jenis_kelamin' => $user->jenis_kelamin,
+				'pendidikan' => $user->pendidikan,
+				'tahun_lulus' => $user->tahun_lulus,
+				'provinsi' => $user->provinsi,
+				'kota' => $user->kota,
+				'alamat' => $user->alamat,
+				'kode_pos' => $user->kode_pos,
+				'role_id' => $user->current_role_id, // ⬅️ Gunakan current_role_id
+				'role_name' => $role_name,
+				'jabatan_history' => $jabatanData, // ⬅️ Data history jabatan dimasukkan di sini
+				'foto' => $user->foto ? url('storage/foto_nurse/' . basename($user->foto)) : null,
+				'ijazah' => $ijazah,
+				'ujikom' => $ujikom,
+				'str' => $str,
+				'sip' => $sip,
+				'spk' => $spk,
+				'sertifikat' => $sertifikat,
+			];
+		
+			return response()->json([
+				'status' => 200,
+				'message' => 'User data found from database.',
+				'data' => $userData,
+				'message_detail' => 'User data successfully retrieved and stored in cache.'
+			], 200);
+		} catch (\Exception $e) {
+			return response()->json([
+				'status' => 500,
+				'message' => 'Server error.',
+				'error' => $e->getMessage()
+			], 500);
+		}
+	}
 
 	public function CheckDataCompleteness($nik)
 	{
 		try {
+
 			$user = DaftarUser::where('nik', $nik)->first();
 
 			if (!$user) {
@@ -1093,8 +719,7 @@ use Illuminate\Support\Facades\Log;
 			$requiredFields = [
 				'nama', 'email', 'no_telp', 'tempat_lahir', 'tanggal_lahir',
 				'kewarganegaraan', 'jenis_kelamin', 'pendidikan', 'tahun_lulus',
-				'provinsi', 'kota', 'alamat', 'kode_pos'
-				// role_id dikeluarkan karena kita ambil dari tabel relasi
+				'provinsi', 'kota', 'alamat', 'kode_pos', 'current_role_id'
 			];
 
 			$missingFields = [];
@@ -1112,6 +737,7 @@ use Illuminate\Support\Facades\Log;
 				$missingFields[] = 'jabatan_id';
 			}
 
+			// Dokumen yang diperiksa
 			$documentFields = [
 				'ijazah' => isset($user->ijazah->path_file) ? url('storage/' . $user->ijazah->path_file) : null,
 				'sip' => isset($user->sip->path_file) ? [
@@ -1124,6 +750,12 @@ use Illuminate\Support\Facades\Log;
 					'masa_berlaku' => $user->str->masa_berlaku_str ?? null,
 					'nomor' => $user->str->nomor_str ?? null
 				] : null,
+
+				// 'ujikom' => isset($user->ujikom->path_file) ? [
+				// 	'url' => url('storage/' . $user->ujikom->path_file),
+				// 	'masa_berlaku' => $user->ujikom->masa_berlaku_kompetensi ?? null,
+				// 	'nomor' => $user->ujikom->nomor_kompetensi ?? null
+				// ] : null
 			];
 
 			$missingDocuments = [];
@@ -1132,6 +764,10 @@ use Illuminate\Support\Facades\Log;
 					$missingDocuments[] = $key;
 				}
 			}
+
+			// if (empty($user->ujikom?->path_file)) {
+			// 	$missingDocuments[] = 'ujikom';
+			// }
 
 			if (count($missingFields) > 0 || count($missingDocuments) > 0) {
 				return response()->json([
@@ -1145,15 +781,8 @@ use Illuminate\Support\Facades\Log;
 				], 400);
 			}
 
-			// ✅ Ambil role dari tabel user_role → roles (BUKAN role)
-			$userRole = DB::table('user_role')
-				->join('roles', 'user_role.role_id', '=', 'roles.role_id')
-				->where('user_role.user_id', $user->user_id)
-				->select('user_role.role_id', 'roles.role_name')
-				->first();
-
-			$role_id = $userRole->role_id ?? null;
-			$role_name = $userRole->role_name ?? null;
+			$role = Role::where('role_id', $user->current_role_id)->first();
+			$role_name = $role ? $role->role_name : null;
 
 			$working_unit = DB::table('working_unit')->where('working_unit_id', $user->working_unit_id)->first();
 			$working_unit_name = $working_unit ? $working_unit->working_unit_name : null;
@@ -1193,7 +822,7 @@ use Illuminate\Support\Facades\Log;
 				'kota' => $user->kota,
 				'alamat' => $user->alamat,
 				'kode_pos' => $user->kode_pos,
-				'role_id' => $role_id,
+				'role_id' => $user->current_role_id,
 				'role_name' => $role_name,
 				'working_unit_id' => $user->working_unit_id,
 				'working_unit_name' => $working_unit_name,
@@ -1204,6 +833,7 @@ use Illuminate\Support\Facades\Log;
 				'ijazah' => $documentFields['ijazah'],
 				'sip' => $documentFields['sip'],
 				'str' => $documentFields['str'],
+				// 'ujikom' => $documentFields['ujikom'],
 				'sertifikat' => $sertifikat,
 				'foto' => $user->foto ? url('storage/foto_nurse/' . basename($user->foto)) : null,
 			];
@@ -1226,339 +856,132 @@ use Illuminate\Support\Facades\Log;
 		}
 	}
 
+	public function updateHistoryJabatan(Request $request, $nik)
+	{
+		try {
+			// Validasi input
+			$validator = Validator::make($request->all(), [
+				'user_jabatan_id'  => 'required|integer|exists:history_jabatan_user,user_jabatan_id',
+				'working_unit_id'  => 'nullable|integer|exists:working_unit,working_unit_id',
+				'jabatan_id'       => 'nullable|integer|exists:jabatan,jabatan_id',
+				'dari'             => 'nullable|date',
+				'sampai'           => 'nullable|date',
+			]);
 
+			if ($validator->fails()) {
+				return response()->json([
+					'status'  => 400,
+					'message' => 'Data validation failed.',
+					'errors'  => $validator->errors(),
+				], 400);
+			}
 
-	/**
- * @OA\Put(
- *     path="/edit-jabatan-working/{nik}",
- *     summary="Edit data History Jabatan berdasarkan Nomor Induk Karyawan (NIK).",
- *     description="API ini memungkinkan pembaruan atau edit data history jabatan pengguna berdasarkan NIK dan ID jabatan.",
- *     tags={"History Jabatan"},
- *     @OA\Parameter(
- *         name="nik",
- *         in="path",
- *         required=true,
- *         description="Nomor Induk Karyawan (NIK) pengguna yang history jabatan-nya akan diperbarui.",
- *         @OA\Schema(type="string", example="1234567890")
- *     ),
- *     @OA\RequestBody(
- *         required=true,
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="user_jabatan_id", type="integer", example=1, description="ID history jabatan yang akan diperbarui."),
- *             @OA\Property(property="working_unit_id", type="integer", example=8, description="ID unit kerja yang akan diperbarui."),
- *             @OA\Property(property="jabatan_id", type="integer", example=2, description="ID jabatan yang akan diperbarui."),
- *             @OA\Property(property="dari", type="string", format="date", example="2023-01-01", description="Tanggal mulai jabatan."),
- *             @OA\Property(property="sampai", type="string", format="date", example="2023-12-31", description="Tanggal selesai jabatan.")
- *         )
- *     ),
- *     @OA\Response(
- *         response=200,
- *         description="History Jabatan berhasil diperbarui.",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="status", type="integer", example=200),
- *             @OA\Property(property="message", type="string", example="History Jabatan updated successfully."),
- *             @OA\Property(property="data", type="object",
- *                 @OA\Property(property="user_jabatan_id", type="integer", example=1),
- *                 @OA\Property(property="working_unit_id", type="integer", example=8),
- *                 @OA\Property(property="jabatan_id", type="integer", example=2),
- *                 @OA\Property(property="dari", type="string", format="date", example="2023-01-01"),
- *                 @OA\Property(property="sampai", type="string", format="date", example="2023-12-31")
- *             )
- *         )
- *     ),
- *     @OA\Response(
- *         response=400,
- *         description="Validasi data input gagal.",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="status", type="integer", example=400),
- *             @OA\Property(property="message", type="string", example="Data validation failed."),
- *             @OA\Property(property="errors", type="object",
- *                 @OA\Property(property="user_jabatan_id", type="array", items=@OA\Items(type="string", example="The user_jabatan_id field is required."))
- *             )
- *         )
- *     ),
- *     @OA\Response(
- *         response=404,
- *         description="Data tidak ditemukan (pengguna atau history jabatan).",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="status", type="integer", example=404),
- *             @OA\Property(property="message", type="string", example="User not found.")
- *         )
- *     ),
- *     @OA\Response(
- *         response=500,
- *         description="Kesalahan pada server.",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="status", type="integer", example=500),
- *             @OA\Property(property="message", type="string", example="Failed to update History Jabatan: {error message}")
- *         )
- *     )
- * )
- */
-public function updateHistoryJabatan(Request $request, $nik)
-{
-	try {
-		// Validasi input
-		$validator = Validator::make($request->all(), [
-			'user_jabatan_id'  => 'required|integer|exists:history_jabatan_user,user_jabatan_id',
-			'working_unit_id'  => 'nullable|integer|exists:working_unit,working_unit_id',
-			'jabatan_id'       => 'nullable|integer|exists:jabatan,jabatan_id',
-			'dari'             => 'nullable|date',
-			'sampai'           => 'nullable|date',
-		]);
+			// Cari user berdasarkan NIK
+			$user = DaftarUser::where('nik', $nik)->first();
+			if (!$user) {
+				return response()->json([
+					'status'  => 404,
+					'message' => 'User not found.',
+				], 404);
+			}
 
-		if ($validator->fails()) {
+			DB::beginTransaction();
+
+			// Cari history berdasarkan user_jabatan_id dan user_id
+			$history = HistoryJabatan::where('user_jabatan_id', $request->user_jabatan_id)
+				->where('user_id', $user->user_id)
+				->first();
+
+			if (!$history) {
+				return response()->json([
+					'status'  => 404,
+					'message' => 'History Jabatan not found.',
+				], 404);
+			}
+
+			// Update data
+			$history->update([
+				'working_unit_id' => $request->working_unit_id ?? $history->working_unit_id,
+				'jabatan_id'      => $request->jabatan_id ?? $history->jabatan_id,
+				'dari'            => $request->filled('dari') ? $request->dari : $history->dari,
+				'sampai'          => $request->filled('sampai') ? $request->sampai : $history->sampai,
+			]);
+
+			DB::commit();
+
 			return response()->json([
-				'status'  => 400,
-				'message' => 'Data validation failed.',
-				'errors'  => $validator->errors(),
-			], 400);
-		}
+				'status'  => 200,
+				'message' => 'History Jabatan updated successfully.',
+				'data'    => $history,
+			], 200);
 
-		// Cari user berdasarkan NIK
-		$user = DaftarUser::where('nik', $nik)->first();
-		if (!$user) {
-			return response()->json([
-				'status'  => 404,
-				'message' => 'User not found.',
-			], 404);
-		}
-
-		DB::beginTransaction();
-
-		// Cari history berdasarkan user_jabatan_id dan user_id
-		$history = HistoryJabatan::where('user_jabatan_id', $request->user_jabatan_id)
-			->where('user_id', $user->user_id)
-			->first();
-
-		if (!$history) {
-			return response()->json([
-				'status'  => 404,
-				'message' => 'History Jabatan not found.',
-			], 404);
-		}
-
-		// Update data
-		$history->update([
-			'working_unit_id' => $request->working_unit_id ?? $history->working_unit_id,
-			'jabatan_id'      => $request->jabatan_id ?? $history->jabatan_id,
-			'dari'            => $request->filled('dari') ? $request->dari : $history->dari,
-			'sampai'          => $request->filled('sampai') ? $request->sampai : $history->sampai,
-		]);
-
-		DB::commit();
-
-		return response()->json([
-			'status'  => 200,
-			'message' => 'History Jabatan updated successfully.',
-			'data'    => $history,
-		], 200);
-
-	} catch (\Exception $e) {
-		DB::rollBack();
-		return response()->json([
-			'status'  => 500,
-			'message' => 'Failed to update History Jabatan: ' . $e->getMessage(),
-		], 500);
-	}
-}
-
-/**
- * @OA\Delete(
- *     path="/delete-jabatan-working/{nik}",
- *     summary="Hapus riwayat jabatan user",
- *     description="Menghapus data history jabatan berdasarkan NIK dan user_jabatan_id",
- *     tags={"History Jabatan"},
- *     @OA\Parameter(
- *         name="nik",
- *         in="path",
- *         required=true,
- *         description="NIK user",
- *         @OA\Schema(type="string")
- *     ),
- *     @OA\RequestBody(
- *         required=true,
- *         @OA\JsonContent(
- *             required={"user_jabatan_id"},
- *             @OA\Property(
- *                 property="user_jabatan_id",
- *                 type="integer",
- *                 example=5
- *             )
- *         )
- *     ),
- *     @OA\Response(
- *         response=200,
- *         description="History Jabatan deleted successfully.",
- *         @OA\JsonContent(
- *             @OA\Property(property="status", type="integer", example=200),
- *             @OA\Property(property="message", type="string", example="History Jabatan deleted successfully.")
- *         )
- *     ),
- *     @OA\Response(
- *         response=400,
- *         description="Data validation failed.",
- *         @OA\JsonContent(
- *             @OA\Property(property="status", type="integer", example=400),
- *             @OA\Property(property="message", type="string", example="Data validation failed."),
- *             @OA\Property(property="errors", type="object")
- *         )
- *     ),
- *     @OA\Response(
- *         response=404,
- *         description="User or history not found.",
- *         @OA\JsonContent(
- *             @OA\Property(property="status", type="integer", example=404),
- *             @OA\Property(property="message", type="string", example="User not found.")
- *         )
- *     ),
- *     @OA\Response(
- *         response=500,
- *         description="Failed to delete History Jabatan.",
- *         @OA\JsonContent(
- *             @OA\Property(property="status", type="integer", example=500),
- *             @OA\Property(property="message", type="string", example="Failed to delete History Jabatan: error message")
- *         )
- *     )
- * )
- */
-
-public function deleteHistoryJabatan(Request $request, $nik)
-{
-	try {
-		// Validasi input
-		$validator = Validator::make($request->all(), [
-			'user_jabatan_id' => 'required|integer|exists:history_jabatan_user,user_jabatan_id',
-		]);
-
-		if ($validator->fails()) {
-			return response()->json([
-				'status'  => 400,
-				'message' => 'Data validation failed.',
-				'errors'  => $validator->errors(),
-			], 400);
-		}
-
-		// Cari user berdasarkan NIK
-		$user = DaftarUser::where('nik', $nik)->first();
-		if (!$user) {
-			return response()->json([
-				'status'  => 404,
-				'message' => 'User not found.',
-			], 404);
-		}
-
-		DB::beginTransaction();
-
-		// Cari history berdasarkan user_jabatan_id dan user_id
-		$history = HistoryJabatan::where('user_jabatan_id', $request->user_jabatan_id)
-			->where('user_id', $user->user_id)
-			->first();
-
-		if (!$history) {
+		} catch (\Exception $e) {
 			DB::rollBack();
 			return response()->json([
-				'status'  => 404,
-				'message' => 'History Jabatan not found.',
-			], 404);
+				'status'  => 500,
+				'message' => 'Failed to update History Jabatan: ' . $e->getMessage(),
+			], 500);
 		}
-
-		// Hapus data
-		$history->delete();
-
-		DB::commit();
-
-		return response()->json([
-			'status'  => 200,
-			'message' => 'History Jabatan deleted successfully.',
-		], 200);
-
-	} catch (\Exception $e) {
-		DB::rollBack();
-		return response()->json([
-			'status'  => 500,
-			'message' => 'Failed to delete History Jabatan: ' . $e->getMessage(),
-		], 500);
 	}
-}
 
-/**
-* @OA\Post(
-*     path="/input-jabatan-working/{nik}",
-*     summary="Insert data History Jabatan baru berdasarkan Nomor Induk Karyawan (NIK).",
-*     description="API ini memungkinkan penambahan data history jabatan pengguna berdasarkan NIK dan informasi jabatan.",
-*     tags={"History Jabatan"},
-*     @OA\Parameter(
-*         name="nik",
-*         in="path",
-*         required=true,
-*         description="Nomor Induk Karyawan (NIK) pengguna yang history jabatan-nya akan ditambahkan.",
-*         @OA\Schema(type="string", example="1234567890")
-*     ),
-*     @OA\RequestBody(
-*         required=true,
-*         @OA\JsonContent(
-*             type="object",
-*             @OA\Property(property="working_unit_id", type="integer", example=8, description="ID unit kerja yang akan ditambahkan."),
-*             @OA\Property(property="jabatan_id", type="integer", example=2, description="ID jabatan yang akan ditambahkan."),
-*             @OA\Property(property="dari", type="string", format="date", example="2023-01-01", description="Tanggal mulai jabatan."),
-*             @OA\Property(property="sampai", type="string", format="date", example="2023-12-31", description="Tanggal selesai jabatan (opsional).")
-*         )
-*     ),
-*     @OA\Response(
-*         response=201,
-*         description="History Jabatan berhasil ditambahkan.",
-*         @OA\JsonContent(
-*             type="object",
-*             @OA\Property(property="status", type="integer", example=201),
-*             @OA\Property(property="message", type="string", example="History Jabatan inserted successfully."),
-*             @OA\Property(property="data", type="object",
-*                 @OA\Property(property="user_jabatan_id", type="integer", example=1),
-*                 @OA\Property(property="user_id", type="integer", example=123),
-*                 @OA\Property(property="working_unit_id", type="integer", example=8),
-*                 @OA\Property(property="jabatan_id", type="integer", example=2),
-*                 @OA\Property(property="dari", type="string", format="date", example="2023-01-01"),
-*                 @OA\Property(property="sampai", type="string", format="date", example="2023-12-31")
-*             )
-*         )
-*     ),
-*     @OA\Response(
-*         response=400,
-*         description="Validasi data input gagal.",
-*         @OA\JsonContent(
-*             type="object",
-*             @OA\Property(property="status", type="integer", example=400),
-*             @OA\Property(property="message", type="string", example="Data validation failed."),
-*             @OA\Property(property="errors", type="object",
-*                 @OA\Property(property="working_unit_id", type="array", items=@OA\Items(type="string", example="The working_unit_id field is required."))
-*             )
-*         )
-*     ),
-*     @OA\Response(
-*         response=404,
-*         description="Data pengguna tidak ditemukan.",
-*         @OA\JsonContent(
-*             type="object",
-*             @OA\Property(property="status", type="integer", example=404),
-*             @OA\Property(property="message", type="string", example="User not found.")
-*         )
-*     ),
-*     @OA\Response(
-*         response=500,
-*         description="Kesalahan pada server.",
-*         @OA\JsonContent(
-*             type="object",
-*             @OA\Property(property="status", type="integer", example=500),
-*             @OA\Property(property="message", type="string", example="Failed to insert History Jabatan: {error message}")
-*         )
-*     )
-* )
-*/
+	public function deleteHistoryJabatan(Request $request, $nik)
+	{
+		try {
+			// Validasi input
+			$validator = Validator::make($request->all(), [
+				'user_jabatan_id' => 'required|integer|exists:history_jabatan_user,user_jabatan_id',
+			]);
+
+			if ($validator->fails()) {
+				return response()->json([
+					'status'  => 400,
+					'message' => 'Data validation failed.',
+					'errors'  => $validator->errors(),
+				], 400);
+			}
+
+			// Cari user berdasarkan NIK
+			$user = DaftarUser::where('nik', $nik)->first();
+			if (!$user) {
+				return response()->json([
+					'status'  => 404,
+					'message' => 'User not found.',
+				], 404);
+			}
+
+			DB::beginTransaction();
+
+			// Cari history berdasarkan user_jabatan_id dan user_id
+			$history = HistoryJabatan::where('user_jabatan_id', $request->user_jabatan_id)
+				->where('user_id', $user->user_id)
+				->first();
+
+			if (!$history) {
+				DB::rollBack();
+				return response()->json([
+					'status'  => 404,
+					'message' => 'History Jabatan not found.',
+				], 404);
+			}
+
+			// Hapus data
+			$history->delete();
+
+			DB::commit();
+
+			return response()->json([
+				'status'  => 200,
+				'message' => 'History Jabatan deleted successfully.',
+			], 200);
+
+		} catch (\Exception $e) {
+			DB::rollBack();
+			return response()->json([
+				'status'  => 500,
+				'message' => 'Failed to delete History Jabatan: ' . $e->getMessage(),
+			], 500);
+		}
+	}
 
 	public function insertHistoryJabatan(Request $request, $nik)
 	{
@@ -1614,130 +1037,6 @@ public function deleteHistoryJabatan(Request $request, $nik)
 			], 500);
 		}
 	}
-
-	public function GetAkunNurseByNIK($nik)
-	{
-		try {
-			$user = DaftarUser::where('nik', $nik)->first();
-
-			if (!$user) {
-				return response()->json([
-					'status' => 404,
-					'message' => 'User not found.',
-					'detail' => "Account with NIK '{$nik}' is not registered in the system.",
-					'solution' => 'Please check your NIK or make sure you are registered.'
-				], 404);
-			}
-
-			// ✅ Ambil semua role user dari tabel user_role dan roles
-			$roles = DB::table('user_role')
-				->join('roles', 'user_role.role_id', '=', 'roles.role_id')
-				->where('user_role.user_id', $user->user_id)
-				->select('roles.role_id', 'roles.role_name')
-				->get();
-
-			// Ambil history jabatan
-			$historyJabatan = HistoryJabatan::where('user_id', $user->user_id)->get();
-
-			$jabatanData = $historyJabatan->map(function ($history) {
-				$working_unit = DB::table('working_unit')->where('working_unit_id', $history->working_unit_id)->first();
-				$working_unit_name = $working_unit?->working_unit_name;
-
-				$jabatan = DB::table('jabatan')->where('jabatan_id', $history->jabatan_id)->first();
-				$nama_jabatan = $jabatan?->nama_jabatan;
-
-				return [
-					'working_unit_id' => $history->working_unit_id,
-					'user_jabatan_id' => $history->user_jabatan_id,
-					'working_unit_name' => $working_unit_name,
-					'jabatan_id' => $history->jabatan_id,
-					'nama_jabatan' => $nama_jabatan,
-					'dari' => $history->dari,
-					'sampai' => $history->sampai
-				];
-			});
-
-			Log::info('ini user data', ['user' => $user->toArray()]);
-
-			$ijazah = [
-				'url' => $user->ijazah?->path_file ? url('storage/' . $user->ijazah->path_file) : null,
-			];
-
-			$ujikom = [
-				'url' => $user->ujikom?->path_file ? url('storage/' . $user->ujikom->path_file) : null,
-				'nomor' => $user->ujikom->nomor_kompetensi ?? null,
-				'masa_berlaku' => $user->ujikom->masa_berlaku_kompetensi ?? null
-			];
-
-			$str = [
-				'url' => $user->str?->path_file ? url('storage/' . $user->str->path_file) : null,
-				'nomor' => $user->str->nomor_str ?? null,
-				'masa_berlaku' => $user->str->masa_berlaku_str ?? null
-			];
-
-			$sip = [
-				'url' => $user->sip?->path_file ? url('storage/' . $user->sip->path_file) : null,
-				'nomor' => $user->sip->nomor_sip ?? null,
-				'masa_berlaku' => $user->sip->masa_berlaku_sip ?? null
-			];
-
-			$spk = [
-				'url' => $user->spk?->path_file ? url('storage/' . $user->spk->path_file) : null,
-				'nomor' => $user->spk->nomor_spk ?? null,
-				'masa_berlaku' => $user->spk->masa_berlaku_spk ?? null
-			];
-
-			$sertifikat = $user->sertifikat->map(function ($item) {
-				return [
-					'url' => url('storage/' . $item->path_file),
-					'type' => $item->type_sertifikat,
-					'nomor' => $item->nomor_sertifikat,
-					'masa_berlaku' => $item->masa_berlaku_sertifikat ?? null
-				];
-			});
-
-			$userData = [
-				'nama' => $user->nama,
-				'email' => $user->email,
-				'no_telp' => $user->no_telp,
-				'tempat_lahir' => $user->tempat_lahir,
-				'tanggal_lahir' => $user->tanggal_lahir,
-				'kewarganegaraan' => $user->kewarganegaraan,
-				'jenis_kelamin' => $user->jenis_kelamin,
-				'pendidikan' => $user->pendidikan,
-				'tahun_lulus' => $user->tahun_lulus,
-				'provinsi' => $user->provinsi,
-				'kota' => $user->kota,
-				'alamat' => $user->alamat,
-				'kode_pos' => $user->kode_pos,
-				'roles' => $roles, // ⬅️ roles sebagai array
-				'jabatan_history' => $jabatanData,
-				'foto' => $user->foto ? url('storage/foto_nurse/' . basename($user->foto)) : null,
-				'ijazah' => $ijazah,
-				'ujikom' => $ujikom,
-				'str' => $str,
-				'sip' => $sip,
-				'spk' => $spk,
-				'sertifikat' => $sertifikat,
-			];
-
-			return response()->json([
-				'status' => 200,
-				'message' => 'User data found from database.',
-				'data' => $userData,
-				'message_detail' => 'User data successfully retrieved.'
-			], 200);
-		} catch (\Exception $e) {
-			return response()->json([
-				'status' => 500,
-				'message' => 'Server error.',
-				'error' => $e->getMessage()
-			], 500);
-		}
-	}
-
-
-	
 }
 
 

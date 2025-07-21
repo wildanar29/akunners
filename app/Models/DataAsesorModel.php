@@ -18,7 +18,9 @@ class DataAsesorModel extends Model
         'user_id',
         'no_reg',
         'tanggal_berlaku',
-        'aktif'
+        'aktif',
+        "valid_from",
+        "valid_until",
     ];
 
 

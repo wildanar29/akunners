@@ -18,6 +18,9 @@ $router->get('/', function () use ($router) {
     return $router->app->version();
 });
 
+// MASTER DATA
+$router->get('/get-educations', 'MasterController@getEducations');
+$router->get('/get-kompetensi-pk', 'MasterController@getKompetensiPk');
 // PROGRES TRACKING
 $router->get('/progress/asesi/{asesorId}', 'AsesiPermohonanController@getAsesiProgressByAsesor');
 
@@ -49,7 +52,7 @@ $router->put('/form3/update/{form3_id}', 'Form3Controller@UpdateAsesorForm3');
 
 
 
-//Users Controller
+// AUTH CONTROLLER 
 $router->post('/register-akun', 'UsersController@RegisterAkunNurse');
 $router->post('/login-akun', 'UsersController@LoginAkunNurse');
 $router->post('/update-profile/{nik}', 'UsersController@UpdateAkunNurse');
@@ -73,8 +76,8 @@ $router->post('/reset-otp', 'WhatsappController@resetOtp');
 
 
 //WhastappController Reset Password
-$router->post('/send-otp-reset-password', 'WhatsappController@sendOtpPassword');
-$router->get('/valid-otp-reset-password', 'WhatsappController@validateOtpPassword');
+$router->post('/send-otp-reset-password', 'MailController@sendOtpPassword');
+$router->get('/valid-otp-reset-password', 'MailController@validateOtpPassword');
 $router->post('/reset-otp-password', 'WhatsappController@resetOtpPassword');
 
 

@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Redis; // Tambahkan Redis facade
 use Illuminate\Support\Facades\Http;
 use Postmark\PostmarkClient;
 use GuzzleHttp\Client as GuzzleClient;
-
+use Illuminate\Support\Facades\Mail;
 
 
 class WhatsappController extends Controller
@@ -360,103 +360,84 @@ class WhatsappController extends Controller
 
     public function sendOtpPassword(Request $request)
     {
-        // Validasi input untuk memastikan data dalam format JSON
+        // Validasi input email
         $validator = Validator::make($request->all(), [
-            'no_telp'   => 'required|string',  // Hanya nomor telepon yang diterima
+            'email' => ['required', 'email', 'exists:users,email'], // Email harus valid dan terdaftar
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'status' => 'ERROR',
-                'errorCode' => 'INVALID_INPUT',
-				'message' => 'Invalid data.',
+                'errorCode' => 'VALIDATION_ERROR',
+                'message' => 'Masukkan Email yang terdaftar pada akun Anda sebelumnya.',
                 'errorMessages' => $validator->errors(),
                 'data' => []
             ], 400);
         }
 
-        // Mendapatkan nomor telepon dari input
-        $noTelp = $request->input('no_telp');
-
-        // Ambil pengguna berdasarkan no_telp
-        $user = DaftarUser::where('no_telp', $noTelp)->first();
+        // Ambil pengguna berdasarkan email
+        $user = DaftarUser::where('email', $request->email)->first();
 
         if (!$user) {
             return response()->json([
                 'status' => 'ERROR',
                 'errorCode' => 'USER_NOT_FOUND',
-				'message' => 'User not found.',
+                'message' => 'Pengguna dengan email tersebut tidak ditemukan.',
                 'errorMessages' => [],
                 'data' => []
             ], 404);
         }
 
-        // Generate OTP angka acak (6 digit)
+        // Generate OTP 6 digit
         $kodeOtp = rand(100000, 999999);
+        $expiresAt = Carbon::now()->addMinutes(5); // OTP berlaku 5 menit
 
-        // Waktu kadaluarsa OTP (5 menit dari sekarang)
-        $expiresAt = Carbon::now('UTC')->addMinutes(5);
-
-        // Simpan atau perbarui OTP di tabel password_reset
-        $otpRecord = PasswordReset::updateOrCreate(
-            ['no_telp' => $noTelp],
+        // Simpan atau perbarui ke tabel password_resets
+        PasswordReset::updateOrCreate(
+            ['email' => $request->email],
             [
                 'otp' => $kodeOtp,
                 'expires_at' => $expiresAt,
-                'validate_otp_password' => false, // Default belum divalidasi
+                'validate_otp_password' => false,
             ]
         );
 
-        // Format waktu kadaluarsa ke zona waktu Jakarta
-        $timeInJakarta = $otpRecord->expires_at->setTimezone('Asia/Jakarta')->format('d-m-Y H:i:s');
-
-        // Menyusun pesan untuk Reset Password
-        $message = "Halo Nurse " . $user->nama . ",\n\n";
-        $message .= "Ini adalah kode OTP untuk mereset password akun Anda: " . $kodeOtp . "\n\n";
-        $message .= "Mohon jangan berikan kode ini kepada orang lain.\n\n";
-        $message .= "Kode berlaku hingga: " . $timeInJakarta . "\n\n";
-        $message .= "Terima kasih!";
-
-        // Kirimkan pesan ke API Wablas
-        $payload = [
-            "data" => [
-                [
-                    "phone" => $noTelp,
-                    "message" => $message
-                ]
-            ]
-        ];
-
         try {
-            $response = $this->wablasService->sendMessage($payload);
-
-            if (isset($response['status']) && $response['status'] === true) {
-                return response()->json([
-                    'status' => 'SUCCESS',
-                    'errorCode' => null,
-					'message' => 'OTP code for Password Reset sent successfully!',
-                    'errorMessages' => [],
-                    'data' => $response
-                ], 200);
-            }
+            // Kirim email via Postmark
+            Mail::mailer('postmark')->raw(
+                "Halo {$user->nama},\n\n" .
+                "Berikut adalah kode OTP Anda untuk reset password: {$kodeOtp}\n\n" .
+                "Kode ini berlaku hingga: " . $expiresAt->format('d-m-Y H:i:s') . "\n\n" .
+                "Mohon jangan membagikan kode ini kepada siapa pun.\n\n" .
+                "Pesan ini dikirim secara otomatis oleh sistem kami.",
+                function ($message) use ($request) {
+                    $message->to($request->email)
+                            ->subject('Kode OTP Reset Password')
+                            ->from(config('mail.from.address'), config('mail.from.name'));
+                }
+            );
 
             return response()->json([
-                'status' => 'ERROR',
-                'errorCode' => 'SEND_MESSAGE_FAILED',
-				'message' => $response['message'] ?? 'Failed to send OTP.',
+                'status' => 'SUCCESS',
+                'errorCode' => null,
+                'message' => 'Kode OTP berhasil dikirim ke email!',
                 'errorMessages' => [],
                 'data' => []
-            ], 500);
-        } catch (Exception $e) {
+            ], 200);
+
+        } catch (\Exception $e) {
+            \Log::error('Gagal mengirim email OTP: ' . $e->getMessage());
+
             return response()->json([
                 'status' => 'ERROR',
-                'errorCode' => 'EXCEPTION_ERROR',
-				'message' => 'An error occurred: ' . $e->getMessage(),
-                'errorMessages' => [],
+                'errorCode' => 'EMAIL_SEND_ERROR',
+                'message' => 'Gagal mengirim OTP. Silakan coba lagi nanti.',
+                'errorMessages' => $e->getMessage(),
                 'data' => []
             ], 500);
         }
     }
+
 	
 	
 

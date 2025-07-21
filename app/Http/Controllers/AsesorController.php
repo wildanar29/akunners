@@ -16,6 +16,8 @@ use App\Models\UjikomModel; // Model untuk users_str_file
 use App\Models\DataAsesorModel; // Model untuk users_str_file  
 use App\Models\PkProgressModel; // Model untuk users_str_file  
 use App\Models\PkStatusModel; // Model untuk users_str_file  
+use App\Models\KompetensiProgres;
+use App\Models\KompetensiTrack;
 use App\Models\User; // Model untuk user  
 use Illuminate\Support\Facades\Validator;  
 use Illuminate\Support\Facades\DB; // Tambahkan DB untuk query manual
@@ -89,8 +91,8 @@ class AsesorController extends Controller
 		]);
 
 		try {
-			// Ambil data form untuk logging perbandingan
-			$formDebug = DB::table('form_1')->where('form_1_id', $form_1_id)->first();
+			// Ambil data form untuk logging dan kebutuhan tracking
+			$formDebug = BidangModel::find($form_1_id);
 			if ($formDebug) {
 				Log::debug('Data form_1 ditemukan', [
 					'form_1_id' => $form_1_id,
@@ -102,9 +104,8 @@ class AsesorController extends Controller
 			}
 
 			// Validasi: hanya asesor yang ditugaskan dan status 'Process'
-			$form = DB::table('form_1')
-				->where('form_1_id', $form_1_id)
-				->where('status', 'Process')
+			$form = BidangModel::where('form_1_id', $form_1_id)
+				->where('status', 'Assigned')
 				->where('asesor_id', $user->user_id)
 				->first();
 
@@ -121,19 +122,49 @@ class AsesorController extends Controller
 			}
 
 			// Update status jadi Approved
-			DB::table('form_1')
-				->where('form_1_id', $form_1_id)
-				->update([
-					'status' => 'Process',
-					'updated_at' => Carbon::now(),
-				]);
+			$form->status = 'Approved';
+			$form->updated_at = Carbon::now();
+			$form->save();
 
 			Log::info('Form berhasil disetujui', [
 				'form_1_id' => $form_1_id,
 				'user_id' => $user->user_id,
 			]);
 
-			// Kirim notifikasi ke user pengaju (dipisahkan)
+			$progres = KompetensiProgres::where('form_id', $form->form_1_id)->first();
+
+			if ($progres) {
+				$progres->status = 'Approved';
+				$progres->save();
+
+				Log::info('Status kompetensi_progres diperbarui menjadi Approved', [
+					'form_id' => $form->form_1_id,
+					'progres_id' => $progres->id,
+				]);
+			} else {
+				$progres = KompetensiProgres::create([
+					'form_id' => $form->form_1_id,
+					'status' => 'Approved',
+				]);
+
+				Log::info('Data kompetensi_progres baru dibuat dengan status Approved', [
+					'form_id' => $form->form_1_id,
+					'progres_id' => $progres->id,
+				]);
+			}
+
+
+			// Tambahkan aktivitas ke kompetensi_tracks
+			KompetensiTrack::create([
+				'progres_id' => $progres->id,
+				'form_type' => 'form_1',
+				'activity' => 'Approved',
+				'activity_time' => Carbon::now(),
+				'description' => 'Form 1 disetujui oleh Asesor.',
+			]);
+
+
+			// Kirim notifikasi ke user pengaju
 			$this->kirimNotifikasiApprovalKePengaju($formDebug);
 
 			return response()->json([

@@ -33,7 +33,7 @@ $app->withEloquent();
 $app->configure('filesystems');
 
 $app->configure('auth');  
-
+$app->configure('mail');
 $app->configure('session');
 
 //Aktifkan Redis
@@ -53,7 +53,7 @@ $app->register(App\Providers\WablasServiceProvider::class);
 
 $app->register(Tymon\JWTAuth\Providers\LumenServiceProvider::class);  
 $app->register(Illuminate\Redis\RedisServiceProvider::class);
-
+$app->register(Illuminate\Mail\MailServiceProvider::class);
 
 class_alias(Tymon\JWTAuth\Facades\JWTAuth::class, 'JWTAuth');  
 class_alias(Tymon\JWTAuth\Facades\JWTFactory::class, 'JWTFactory');  

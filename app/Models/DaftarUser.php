@@ -39,7 +39,8 @@ class DaftarUser extends Model implements AuthenticatableContract, JWTSubject
         'jabatan_id',
         'masa_berlaku_jabatan',
         'no_telp',  
-        'role_id',  
+        'role_id',
+        'current_role_id',  
         'working_unit_id',  
         'foto',
         'device_token'  

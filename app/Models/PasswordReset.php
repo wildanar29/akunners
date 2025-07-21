@@ -17,7 +17,8 @@ class PasswordReset extends Model
         'no_telp', 
         'otp', 
         'expires_at', 
-        'validate_otp_password'
+        'validate_otp_password',
+        'email'
     ];
 
     // Menentukan apakah ID otomatis

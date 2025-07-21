@@ -6,6 +6,9 @@ use App\Models\IjazahModel;
 use Illuminate\Support\Facades\Log;
 use App\Service\OneSignalService;
 use App\Models\DaftarUser;
+use App\Models\KompetensiProgres;
+use App\Models\KompetensiTrack;
+use App\Models\KompetensiPk;
 use App\Models\UserRole;
 use App\Models\SipModel;
 use App\Models\Notification;
@@ -14,7 +17,8 @@ use App\Models\SertifikatModel;
 use App\Models\UjikomModel;
 use App\Models\BidangModel; // Model form_1
 use Illuminate\Support\Facades\DB;
-use App\Models\PkProgressModel; 
+use App\Models\PkProgressModel;
+use Illuminate\Support\Facades\Validator; 
 use App\Models\PkStatusModel; 
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -29,130 +33,169 @@ class AsesiPermohonanController extends Controller
     {
         $this->oneSignalService = $oneSignalService;
     }
-   public function AjuanPermohonanAsesi(Request $request)
-    {
-        try {
-            // Ambil user dari token
-            $user = auth()->user();
 
-            // Jika user tidak ditemukan dari token, kirim error
-            if (!$user) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthorized. Invalid token or user not found.',
-                    'status_code' => 401,
-                ], 401);
-            }
+	public function AjuanPermohonanAsesi(Request $request)
+	{
+		try {
+			$user = auth()->user();
 
-            // Panggil controller lain dan gunakan fungsi CheckDataCompleteness
-            $dataChecker = new UsersController();
-            $checkDataResponse = $dataChecker->CheckDataCompleteness($user->nik);
+			if (!$user) {
+				return response()->json([
+					'success' => false,
+					'message' => 'Unauthorized. Invalid token or user not found.',
+					'status_code' => 401,
+				], 401);
+			}
 
-            // Jika response dari CheckDataCompleteness mengandung status selain 200, kembalikan error
-            if ($checkDataResponse->getStatusCode() !== 200) {
-                return $checkDataResponse;
-            }
+			$validator = Validator::make($request->all(), [
+				'pk_id' => 'required|exists:kompetensi_pk,pk_id',
+			]);
 
-            // Ambil data terkait dari berbagai tabel berdasarkan user_id
-            $ijazah = IjazahModel::where('user_id', $user->user_id)->first();
-            // $ujikom = UjikomModel::where('user_id', $user->user_id)->first(); // Dikomentari sesuai permintaan
-            $str = StrModel::where('user_id', $user->user_id)->first();
-            $sip = SipModel::where('user_id', $user->user_id)->first();
-            $sertifikat = SertifikatModel::where('user_id', $user->user_id)->first();
+			if ($validator->fails()) {
+				return response()->json([
+					'success' => false,
+					'message' => 'The pk id field is required.',
+					'errors' => $validator->errors(),
+					'status_code' => 422,
+				], 422);
+			}
 
-            // Kumpulkan dokumen yang belum tersedia atau tidak memiliki path_file
-            $missingDocuments = [];
+			$pkId = (int) $request->input('pk_id');
 
-            if (!$ijazah || empty($ijazah->path_file)) $missingDocuments[] = 'Ijazah';
-            // if (!$ujikom || empty($ujikom->path_file)) $missingDocuments[] = 'Ujikom'; // Dikomentari sesuai permintaan
-            if (!$str || empty($str->path_file)) $missingDocuments[] = 'STR';
-            if (!$sip || empty($sip->path_file)) $missingDocuments[] = 'SIP';
+			if ($pkId > 1) {
+				$previousPk = BidangModel::where('asesi_id', $user->user_id)
+					->where('pk_id', $pkId - 1)
+					->where('status', 'Completed')
+					->first();
 
-            // Jika ada dokumen yang belum tersedia atau tidak memiliki path_file, kembalikan error
-            if (!empty($missingDocuments)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Submission failed. The following documents must have a valid file path: ' . implode(', ', $missingDocuments) . '.',
-                    'missing_documents' => $missingDocuments,
-                    'status_code' => 400,
-                ], 400);
-            }
+				if (!$previousPk) {
+					return response()->json([
+						'success' => false,
+						'message' => "You must complete PK " . ($pkId - 1) . " before submitting PK {$pkId}.",
+						'status_code' => 403,
+					], 403);
+				}
+			}
 
-            // Cek apakah permohonan sudah pernah diajukan
-            $existingBidang = BidangModel::where('user_id', $user->user_id)->first();
+			$alreadySubmitted = BidangModel::where('asesi_id', $user->asesi_id)
+				->where('pk_id', $pkId)
+				->first();
 
-            // Data yang akan disimpan atau diperbarui
-            $dataUpdate = [
-                'asesi_name' => $user->nama,
-                'asesi_date' => Carbon::now()->toDateString(),
-                'ijazah_id' => $ijazah->ijazah_id,
-                // 'ujikom_id' => $ujikom->ujikom_id, // Dikomentari sesuai permintaan
-                'str_id' => $str->str_id,
-                'sip_id' => $sip->sip_id,
-                'sertifikat_id' => $sertifikat ? $sertifikat->user_id : null,
-                'updated_at' => Carbon::now(),
-                'status' => 'Waiting',
-            ];
+			if ($alreadySubmitted) {
+				return response()->json([
+					'status' => 'SUCCESS',
+					'message' => 'You have already submitted a request for the selected PK.',
+					'status_code' => 409,
+				], 409);
+			}
 
-            if ($existingBidang) {
-                $existingBidang->update($dataUpdate);
+			// ✅ Cek kelengkapan data profil
+			$dataChecker = new UsersController();
+			$checkDataResponse = $dataChecker->CheckDataCompleteness($user->nik);
+			if ($checkDataResponse->getStatusCode() !== 200) {
+				return $checkDataResponse;
+			}
+
+			$ijazah = IjazahModel::where('user_id', $user->user_id)->first();
+			$str = StrModel::where('user_id', $user->user_id)->first();
+			$sip = SipModel::where('user_id', $user->user_id)->first();
+			$sertifikat = SertifikatModel::where('user_id', $user->user_id)->first();
+
+			$missingDocuments = [];
+			if (!$ijazah || empty($ijazah->path_file)) $missingDocuments[] = 'Ijazah';
+			if (!$str || empty($str->path_file)) $missingDocuments[] = 'STR';
+			if (!$sip || empty($sip->path_file)) $missingDocuments[] = 'SIP';
+
+			if (!empty($missingDocuments)) {
+				return response()->json([
+					'success' => false,
+					'message' => 'Submission failed. Missing: ' . implode(', ', $missingDocuments),
+					'missing_documents' => $missingDocuments,
+					'status_code' => 400,
+				], 400);
+			}
+
+			// ✅ Transaksi DB
+			DB::beginTransaction();
+
+			$dataUpdate = [
+				'pk_id' => $pkId,
+				'asesi_name' => $user->nama,
+				'asesi_date' => Carbon::now()->toDateString(),
+				'ijazah_id' => $ijazah->ijazah_id,
+				'str_id' => $str->str_id,
+				'sip_id' => $sip->sip_id,
+				'sertifikat_id' => $sertifikat ? $sertifikat->user_id : null,
+				'status' => 'Submitted',
+				'updated_at' => Carbon::now(),
+			];
+
+			if ($existingBidang = BidangModel::where('asesi_id', $user->user_id)->first()) {
+				$existingBidang->update($dataUpdate);
+
 				$this->kirimNotifikasiKeBidang($user->nama);
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Data successfully updated in Form_1.',
-                    'form_1_id' => $existingBidang->form_1_id,
-                    'updated_data' => $dataUpdate,
-                    'status_code' => 200,
-                ], 200);
-            } else {
-                $dataUpdate['user_id'] = $user->user_id;
-                $dataUpdate['created_at'] = Carbon::now();
 
-                $newBidang = BidangModel::create($dataUpdate);
-                $form_1_id = $newBidang->form_1_id;
-            }
+				DB::commit();
 
-            // *** Tambahkan Data ke pk_progress ***
-            $progress = PkProgressModel::create([
-                'user_id' => $user->user_id,
-                'form_1_id' => $form_1_id,
-            ]);
+				return response()->json([
+					'success' => true,
+					'message' => 'Data successfully updated in Form_1.',
+					'form_1_id' => $existingBidang->form_1_id,
+					'updated_data' => $dataUpdate,
+					'status_code' => 200,
+				], 200);
+			} else {
+				$dataUpdate['asesi_id'] = $user->user_id;
+				$dataUpdate['created_at'] = Carbon::now();
 
-            // *** Tambahkan Data ke pk_status ***
-            PkStatusModel::create([
-                'progress_id' => $progress->progress_id,
-                'form_1_status' => 'Open',
-            ]);
+				$newBidang = BidangModel::create($dataUpdate);
+				$form_1_id = $newBidang->form_1_id;
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Data successfully inserted into Form_1, Pk_Progress, and Pk_Status.',
-                'form_1' => [
-                    'form_1_id' => $form_1_id,
-                    'user_id' => $user->user_id,
-                    'asesi_name' => $dataUpdate['asesi_name'],
-                    'asesi_date' => $dataUpdate['asesi_date'],
-                    'ijazah_id' => $dataUpdate['ijazah_id'],
-                    // 'ujikom_id' => $dataUpdate['ujikom_id'] ?? null, // Dikomentari sesuai permintaan
-                    'str_id' => $dataUpdate['str_id'],
-                    'sip_id' => $dataUpdate['sip_id'],
-                    'sertifikat_id' => $dataUpdate['sertifikat_id'],
-                    'status' => $dataUpdate['status'],
-                    'created_at' => $dataUpdate['created_at'] ?? null,
-                    'updated_at' => $dataUpdate['updated_at'],
-                ],
-                'pk_progress' => [
-                    'form_1_status' => 'Open',
-                ],
-                'status_code' => 201,
-            ], 201);
+				$progres = KompetensiProgres::create([
+					'form_id' => $form_1_id,
+					'parent_form_id' => null,
+					'user_id' => $user->user_id,
+					'status' => 'Submitted',
+				]);
 
-        } catch (\Exception $e) {
+				KompetensiTrack::create([
+					'progres_id' => $progres->id,
+					'form_type' => 'form_1',
+					'activity' => 'Submitted',
+					'activity_time' => Carbon::now(),
+					'description' => 'Pengajuan Form 1 oleh asesi.',
+				]);
+
+				DB::commit();
+				$this->kirimNotifikasiKeBidang($user->nama);
+				return response()->json([
+					'success' => true,
+					'message' => 'Data successfully inserted into Form_1.',
+					'form_1' => [
+						'form_1_id' => $form_1_id,
+						'user_id' => $user->user_id,
+						'pk_id' => $pkId,
+						'asesi_name' => $dataUpdate['asesi_name'],
+						'asesi_date' => $dataUpdate['asesi_date'],
+						'ijazah_id' => $dataUpdate['ijazah_id'],
+						'str_id' => $dataUpdate['str_id'],
+						'sip_id' => $dataUpdate['sip_id'],
+						'sertifikat_id' => $dataUpdate['sertifikat_id'],
+						'status' => $dataUpdate['status'],
+						'created_at' => $dataUpdate['created_at'],
+						'updated_at' => $dataUpdate['updated_at'],
+					],
+					'status_code' => 201,
+				], 201);
+			}
+		} catch (\Exception $e) {
+			DB::rollBack(); // rollback transaksi jika ada error
+
 			\Log::error('Gagal melakukan pengajuan asesi.', [
 				'user_id' => auth()->check() ? auth()->user()->user_id : null,
 				'nama' => auth()->check() ? auth()->user()->nama : null,
 				'error_message' => $e->getMessage(),
-				'error_trace' => $e->getTraceAsString(), // log jejak error secara lengkap
+				'error_trace' => $e->getTraceAsString(),
 				'line' => $e->getLine(),
 				'file' => $e->getFile(),
 			]);
@@ -164,15 +207,15 @@ class AsesiPermohonanController extends Controller
 				'status_code' => 500,
 			], 500);
 		}
-
-    }
+	}
 
 	private function kirimNotifikasiKeBidang($namaAsesi)
 	{
 		$bidangUsers = DaftarUser::whereHas('roles', function ($query) {
 			$query->where('user_role.role_id', 3);
 		})->get();
-
+		Log::info("Mengirim notifikasi ke " . count($bidangUsers) . " user bidang.");
+		Log::info($bidangUsers);
 		$title = 'Pengajuan Asessmen';
 		$message = "Ada pengajuan baru dari Asesi $namaAsesi.";
 

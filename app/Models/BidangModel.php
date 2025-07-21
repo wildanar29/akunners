@@ -23,7 +23,8 @@ class BidangModel extends Model
   
     // Kolom yang dapat diisi (fillable)  
     protected $fillable = [
-        'user_id',  
+        'user_id',
+        'pk_id',  
         'asesi_name',  
         'asesi_date',  
         'signature_asesi',  

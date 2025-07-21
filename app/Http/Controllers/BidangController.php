@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;  
 use App\Models\BidangModel;  
 use App\Models\Role;
+use App\Models\KompetensiProgres;
+use App\Models\KompetensiTrack;
 use App\Models\Notification;
 use App\Models\DaftarUser; // Pastikan untuk mengimpor model User  
 use App\Models\IjazahModel; // Model untuk users_ijazah_file  
@@ -127,12 +129,11 @@ class BidangController extends Controller
 
 		// Validasi input
 		$validation = Validator::make($request->all(), [
-			'status' => 'nullable|in:Cancel',
+			'status' => 'nullable|in:Rejected',
 			'no_reg' => 'nullable|string|max:255',
 			'form_1_id' => 'required|exists:form_1,form_1_id',
-			'keterangan' => 'required_if:status,Cancel|string|nullable',
+			'keterangan' => 'required_if:status,Rejected|string|nullable',
 		]);
-
 
 		if ($validation->fails()) {
 			Log::warning('Validasi gagal saat insertAsesor', [
@@ -162,18 +163,39 @@ class BidangController extends Controller
 				], 404);
 			}
 
-			if ($request->status === 'Cancel') {
-				Log::info('Status Cancel diterima, memperbarui data bidang', ['form_1_id' => $bidang->form_1_id]);
+			if ($request->status === 'Rejected') {
+				Log::info('Status Rejected diterima, memperbarui data bidang dan progres', ['form_1_id' => $bidang->form_1_id]);
 
-				$bidang->status = 'Cancel';
+				$bidang->status = 'Rejected';
 				$bidang->ket = $request->keterangan;
 				$bidang->save();
 
-				Log::info('Data bidang berhasil diubah menjadi Cancel', ['form_1_id' => $bidang->form_1_id]);
+				// ✅ Update status di kompetensi_progres
+				$progres = KompetensiProgres::where('form_id', $bidang->form_1_id)->first();
+				if ($progres) {
+					$progres->status = 'Rejected';
+					$progres->save();
+
+					Log::info('Status kompetensi_progres diperbarui menjadi Rejected', [
+						'form_id' => $bidang->form_1_id,
+						'progres_id' => $progres->id,
+					]);
+
+					// Tambahkan aktivitas ke kompetensi_tracks
+					KompetensiTrack::create([
+						'progres_id' => $progres->id,
+						'form_type' => 'form_1',
+						'activity' => 'Rejected',
+						'activity_time' => Carbon::now(),
+						'description' => 'Form 1 ditolak oleh bidang. Keterangan: ' . $request->keterangan,
+					]);
+				} else {
+					Log::warning('Data kompetensi_progres tidak ditemukan untuk form_id', ['form_id' => $bidang->form_1_id]);
+				}
 
 				return response()->json([
 					'success' => true,
-					'message' => 'Status berhasil diubah menjadi Cancel.',
+					'message' => 'Status berhasil diubah menjadi Rejected.',
 					'data' => $bidang,
 					'status_code' => 200,
 				], 200);
@@ -218,26 +240,36 @@ class BidangController extends Controller
 			$bidang->asesor_name = $userAsesor->nama;
 			$bidang->asesor_date = Carbon::now();
 			$bidang->no_reg = $request->no_reg;
-			$bidang->status = 'Process';
+			$bidang->status = 'Assigned';
 			$bidang->ket = null;
 			$bidang->save();
 
-			// Simpan user_id asesor ke pk_progress
-			$pkProgress = PkProgressModel::where('form_1_id', $bidang->form_1_id)->first();
-			if ($pkProgress) {
-				Log::info('Memperbarui pk_progress dengan asesor_id', [
-					'form_1_id' => $bidang->form_1_id,
-					'asesor_id' => $userAsesor->user_id
+			// ✅ Update status di kompetensi_progres
+			$progres = KompetensiProgres::where('form_id', $bidang->form_1_id)->first();
+			if ($progres) {
+				$progres->status = 'Assigned';
+				$progres->save();
+
+				Log::info('Status kompetensi_progres diperbarui menjadi in_progress', [
+					'form_id' => $bidang->form_1_id,
+					'progres_id' => $progres->id,
 				]);
 
-				$pkProgress->asesor_id = $userAsesor->user_id;
-				$pkProgress->save();
+				// Tambahkan aktivitas ke kompetensi_tracks
+				KompetensiTrack::create([
+					'progres_id' => $progres->id,
+					'form_type' => 'form_1',
+					'activity' => 'Assigned',
+					'activity_time' => Carbon::now(),
+					'description' => 'Form 1 disetujui dan asesor ditetapkan.',
+				]);
 			} else {
-				Log::warning('Data pk_progress tidak ditemukan untuk form_1_id', ['form_1_id' => $bidang->form_1_id]);
+				Log::warning('Data kompetensi_progres tidak ditemukan untuk form_id', ['form_id' => $bidang->form_1_id]);
 			}
 
 			Log::info('Data bidang berhasil diupdate dengan asesor', ['form_1_id' => $bidang->form_1_id]);
 			$this->kirimNotifikasiKeAsesor($userAsesor, $bidang->form_1_id);
+
 			return response()->json([
 				'success' => true,
 				'message' => 'Data asesor berhasil diupdate.',
