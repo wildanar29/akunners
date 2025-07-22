@@ -341,7 +341,10 @@ class UsersController extends Controller
 					'name' => $user->nama,
 					'nik' => $user->nik,
 					'user_id' => $user->user_id, // Return user_id
-					'current_role' => $user->current_role_id, // Return current_role_id
+					'current_role' => [
+						'role_id' => $user->current_role_id,
+						'role_name' => $roleName
+					],
 					'role_name' => $roleName, // Add role_name if available
 					'working_unit' => $workingUnit ? [
 						'working_unit_id' => $working_unit_id,
