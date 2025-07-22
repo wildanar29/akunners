@@ -63,6 +63,16 @@ class BidangModel extends Model
         return $this->belongsTo(IjazahModel::class, 'ijazah_id', 'ijazah_id');
     }
 
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id', 'user_id');
+    }
+
+    public function asesi()
+    {
+        return $this->belongsTo(Asesi::class, 'asesi_id', 'asesi_id');
+    }
+
     public function transkrip()
     {
         return $this->belongsTo(TranskripModel::class, 'transkrip_id', 'transkrip_id');

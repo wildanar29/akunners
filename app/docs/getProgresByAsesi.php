@@ -71,4 +71,4 @@ namespace App\Docs;
  */
 
 
- class AjuanPermohonanAsesi {}
+ class getProgresByAsesi {}

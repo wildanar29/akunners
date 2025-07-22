@@ -12,6 +12,6 @@ class SoalForm2Model extends Model
 
     public function komponen()
     {
-        return $this->belongsTo(KomponenForm2Model::class, 'komponen_id', 'komponen_id');
+        return $this->belongsTo(KomponenForm2Model::class, ['komponen_id', 'pk_id']);
     }
 }

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class KompetensiProgres extends Model
 {
     protected $table = 'kompetensi_progres';
+    
 
     protected $fillable = [
         'form_id',
@@ -31,7 +32,13 @@ class KompetensiProgres extends Model
      */
     public function formInduk()
     {
-        return $this->belongsTo(Form1::class, 'form_id');
+        return $this->belongsTo(BidangModel::class, 'form_id', 'form_1_id');
+    }
+
+    public function formChild()
+    {
+        return $this->belongsTo(PenilaianForm2Model::class, 'form_id', 'form_2_id');
+        // Ganti dengan form lain jika bukan hanya form_2
     }
 
     /**
@@ -42,11 +49,21 @@ class KompetensiProgres extends Model
         return $this->belongsTo(KompetensiProgres::class, 'parent_form_id');
     }
 
+    public function form2()
+    {
+        return $this->belongsTo(PenilaianForm2Model::class, 'form_2_id'); // Pastikan kolom 'form_id' cocok
+    }
+
     /**
      * Relasi untuk mengambil turunan dari progres ini (anak-anak form)
      */
     public function children()
     {
         return $this->hasMany(KompetensiProgres::class, 'parent_form_id');
+    }
+
+    public function tracks()
+    {
+        return $this->belongsTo(KompetensiTrack::class, 'track_id');
     }
 }

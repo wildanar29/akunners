@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ElemenKompetensiForm2Model;
 use App\Models\JawabanForm2Model;
 use App\Models\SoalForm2Model;
+use App\Models\DaftarUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Tymon\JWTAuth\Facades\JWTAuth;
@@ -12,9 +13,13 @@ use App\Models\PenilaianForm2Model;
 use App\Models\PkProgressModel;
 use Carbon\Carbon; // Pastikan untuk mengimpor Carbon  
 use App\Models\BidangModel;
+use App\Models\KompetensiTrack;
+use App\Models\KompetensiProgres;
 use Illuminate\Support\Facades\Redis; // Tambahkan Redis facade
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Support\Facades\Log;  
+use App\Service\OneSignalService;
+use App\Models\Notification;
 
 /**
  * @OA\Tag(
@@ -25,203 +30,78 @@ use Illuminate\Support\Facades\DB;
 
 class Form2Controller extends Controller
 {
-    /**
- * @OA\Get(
- *     path="/soal-form2",
- *     summary="Mengambil daftar soal dari Redis atau Database",
- *     description="Mengambil semua soal berdasarkan elemen kompetensi, komponen serta soalnya. Parameter opsional no_elemen dan no_id dapat digunakan untuk melakukan filter.",
- *     tags={"Form 2"},
- *     @OA\Parameter(
- *         name="no_elemen",
- *         in="query",
- *         description="Filter berdasarkan nomor elemen",
- *         required=false,
- *         @OA\Schema(
- *             type="integer"
- *         )
- *     ),
- *     @OA\Parameter(
- *         name="no_id",
- *         in="query",
- *         description="Filter berdasarkan nomor id",
- *         required=false,
- *         @OA\Schema(
- *             type="integer"
- *         )
- *     ),
- *     @OA\Response(
- *         response=200,
- *         description="Data diambil dari Redis atau dari database",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="status", type="string", example="SUCCESS"),
- *             @OA\Property(property="message", type="string", example="Data taken from Redis"),
- *             @OA\Property(
- *                 property="data",
- *                 type="array",
- *                 @OA\Items(
- *                     type="object",
- *                     @OA\Property(property="no_elemen", type="integer", example=1),
- *                     @OA\Property(property="nama_elemen", type="string", example="Menilai kompetensi teknis"),
- *                     @OA\Property(property="komponen_id", type="string", example="1.1"),
- *                     @OA\Property(property="nama_komponen", type="string", example="Kemampuan problem-solving"),
- *                     @OA\Property(property="no_id", type="integer", example=5),
- *                     @OA\Property(property="sub_komponen_id", type="integer", example=2),
- *                     @OA\Property(property="daftar_pertanyaan", type="string", example="Bagaimana Anda menangani masalah dalam proyek?")
- *                 )
- *             )
- *         )
- *     ),
- *     @OA\Response(
- *         response=500,
- *         description="Terjadi kesalahan pada server"
- *     )
- * )
- */
+    protected $oneSignalService;
 
-     public function getSoals(Request $request)
+	public function __construct(OneSignalService $oneSignalService)
+	{
+		$this->oneSignalService = $oneSignalService;
+	}
+
+    public function getSoals(Request $request)
     {
-        // Ambil parameter dari query string
-        $no_elemen = $request->query('no_elemen');
-        $no_id     = $request->query('no_id');
+        // Validasi request
+        $validator = Validator::make($request->all(), [
+            'pk_id' => 'required|integer',
+            'no_elemen' => 'nullable|integer',
+            'no_id' => 'nullable|integer',
+        ]);
 
-        // Tentukan cache key berdasarkan adanya filter
-        if ($no_elemen !== null || $no_id !== null) {
-            // Gunakan nilai default "all" bila parameter tidak ada
-            $filterElemen = $no_elemen !== null ? $no_elemen : 'all';
-            $filterId     = $no_id !== null ? $no_id : 'all';
-            $cacheKey = 'soal_cache_filtered_' . $filterElemen . '_' . $filterId;
-        } else {
-            $cacheKey = 'soal_cache';
-        }
-
-        //Cek apakah data sudah ada di Redis dengan key tersebut
-		
-        $cachedData = Redis::get($cacheKey);
-        if ($cachedData) {
-            $data = json_decode($cachedData, true);
+        if ($validator->fails()) {
             return response()->json([
-                'status'  => 'SUCCESS',
-                'message' => 'Data taken from Redis',
-                'data'    => $data
-            ]);
-        }
-		
-
-        // Jika cache tidak ada, ambil data dari database
-        $elemenKompetensis = ElemenKompetensiForm2Model::with('komponens.soals')
-            ->orderBy('no_elemen')
-            ->get();
-
-        $result = [];
-        foreach ($elemenKompetensis as $elemenKompetensi) {
-            foreach ($elemenKompetensi->komponens as $komponen) {
-                foreach ($komponen->soals as $soal) {
-                    $result[] = [
-                        'no_elemen'         => $elemenKompetensi->no_elemen,
-                        'nama_elemen'       => $elemenKompetensi->nama_elemen,
-                        'komponen_id'       => $komponen->komponen_id,
-                        'nama_komponen'     => $komponen->nama_komponen,
-                        'no_id'             => $soal->no_id,
-                        'sub_komponen_id'   => $soal->sub_komponen_id,
-                        'daftar_pertanyaan' => $soal->daftar_pertanyaan,
-                    ];
-                }
-            }
+                'status'  => 'ERROR',
+                'message' => 'Validasi gagal',
+                'errors'  => $validator->errors()
+            ], 422);
         }
 
-        // Lakukan filtering jika parameter tersedia
+        $pk_id     = $request->input('pk_id');
+        $no_elemen = $request->input('no_elemen');
+        $no_id     = $request->input('no_id');
+
+        Log::debug('getSoals() called with:', compact('pk_id', 'no_elemen', 'no_id'));
+
+        // Query langsung antar tabel
+        $query = DB::table('soal_form_2 as s')
+            ->join('komponen_form_2 as k', function ($join) {
+                $join->on('s.komponen_id', '=', 'k.komponen_id')
+                    ->on('s.pk_id', '=', 'k.pk_id');
+            })
+            ->join('elemen_kompetensi_form_2 as e', function ($join) {
+                $join->on('k.no_elemen', '=', 'e.no_elemen')
+                    ->on('k.pk_id', '=', 'e.pk_id');
+            })
+            ->where('s.pk_id', $pk_id)
+            ->select(
+                'e.pk_id',
+                'e.no_elemen',
+                'e.nama_elemen',
+                'k.komponen_id',
+                'k.nama_komponen',
+                's.no_id',
+                's.sub_komponen_id',
+                's.daftar_pertanyaan'
+            )
+            ->orderBy('e.no_elemen')
+            ->orderBy('k.komponen_id');
+
+        // Filter opsional
         if ($no_elemen !== null) {
-            $result = array_filter($result, function ($item) use ($no_elemen) {
-                return $item['no_elemen'] == $no_elemen;
-            });
+            $query->where('e.no_elemen', $no_elemen);
         }
         if ($no_id !== null) {
-            $result = array_filter($result, function ($item) use ($no_id) {
-                return $item['no_id'] == $no_id;
-            });
+            $query->where('s.no_id', $no_id);
         }
 
-        // Reindex array hasil filter
-        $result = array_values($result);
+        $result = $query->get();
 
-        // Simpan data ke Redis dengan cache key yang sesuai
-        Redis::set($cacheKey, json_encode($result));
-
-        $message = ($no_elemen !== null || $no_id !== null) ? 
-            'Data taken from database (filtered)' : 'Data taken from database and cached';
+        Log::debug('Total hasil akhir:', ['count' => $result->count()]);
 
         return response()->json([
             'status'  => 'SUCCESS',
-            'message' => $message,
+            'message' => 'Data taken from database for PK ' . $pk_id,
             'data'    => $result
         ]);
     }
-
-    /**
- * @OA\Get(
- *     path="/get-form2",
- *     summary="Mengambil semua data Form 2",
- *     description="Mengambil seluruh data dari tabel Form 2 dengan opsi filter berdasarkan form_2_id, date dan no_reg.",
- *     tags={"Form 2"},
- *     @OA\Parameter(
- *         name="form_2_id",
- *         in="query",
- *         description="Filter berdasarkan form_2_id",
- *         required=false,
- *         @OA\Schema(
- *             type="integer"
- *         )
- *     ),
- *     @OA\Parameter(
- *         name="date",
- *         in="query",
- *         description="Filter berdasarkan tanggal (format: YYYY-MM-DD)",
- *         required=false,
- *         @OA\Schema(
- *             type="string",
- *             format="date"
- *         )
- *     ),
- *     @OA\Parameter(
- *         name="no_reg",
- *         in="query",
- *         description="Filter berdasarkan nomor registrasi",
- *         required=false,
- *         @OA\Schema(
- *             type="integer"
- *         )
- *     ),
- *     @OA\Response(
- *         response=200,
- *         description="Data berhasil diambil",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="message", type="string", example="Data retrieved successfully"),
- *             @OA\Property(
- *                 property="data",
- *                 type="array",
- *                 @OA\Items(
- *                     type="object",
- *                     @OA\Property(property="id", type="integer", example=1),
- *                     @OA\Property(property="user_id", type="integer", example=101),
- *                     @OA\Property(property="nilai", type="integer", example=85),
- *                     @OA\Property(property="tanggal", type="string", format="date", example="2024-02-10")
- *                 )
- *             )
- *         )
- *     ),
- *     @OA\Response(
- *         response=404,
- *         description="Data tidak ditemukan",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="message", type="string", example="Data not found")
- *         )
- *     )
- * )
- */
-
 
      public function getForm2Data(Request $request)
      {
@@ -262,56 +142,6 @@ class Form2Controller extends Controller
              'data'    => $data
          ]);
      }
-
-    /**
-     * @OA\Get(
-     *     path="/get-jawaban-form2/{user_jawab_form_2_id}",
-     *     summary="Mengambil data soal dan jawaban berdasarkan user_jawab_form_2_id",
-     *     description="Mengembalikan daftar soal dan jawaban yang telah diberikan oleh user berdasarkan ID user_jawab_form_2_id. Hanya data penilaian dan soal yang ditampilkan sekali untuk setiap user.",
-     *     tags={"Asesor"},
-     *     security={{ "bearerAuth":{} }},
-     *     @OA\Parameter(
-     *         name="user_jawab_form_2_id",
-     *         in="path",
-     *         required=true,
-     *         @OA\Schema(type="integer"),
-     *         description="ID user yang memberikan jawaban"
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Data berhasil diambil",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="user_jawab_form_2_id", type="integer", example=26),
-     *             @OA\Property(property="asesi_name", type="string", example="INI BUDI"),
-     *             @OA\Property(property="penilaian_asesi", type="string", example="80.60"),
-     *             @OA\Property(property="asesi_date", type="string", example="2025-04-01"),
-     *             @OA\Property(
-     *                 property="soal",
-     *                 type="array",
-     *                 @OA\Items(
-     *                     @OA\Property(property="komponen_id", type="string", example="1.1"),
-     *                     @OA\Property(property="nama_komponen", type="string", example="Pasien yang dilakukan pengkajian keperawatan diidentifikasi"),
-     *                     @OA\Property(property="no_id", type="integer", example=1),
-     *                     @OA\Property(property="sub_komponen_id", type="string", example="1.1.1"),
-     *                     @OA\Property(property="daftar_pertanyaan", type="string", example="Apakah anda mampu menjelaskan respon biopsikososial atau manifestasi klinik yang diperhatikan oleh pasien dengan minimal care?"),
-     *                     @OA\Property(property="k", type="boolean", example=true),
-     *                     @OA\Property(property="bk", type="boolean", example=false)
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Data tidak ditemukan",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="message", type="string", example="Data tidak ditemukan")
-     *         )
-     *     )
-     * )
-     */
-
 
      public function getDataSoalJawaban($user_jawab_form_2_id)
      {
@@ -362,54 +192,6 @@ class Form2Controller extends Controller
 		]);
     }
      
-
-    /**
-     * @OA\Put(
-     *     path="/penilaian-asesor-form2",
-     *     summary="Memperbarui penilaian asesor untuk Asesi",
-     *     tags={"Asesor"},
-     *     security={{ "bearerAuth":{} }},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"form_2_id", "status"},
-     *             @OA\Property(property="form_2_id", type="integer", example=1),
-     *             @OA\Property(property="status", type="string", enum={"Approved", "Cancel"}, example="Approved")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Penilaian asesor berhasil diperbarui",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="message", type="string", example="Status updated successfully"),
-     *             @OA\Property(property="data", type="object",
-     *                 @OA\Property(property="form_2_id", type="integer", example=1),
-     *                 @OA\Property(property="status", type="string", example="Approved"),
-     *                 @OA\Property(property="asesor_date", type="string", format="date-time", example="2024-08-02T10:00:00Z")
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=400,
-     *         description="Validasi gagal - Input tidak sesuai",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="error", type="object", example={"form_2_id": {"Form_2 ID tidak valid"}})
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Data tidak ditemukan",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="error", type="string", example="Data not found")
-     *         )
-     *     )
-     * )
-     */
-
-
      public function inputPenilaianAsesor(Request $request)
      {
          // Validasi input hanya untuk status
@@ -474,229 +256,243 @@ class Form2Controller extends Controller
          ]);
      }
      
+    
+    private function kirimNotifikasiKeAsesor(DaftarUser $userAsesor, $formId)
+    {
+        if (empty($userAsesor->device_token)) {
+            Log::warning("Asesor user_id={$userAsesor->user_id} tidak memiliki device_token.");
+            return;
+        }
 
+        try {
+            DB::transaction(function () use ($userAsesor, $formId) {
+                $title = 'Penugasan Asesor';
+                $message = "Asesi telah selesai mengerjakan Form 2.";
 
+                // Log sebelum pengiriman notifikasi
+                Log::info("Mengirim notifikasi ke OneSignal untuk user_id={$userAsesor->user_id}, form_id={$formId}");
 
-/**
- * @OA\Post(
- *     path="/jawaban-asesi",
- *     summary="Menyimpan jawaban asesi dan menghitung penilaian",
- *     tags={"Form 2"},
- *     security={{ "bearerAuth":{} }},
- *     @OA\RequestBody(
- *         required=true,
- *         @OA\JsonContent(
- *             required={"jawaban"},
- *             @OA\Property(
- *                 property="jawaban",
- *                 type="array",
- *                 @OA\Items(
- *                     type="object",
- *                     required={"no_id", "k", "bk"},
- *                     @OA\Property(property="no_id", type="integer", example=1),
- *                     @OA\Property(property="k", type="boolean", example=true),
- *                     @OA\Property(property="bk", type="boolean", example=false)
- *                 )
- *             )
- *         )
- *     ),
- *     @OA\Response(
- *         response=200,
- *         description="Jawaban berhasil disimpan dan nilai lebih dari 80",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="message", type="string", example="Answer successfully saved and score more than 80"),
- *             @OA\Property(property="user_jawab_form_2_id", type="integer", example=1),
- *             @OA\Property(property="total_k", type="integer", example=10),
- *             @OA\Property(property="total_bk", type="integer", example=5),
- *             @OA\Property(property="total_soal", type="integer", example=20),
- *             @OA\Property(property="penilaian_asesi", type="number", format="float", example=85.0),
- *             @OA\Property(property="asesi_date", type="string", format="date-time", example="2024-08-02T10:00:00Z"),
- *             @OA\Property(property="no_reg", type="string", example="REG-123456"),
- *             @OA\Property(property="asesi_name", type="string", example="John Doe"),
- *             @OA\Property(property="asesor_name", type="string", example="Dr. Smith")
- *         )
- *     ),
- *     @OA\Response(
- *         response=400,
- *         description="Validasi gagal - Input tidak sesuai",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="error", type="object", example={"jawaban.*.no_id": {"Soal tidak ditemukan"}})
- *         )
- *     ),
- *     @OA\Response(
- *         response=404,
- *         description="Data tidak ditemukan atau user tidak ditemukan",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="message", type="string", example="User not found")
- *         )
- *     ),
- *     @OA\Response(
- *         response=500,
- *         description="Terjadi kesalahan pada server",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="error", type="string", example="Terjadi kesalahan: [deskripsi error]")
- *         )
- *     )
- * )
- */
+                // Kirim notifikasi ke OneSignal
+                $this->oneSignalService->sendNotification(
+                    [$userAsesor->device_token],
+                    $title,
+                    $message
+                );
 
+                Log::info("Notifikasi berhasil dikirim ke OneSignal untuk user_id={$userAsesor->user_id}");
 
+                // Simpan notifikasi ke database
+                Notification::create([
+                    'user_id' => $userAsesor->user_id,
+                    'title' => $title,
+                    'description' => $message,
+                    'is_read' => 0,
+                    'created_at' => Carbon::now(),
+                    'updated_at' => Carbon::now(),
+                ]);
+
+                Log::info("Notifikasi berhasil disimpan di database untuk user_id={$userAsesor->user_id}, form_id={$formId}");
+            });
+
+        } catch (\Exception $e) {
+            Log::error("Gagal mengirim notifikasi ke asesor.", [
+                'user_id' => $userAsesor->user_id,
+                'form_id' => $formId,
+                'error_message' => $e->getMessage(),
+                'error_trace' => $e->getTraceAsString(),
+            ]);
+        }
+    }
 
     public function JawabanAsesi(Request $request)
     {
         // Validasi input
         $validator = Validator::make($request->all(), [
-            'jawaban' => 'required|array', // Jawaban harus array
+            'form_2_id' => 'required|integer|exists:form_2,form_2_id',
+            'jawaban' => 'required|array',
             'jawaban.*.no_id' => 'required|integer|exists:soal_form_2,no_id',
             'jawaban.*.k' => 'boolean',
             'jawaban.*.bk' => 'boolean',
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()], 400);
+            return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        // Ambil user_id dari token JWT
-        $user = JWTAuth::parseToken()->authenticate();
-        if (!$user) {
-            return response()->json(['message' => 'User not found'], 404);
-        }
+        $user = auth()->user();
 
-        // Cari form_1 berdasarkan user_id
-        $form1 = BidangModel::where('user_id', $user->user_id)->first();
-        if (!$form1) {
+        // Ambil form_1 terkait user
+        $form = BidangModel::where('asesi_id', $user->user_id)->first();
+        if (!$form) {
             return response()->json(['error' => 'Data form_1 tidak ditemukan untuk user ini'], 404);
         }
 
-        // Ambil asesi_name dan asesor_name dari form_1
-        $asesi_name = $form1->asesi_name;  // Ambil asesi_name dari form_1
-        $asesor_name = $form1->asesor_name;  // Ambil asesor_name dari form_1
+        Log::info('Memulai proses penyimpanan jawaban asesmen', [
+            'user_id' => $user->user_id,
+            'jumlah_jawaban' => count($request->jawaban),
+        ]);
 
-        // Ambil jumlah total soal dari tabel soal_form_2
-        $total_soal = SoalForm2Model::count();
-        if ($total_soal == 0) {
-            return response()->json(['error' => 'Total soal tidak boleh 0'], 400);
-        }
-
-        // Mulai transaksi database
         DB::beginTransaction();
+
         try {
-            // Ambil semua jawaban user sebelumnya
-            $jawabanUser = JawabanForm2Model::where('user_jawab_form_2_id', $user->user_id)->get()->keyBy('no_id');
+            foreach ($request->jawaban as $jawaban) {
+                $no_id = $jawaban['no_id'];
+                $k = $jawaban['k'] ?? false;
+                $bk = $jawaban['bk'] ?? false;
 
-            $k_count = 0;
-            $bk_count = 0;
-            $jawabanData = [];
-
-            foreach ($request->jawaban as $input) {
-                $no_id = $input['no_id'];
-                $k = $input['k'] ?? false;
-                $bk = $input['bk'] ?? false;
-
-                if (isset($jawabanUser[$no_id])) {
-                    // Update jawaban jika sudah ada
-                    $jawabanUser[$no_id]->k = $k;
-                    $jawabanUser[$no_id]->bk = $bk;
-                    $jawabanUser[$no_id]->save();
-                } else {
-                    // Cek apakah ada jawaban lama yang telah di-null-kan
-                    $jawaban = JawabanForm2Model::where('user_jawab_form_2_id', $user->user_id)
-                        ->whereNull('no_id')
-                        ->first();
-                    
-                    if ($jawaban) {
-                        // Jika ada yang NULL, update kembali
-                        $jawaban->no_id = $no_id;
-                        $jawaban->k = $k;
-                        $jawaban->bk = $bk;
-                        $jawaban->save();
-                    } else {
-                        // Simpan jawaban baru
-                        $jawabanData[] = [
-                            'no_id' => $no_id,
-                            'k' => $k,
-                            'bk' => $bk,
-                            'user_jawab_form_2_id' => $user->user_id,
-                        ];
-                    }
-                }
-    
-                // Akumulasi nilai K dan BK
-                $k_count += $k ? 1 : 0;
-                $bk_count += $bk ? 1 : 0;
-            }
-
-
-            // Insert semua jawaban baru dalam satu query
-            if (!empty($jawabanData)) {
-                JawabanForm2Model::insert($jawabanData);
-            }
-
-            // Hitung nilai penilaian asesi
-            $penilaian_asesi = ($k_count / $total_soal) * 100;
-
-             // **Cek apakah nilai >= 80 sebelum disimpan**
-            if ($penilaian_asesi >= 80) {
-                // Simpan atau update data penilaian di tabel form_2
-                $penilaian = PenilaianForm2Model::updateOrCreate(                    
-                    ['no_reg' => $form1->no_reg, 'user_jawab_form_2_id' => $user->user_id],
+                JawabanForm2Model::updateOrCreate(
                     [
-                        'k' => $k_count,
-                        'bk' => $bk_count,
-                        'penilaian_asesi' => $penilaian_asesi,
-                        'asesi_date' => Carbon::now(), // Menambahkan asesii_date dengan waktu sekarang
-                        'asesi_name' => $asesi_name,  // Menambahkan asesi_name dari form_1
-                        'asesor_name' => $asesor_name,  // Menambahkan asesor_name dari form_1
+                        'user_jawab_form_2_id' => $user->user_id,
+                        'no_id' => $no_id
+                    ],
+                    [
+                        'k' => $k,
+                        'bk' => $bk
                     ]
                 );
-
-                // **Tambahkan form_2_id ke dalam tabel pk_progress**
-                PkProgressModel::updateOrCreate(
-                    ['user_id' => $user->user_id],
-                    ['form_2_id' => $penilaian->form_2_id] // Pastikan form_2_id yang dimasukkan sesuai dengan ID dari PenilaianForm2Model
-                );
-
-
-            } else {
-                // Jika nilai < 80, batalkan penyimpanan data penilaian
-                DB::rollBack();
-                return response()->json([
-                    'message' => 'Value less than 80, data is not saved',
-                    'user_jawab_form_2_id' => $user->user_id,
-                    'total_k' => $k_count,
-                    'total_bk' => $bk_count,
-                    'total_soal' => $total_soal,
-                    'penilaian_asesi' => $penilaian_asesi,
-                ], 200);
             }
 
+            $total_soal = SoalForm2Model::count();
+            $jawabanUser = JawabanForm2Model::where('user_jawab_form_2_id', $user->user_id)->get();
 
-            // Commit transaksi
+            $k_count = $jawabanUser->where('k', true)->count();
+            $bk_count = $jawabanUser->where('bk', true)->count();
+            $penilaian_asesi = ($k_count / $total_soal) * 100;
+
+            $penilaian = PenilaianForm2Model::updateOrCreate(
+                [
+                    'form_2_id' => $request->form_2_id,
+                    'user_jawab_form_2_id' => $user->user_id,
+                ],
+                [
+                    'k' => $k_count,
+                    'bk' => $bk_count,
+                    'penilaian_asesi' => $penilaian_asesi,
+                    'asesi_name' => $form->asesi_name,
+                    'asesor_name' => $form->asesor_name,
+                    'asesi_date' => Carbon::now(),
+                ]
+            );
+
+            $progres = KompetensiProgres::updateOrCreate(
+                ['form_id' => $penilaian->form_2_id],
+                ['status' => 'Submitted']
+            );
+
+            if ($form && $form->form_1_id) {
+                KompetensiProgres::updateOrCreate(
+                    ['form_id' => $form->form_1_id],
+                    ['status' => 'InAssessment']
+                );
+            }
+
+            Log::info('KompetensiProgres diperbarui/dibuat', [
+                'form_id' => $penilaian->form_2_id,
+                'status' => $progres->status,
+            ]);
+
+            KompetensiTrack::create([
+                'progres_id' => $progres->id,
+                'form_type' => 'form_2',
+                'activity' => 'Submitted',
+                'activity_time' => Carbon::now(),
+                'description' => 'Asesi selesai mengisi self assessment.',
+            ]);
+
             DB::commit();
+            Log::info('ada');
+            // ✅ Panggil kirim notifikasi setelah transaksi berhasil
+            $asesor = DaftarUser::find($form->asesor_id);
+            Log::info('Mengirim notifikasi ke asesor', [
+                'asesor_id' => $asesor->user_id,
+                'form_2_id' => $penilaian->form_2_id,
+            ]);
+            if ($asesor) {
+                $this->kirimNotifikasiKeAsesor($asesor, $penilaian->form_2_id);
+            }
 
             return response()->json([
-                'message' => 'Answer successfully saved and score more than 80',
-                'form_2_id' => $penilaian->form_2_id,
-                'user_jawab_form_2_id' => $user->user_id,
+                'message' => 'Jawaban berhasil disimpan atau diperbarui.',
+                'penilaian_asesi' => $penilaian_asesi,
                 'total_k' => $k_count,
                 'total_bk' => $bk_count,
-                'total_soal' => $total_soal,
-                'penilaian_asesi' => $penilaian_asesi,
-                'asesi_date' => $penilaian->asesi_date, // Menambahkan asesi_date ke response
-                'no_reg' => $penilaian->no_reg,
-                'asesi_name' => $penilaian->asesi_name, 
-                'asesor_name' => $penilaian->asesor_name, 
-            ], 200);
-
+                'form_2_id' => $penilaian->form_2_id,
+            ]);
         } catch (\Exception $e) {
-            // Rollback jika ada error
-            DB::rollback();
-            return response()->json(['error' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);
+            DB::rollBack();
+
+            Log::error('Gagal menyimpan jawaban asesmen', [
+                'error' => $e->getMessage(),
+                'user_id' => $user->user_id,
+            ]);
+
+            return response()->json([
+                'message' => 'Terjadi kesalahan saat menyimpan jawaban.',
+                'error' => $e->getMessage(),
+            ], 500);
         }
+    }
+
+
+    public function getSoalDanJawaban(Request $request)
+    {
+        // Validasi request
+        $validator = Validator::make($request->all(), [
+            'pk_id' => 'required|integer',
+            'user_id' => 'required|integer', // user_id yang menjawab
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'ERROR',
+                'message' => 'Validasi gagal',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $pk_id = $request->input('pk_id');
+        $user_id = $request->input('user_id');
+
+        Log::debug('getSoalDanJawaban() called with:', compact('pk_id', 'user_id'));
+
+        $query = DB::table('soal_form_2 as s')
+            ->join('komponen_form_2 as k', function ($join) {
+                $join->on('s.komponen_id', '=', 'k.komponen_id')
+                    ->on('s.pk_id', '=', 'k.pk_id');
+            })
+            ->join('elemen_kompetensi_form_2 as e', function ($join) {
+                $join->on('k.no_elemen', '=', 'e.no_elemen')
+                    ->on('k.pk_id', '=', 'e.pk_id');
+            })
+            ->leftJoin('jawaban_form_2 as j', function ($join) use ($user_id) {
+                $join->on('s.no_id', '=', 'j.no_id')
+                    ->where('j.user_jawab_form_2_id', '=', $user_id);
+            })
+            ->where('s.pk_id', $pk_id)
+            ->select(
+                'e.pk_id',
+                'e.no_elemen',
+                'e.nama_elemen',
+                'k.komponen_id',
+                'k.nama_komponen',
+                's.no_id',
+                's.sub_komponen_id',
+                's.daftar_pertanyaan',
+                'j.k as jawaban_k',
+                'j.bk as jawaban_bk'
+            )
+            ->orderBy('e.no_elemen')
+            ->orderBy('k.komponen_id');
+
+        $result = $query->get();
+
+        Log::debug('Total soal+jawaban ditemukan:', ['count' => $result->count()]);
+
+        return response()->json([
+            'status' => 'SUCCESS',
+            'message' => 'Data soal dan jawaban berhasil diambil',
+            'data' => $result
+        ]);
     }
 
 

@@ -23,7 +23,7 @@ $router->get('/get-educations', 'MasterController@getEducations');
 $router->get('/get-kompetensi-pk', 'MasterController@getKompetensiPk');
 // PROGRES TRACKING
 $router->get('/progress/asesi/{asesorId}', 'AsesiPermohonanController@getAsesiProgressByAsesor');
-
+$router->get('/progress/assessment/{asesi_id}', 'ProgressController@getProgresByAsesi');
 // FORM 1 ATAU FORM PENGAJUAN
 $router->get('/progress/{userId}', 'AsesiPermohonanController@getUserFormProgress');
 $router->post('/get-form1-byasesor', 'AsesiPermohonanController@getForm1ByAsesor');
@@ -197,12 +197,12 @@ $router->get('/get-form2-id/{form_2_id}', 'Form2Controller@getForm2ById');
 $router->get('/get-form2-by-date-id', 'Form2Controller@getForm2ByIdAndDate');
 $router->get('/get-form2-by-no-reg', 'Form2Controller@getForm2ByNoReg');
 // Cukup Sampai Sini Form 2
-
-
+$router->get('/get-soal-jawab-form2', 'Form2Controller@getSoalDanJawaban');
 
 //Asesor Form3 Input Approved
 $router->post('/input-form3/{user_id}', 'Form3Controller@Form3Input');
 
+$router->get('/form1', 'ProgressController@getForm1');
 
 
 //Notifikasi 

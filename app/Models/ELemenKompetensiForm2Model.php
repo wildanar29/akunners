@@ -10,8 +10,8 @@ class ElemenKompetensiForm2Model extends Model
     protected $primaryKey = 'no_elemen';
     public $timestamps = false;
 
-    public function komponens()
+    public function pk()
     {
-        return $this->hasMany(KomponenForm2Model::class, 'no_elemen', 'no_elemen');
+        return $this->belongsTo(KompetensiPk::class, 'pk_id');
     }
 }

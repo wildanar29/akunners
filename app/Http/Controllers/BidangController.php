@@ -35,8 +35,6 @@ class BidangController extends Controller
 		$this->oneSignalService = $oneSignalService;
 	}
 
-	
-
    public function insertAsesor(Request $request)  
 	{
 		$user = auth()->user();

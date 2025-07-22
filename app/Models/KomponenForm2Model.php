@@ -10,8 +10,8 @@ class KomponenForm2Model extends Model
     protected $primaryKey = 'id';
     public $timestamps = false;
 
-    public function soals()
+    public function elemen()
     {
-        return $this->hasMany(SoalForm2Model::class, 'komponen_id', 'komponen_id');
+        return $this->belongsTo(ElemenKompetensiForm2::class, ['no_elemen', 'pk_id']);
     }
 }

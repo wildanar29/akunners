@@ -7,6 +7,7 @@ use App\Models\BidangModel;
 use App\Models\Notification;
 use Illuminate\Support\Facades\Log;  
 use App\Models\HistoryJabatan;
+use App\Models\PenilaianForm2Model;
 use App\Models\DaftarUser; // Pastikan untuk mengimpor model User  
 use App\Models\IjazahModel; // Model untuk users_ijazah_file  
 use App\Models\TranskripModel; // Model untuk users_transkrip_file  
@@ -16,8 +17,10 @@ use App\Models\UjikomModel; // Model untuk users_str_file
 use App\Models\DataAsesorModel; // Model untuk users_str_file  
 use App\Models\PkProgressModel; // Model untuk users_str_file  
 use App\Models\PkStatusModel; // Model untuk users_str_file  
-use App\Models\KompetensiProgres;
+use App\Models\JawabanForm2Model;
+use App\Models\SoalForm2Model;
 use App\Models\KompetensiTrack;
+use App\Models\KompetensiProgres;
 use App\Models\User; // Model untuk user  
 use Illuminate\Support\Facades\Validator;  
 use Illuminate\Support\Facades\DB; // Tambahkan DB untuk query manual
@@ -59,9 +62,11 @@ class AsesorController extends Controller
 			'user_id' => $user->user_id ?? null,
 		]);
 
+		DB::beginTransaction();
+
 		try {
-			// Ambil data form untuk logging dan kebutuhan tracking
 			$formDebug = BidangModel::find($form_1_id);
+
 			if ($formDebug) {
 				Log::debug('Data form_1 ditemukan', [
 					'form_1_id' => $form_1_id,
@@ -83,13 +88,15 @@ class AsesorController extends Controller
 					'user_id' => $user->user_id,
 				]);
 
+				DB::rollBack();
+
 				return response()->json([
 					'status' => 403,
 					'message' => 'Data tidak ditemukan atau Anda bukan asesor yang ditugaskan.'
 				], 403);
 			}
 
-			// Update status jadi Approved
+			// Update form_1
 			$form->status = 'Approved';
 			$form->updated_at = Carbon::now();
 			$form->save();
@@ -99,6 +106,7 @@ class AsesorController extends Controller
 				'user_id' => $user->user_id,
 			]);
 
+			// Update atau create progres
 			$progres = KompetensiProgres::where('form_id', $form->form_1_id)->first();
 
 			if ($progres) {
@@ -121,8 +129,7 @@ class AsesorController extends Controller
 				]);
 			}
 
-
-			// Tambahkan aktivitas ke kompetensi_tracks
+			// Tambahkan track
 			KompetensiTrack::create([
 				'progres_id' => $progres->id,
 				'form_type' => 'form_1',
@@ -131,16 +138,37 @@ class AsesorController extends Controller
 				'description' => 'Form 1 disetujui oleh Asesor.',
 			]);
 
+			// Inisialisasi jawaban form_2
+			
+			$this->initJawabanForm2($user, $form);
+			$form2 = $this->buatForm2DariForm1($form);
 
-			// Kirim notifikasi ke user pengaju
+			$progresForm2 = KompetensiProgres::create([
+				'form_id' => $form2->form_2_id,
+				'parent_form_id' => $form->form_1_id,
+				'user_id' => $user->user_id,
+				'status' => 'InAssessment',
+			]);
+
+			KompetensiTrack::create([
+				'progres_id' => $progresForm2->id,
+				'form_type' => 'form_2',
+				'activity' => 'InAssessment',
+				'activity_time' => Carbon::now(),
+				'description' => 'Form 2 dimulai untuk asesmen oleh Asesor.',
+			]);
+
 			$this->kirimNotifikasiApprovalKePengaju($formDebug);
+
+			DB::commit();
 
 			return response()->json([
 				'status' => 200,
 				'message' => 'Status berhasil diperbarui menjadi Approved dan notifikasi dikirim.'
 			]);
-
 		} catch (\Exception $e) {
+			DB::rollBack();
+
 			Log::error('Terjadi error saat approveForm1ById', [
 				'form_1_id' => $form_1_id,
 				'user_id' => $user->user_id ?? null,
@@ -153,6 +181,30 @@ class AsesorController extends Controller
 				'error' => $e->getMessage(),
 			], 500);
 		}
+	}
+
+
+	private function buatForm2DariForm1($form)
+	{
+		$form2 = new PenilaianForm2Model();
+		$form2->user_jawab_form_2_id = $form->asesi_id;
+		$form2->penilaian_asesi = 0;
+		$form2->asesi_date = null;
+		$form2->asesor_date = null;
+		$form2->no_reg = null;
+		$form2->asesi_name = $form->asesi_name;
+		$form2->asesor_name = null;
+		$form2->status = null;
+		$form2->created_at = Carbon::now();
+		$form2->updated_at = Carbon::now();
+		$form2->save();
+
+		Log::info('Form_2 berhasil dibuat saat approval', [
+			'form_1_id' => $form->form_1_id,
+			'form_2_id' => $form2->form_2_id,
+		]);
+
+		return $form2;
 	}
 
 	private function kirimNotifikasiApprovalKePengaju($formData)
@@ -205,6 +257,30 @@ class AsesorController extends Controller
 				'user_id' => $pengaju->user_id,
 				'error' => $e->getMessage(),
 			]);
+		}
+	}
+
+	private function initJawabanForm2($user, $form1)
+	{
+		$existingCount = JawabanForm2Model::where('user_jawab_form_2_id', $user->user_id)->count();
+		if ($existingCount === 0) {
+			$soalList = SoalForm2Model::where('pk_id', $form1->pk_id)->get();
+
+			$jawabanToInit = [];
+			foreach ($soalList as $soal) {
+				$jawabanToInit[] = [
+					'user_jawab_form_2_id' => $user->user_id,
+					'no_id' => $soal->no_id,
+					'k' => null,
+					'bk' => null,
+					'created_at' => Carbon::now(),
+					'updated_at' => Carbon::now(),
+				];
+			}
+
+			if (!empty($jawabanToInit)) {
+				JawabanForm2Model::insert($jawabanToInit);
+			}
 		}
 	}
 
