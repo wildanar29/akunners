@@ -45,12 +45,13 @@ class Form5Controller extends BaseController
 			], 403);
 		}
 
-		// Validasi input
+		// ✅ Validasi input (tambahkan pk_id)
 		$this->validate($request, [
 			'date' => 'required|date',
 			'time' => 'required',
 			'place' => 'required|string|max:255',
-			'form_1_id' => 'required|integer|exists:form_1,form_1_id'
+			'form_1_id' => 'required|integer|exists:form_1,form_1_id',
+			'pk_id' => 'required|integer' // validasi pk_id
 		]);
 
 		// Cek apakah user sudah memiliki pengajuan untuk form_1_id ini
@@ -77,6 +78,14 @@ class Form5Controller extends BaseController
 				], 404);
 			}
 
+			// ✅ Validasi kecocokan pk_id dari form_1 dengan request
+			if ($bidang->pk_id != $request->pk_id) {
+				return response()->json([
+					'status' => 400,
+					'message' => 'Form yang dipilih tidak sesuai dengan program keahlian yang Anda ajukan.'
+				], 400);
+			}
+
 			// Ambil data asesor
 			$asesorData = DataAsesorModel::where('no_reg', $bidang->no_reg)->first();
 			if (!$asesorData) {
@@ -100,6 +109,8 @@ class Form5Controller extends BaseController
 			$interview->asesor_id = $asesorData->user_id;
 			$interview->asesor_name = $asesorName;
 			$interview->status = 'Waiting';
+			$interview->pk_id = $request->pk_id;
+
 			$interview->save();
 
 			DB::commit();
@@ -109,7 +120,6 @@ class Form5Controller extends BaseController
 				'message' => 'Pengajuan konsultasi pra asesmen berhasil disimpan.',
 				'data' => $interview
 			], 201);
-
 		} catch (\Exception $e) {
 			DB::rollBack();
 
@@ -121,70 +131,101 @@ class Form5Controller extends BaseController
 		}
 	}
 
-
-
-	public function getJadwalInterviewByAsesor(Request $request)
+	public function getJadwalInterviewGabungan(Request $request)
 	{
 		$user = Auth::user();
 
-		// Cek user login
 		if (!$user) {
 			return response()->json([
 				'status' => 401,
-				'message' => 'User tidak terautentikasi.',
+				'message' => 'User belum login.',
 				'data' => []
 			], 401);
 		}
 
-		// Tangkap inputan
-		$inputAsesorId = $request->input('asesor_id');
-		$inputNoReg = $request->input('no_reg');
+		// Deteksi role
+		$userId   = $user->user_id;
+		$isBidang = UserRole::where('user_id', $userId)->where('role_id', 3)->exists();
+		$isAsesor = DB::table('data_asesor')->where('user_id', $userId)->exists();
 
-		$asesorId = null;
-
-		// Jika ada inputan asesor_id langsung digunakan
-		if ($inputAsesorId) {
-			$asesor = DB::table('data_asesor')->where('user_id', $inputAsesorId)->first();
-			if (!$asesor) {
-				return response()->json([
-					'status' => 404,
-					'message' => 'Asesor tidak ditemukan berdasarkan asesor_id.',
-					'data' => []
-				], 404);
-			}
-			$asesorId = $inputAsesorId;
-		}
-		// Jika ada inputan no_reg, cari user_id asesor dari data_asesor
-		elseif ($inputNoReg) {
-			$asesor = DB::table('data_asesor')->where('no_reg', $inputNoReg)->first();
-			if (!$asesor) {
-				return response()->json([
-					'status' => 404,
-					'message' => 'Asesor tidak ditemukan berdasarkan no_reg.',
-					'data' => []
-				], 404);
-			}
-			$asesorId = $asesor->user_id;
-		}
-		// Kalau tidak ada input, pakai user yang login
-		else {
-			$asesor = DB::table('data_asesor')->where('user_id', $user->user_id)->first();
-			if (!$asesor) {
-				return response()->json([
-					'status' => 403,
-					'message' => 'Akses ditolak. Hanya asesor yang dapat melihat jadwal ini.',
-					'data' => []
-				], 403);
-			}
-			$asesorId = $user->user_id;
+		if (!$isBidang && !$isAsesor) {
+			return response()->json([
+				'status' => 403,
+				'message' => 'Akses ditolak. Hanya Bidang atau Asesor yang dapat mengakses.',
+				'data' => []
+			], 403);
 		}
 
-		// Ambil jadwal interview
-		$jadwal = DB::table('schedule_interview')
-			->where('asesor_id', $asesorId)
-			->orderBy('date', 'asc')
-			->orderBy('time', 'asc')
-			->get();
+		// Tangkap input filter
+		$date       = $request->input('date');
+		$time       = $request->input('time');
+		$place      = $request->input('place');
+		$status     = $request->input('status');
+		$pk_id      = $request->input('pk_id');
+		$asesorId   = $request->input('asesor_id');
+		$noReg      = $request->input('no_reg');
+
+		// Mulai query
+		$query = DB::table('schedule_interview as si')
+			->join('form_1 as f1', 'si.form_1_id', '=', 'f1.form_1_id')
+			->select('si.*');
+
+		// === JIKA BIDANG ===
+		if ($isBidang && !$isAsesor) {
+			if (!empty($date)) {
+				$query->whereDate('si.date', $date);
+			}
+			if (!empty($time)) {
+				$query->where('si.time', $time);
+			}
+			if (!empty($place)) {
+				$query->where('si.place', 'like', '%' . $place . '%');
+			}
+			if (!empty($asesorId)) {
+				$query->where('si.asesor_id', $asesorId);
+			}
+			if (!empty($status)) {
+				$query->where('si.status', $status);
+			}
+		}
+
+		// === JIKA ASESOR ===
+		elseif ($isAsesor) {
+			if ($asesorId) {
+				$asesor = DB::table('data_asesor')->where('user_id', $asesorId)->first();
+				if (!$asesor) {
+					return response()->json([
+						'status' => 404,
+						'message' => 'Asesor tidak ditemukan berdasarkan asesor_id.',
+						'data' => []
+					], 404);
+				}
+			} elseif ($noReg) {
+				$asesor = DB::table('data_asesor')->where('no_reg', $noReg)->first();
+				if (!$asesor) {
+					return response()->json([
+						'status' => 404,
+						'message' => 'Asesor tidak ditemukan berdasarkan no_reg.',
+						'data' => []
+					], 404);
+				}
+				$asesorId = $asesor->user_id;
+			} else {
+				$asesorId = $user->user_id;
+			}
+
+			$query->where('si.asesor_id', $asesorId)
+				->where('si.status', 'waiting');
+
+			if ($pk_id) {
+				$query->where('f1.pk_id', $pk_id);
+			}
+		}
+
+		// Ambil data dan urutkan
+		$jadwal = $query->orderBy('si.date', 'asc')
+						->orderBy('si.time', 'asc')
+						->get();
 
 		return response()->json([
 			'status' => 200,
@@ -278,67 +319,6 @@ class Form5Controller extends BaseController
 		]);
 	}
 	
-	public function getJadwalInterviewByBidang(Request $request)
-	{
-		$authUser = auth()->user();
-
-		if (!$authUser) {
-			return response()->json([
-				'status' => 401,
-				'message' => 'User belum login.',
-				'data' => []
-			], 401);
-		}
-
-		// Cek apakah user memiliki role Bidang (role_id = 3)
-		$isBidang = $authUser->roles()->where('role_id', 3)->exists();
-		if (!$isBidang) {
-			return response()->json([
-				'status' => 403,
-				'message' => 'Akses ditolak. Hanya user dengan role Bidang yang dapat mengakses.',
-				'data' => []
-			], 403);
-		}
-
-		// Ambil parameter filter dari input
-		$date     = $request->input('date');
-		$time     = $request->input('time');
-		$place    = $request->input('place');
-		$asesorId = $request->input('asesor_id');
-		$status   = $request->input('status');
-
-		// Query data dari schedule_interview
-		$query = DB::table('schedule_interview');
-
-		// Filter berdasarkan input jika ada
-		if (!empty($date)) {
-			$query->whereDate('date', $date);
-		}
-		if (!empty($time)) {
-			$query->where('time', $time);
-		}
-		if (!empty($place)) {
-			$query->where('place', 'like', '%' . $place . '%');
-		}
-		if (!empty($asesorId)) {
-			$query->where('asesor_id', $asesorId);
-		}
-		if (!empty($status)) {
-			$query->where('status', $status);
-		}
-
-		// Ambil data dan urutkan
-		$jadwal = $query->orderBy('date')
-						->orderBy('time')
-						->get();
-
-		return response()->json([
-			'status' => 200,
-			'message' => 'Data jadwal interview berhasil diambil.',
-			'data' => $jadwal
-		]);
-	}
-
 	public function getLangkahDanKegiatan()
 	{
 		try {

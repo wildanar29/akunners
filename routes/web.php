@@ -31,7 +31,7 @@ $router->post('/get-form1-byasesi', 'AsesiPermohonanController@getForm1ByAsesi')
 
 // Bagian API Form 5
 $router->post('/konsultasi/pra-asesmen', 'Form5Controller@pengajuanKonsultasiPraAsesmen');
-$router->get('/jadwal/interview/asesor', 'Form5Controller@getJadwalInterviewByAsesor');
+$router->get('/jadwal/interview/asesor', 'Form5Controller@getJadwalInterviewGabungan');
 $router->post('/interview/update-status', 'Form5Controller@updateStatusInterview');
 $router->post('/interview/bidang', 'Form5Controller@getJadwalInterviewByBidang');
 $router->get('/form5/langkah-kegiatan', 'Form5Controller@getLangkahDanKegiatan');

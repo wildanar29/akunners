@@ -84,7 +84,7 @@ class AsesiPermohonanController extends Controller
 			if ($alreadySubmitted) {
 				return response()->json([
 					'status' => 'SUCCESS',
-					'message' => 'You have already submitted a request for the selected PK.',
+					'message' => 'Anda sudah pernah mengajukan permintaan untuk PK ini.',
 					'status_code' => 409,
 				], 409);
 			}
