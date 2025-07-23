@@ -35,7 +35,6 @@ class ProgressController extends Controller
                     'form_1.asesor_name',
                     'form_1.asesi_id',
                     'form_1.asesi_name',
-                    'form_1.status as form_status',
                     'form_1.no_reg',
                     'form_1.ket',
                     'form_1.ijazah_id',
@@ -57,7 +56,7 @@ class ProgressController extends Controller
             }
 
             if (!is_null($status)) {
-                $query->where('form_1.status', $status);
+                $query->where('kompetensi_progres.status', $status);
             }
 
             if (!is_null($asesi_id)) {
