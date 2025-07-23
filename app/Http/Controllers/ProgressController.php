@@ -144,6 +144,51 @@ class ProgressController extends Controller
         }
     }
 
+    public function getTracksByFormId(Request $request)
+    {
+        $form_id = $request->input('form_id');
 
+        if (!$form_id) {
+            return response()->json([
+                'status' => 'ERROR',
+                'message' => 'Parameter form_id wajib diisi.',
+                'data' => [],
+            ], 400);
+        }
+
+        try {
+            // Ambil progres berdasarkan form_id
+            $progres = DB::table('kompetensi_progres')
+                ->where('form_id', $form_id)
+                ->first();
+
+            if (!$progres) {
+                return response()->json([
+                    'status' => 'ERROR',
+                    'message' => 'Data progres tidak ditemukan untuk form_id tersebut.',
+                    'data' => [],
+                ], 404);
+            }
+
+            // Ambil tracks berdasarkan progres_id
+            $tracks = DB::table('kompetensi_tracks')
+                ->where('progres_id', $progres->id)
+                ->orderBy('activity_time', 'asc')
+                ->get();
+
+            return response()->json([
+                'status' => 'OK',
+                'message' => 'Data tracks berhasil diambil.',
+                'data' => $tracks,
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'ERROR',
+                'message' => 'Terjadi kesalahan saat mengambil data tracks.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 
 }

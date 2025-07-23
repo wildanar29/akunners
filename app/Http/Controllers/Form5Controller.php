@@ -8,13 +8,14 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\InterviewModel;
 use App\Models\DataAsesorModel;
 use App\Models\DaftarUser;
+use App\Models\UserRole;
 use App\Models\BidangModel;
 use App\Models\LangkahForm5;
 use App\Models\Form5KegiatanUser;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon; // Tambahkan ini untuk menggunakan Carbon
+use Carbon\Carbon;
 
 
 class Form5Controller extends BaseController
@@ -31,8 +32,11 @@ class Form5Controller extends BaseController
 			], 401);
 		}
 
-		// Cek apakah user memiliki role Asesi (role_id = 1)
-		$isAsesi = $user->roles()->where('role_id', 1)->exists();
+		// ✅ Cek role_id melalui model UserRole
+		$isAsesi = UserRole::where('user_id', $user->user_id)
+			->where('role_id', 1)
+			->exists();
+
 		if (!$isAsesi) {
 			return response()->json([
 				'status' => 403,
@@ -41,7 +45,7 @@ class Form5Controller extends BaseController
 			], 403);
 		}
 
-		// Validasi input dari asesi
+		// Validasi input
 		$this->validate($request, [
 			'date' => 'required|date',
 			'time' => 'required',
@@ -61,50 +65,64 @@ class Form5Controller extends BaseController
 			]);
 		}
 
-		// Ambil no_reg dari form_1 (BidangModel)
-		$bidang = BidangModel::find($request->form_1_id);
-		if (!$bidang) {
+		DB::beginTransaction();
+
+		try {
+			// Ambil data bidang / form_1
+			$bidang = BidangModel::find($request->form_1_id);
+			if (!$bidang) {
+				return response()->json([
+					'status' => 404,
+					'message' => 'Data form_1 tidak ditemukan.'
+				], 404);
+			}
+
+			// Ambil data asesor
+			$asesorData = DataAsesorModel::where('no_reg', $bidang->no_reg)->first();
+			if (!$asesorData) {
+				return response()->json([
+					'status' => 404,
+					'message' => 'Data asesor dengan no_reg tersebut tidak ditemukan.'
+				]);
+			}
+
+			$userAsesor = DaftarUser::where('user_id', $asesorData->user_id)->first();
+			$asesorName = $userAsesor ? $userAsesor->nama : 'Nama tidak tersedia';
+
+			// Simpan ke InterviewModel
+			$interview = new InterviewModel();
+			$interview->asesi_name = $user->nama;
+			$interview->user_id = $user->user_id;
+			$interview->date = $request->date;
+			$interview->time = $request->time;
+			$interview->place = $request->place;
+			$interview->form_1_id = $request->form_1_id;
+			$interview->asesor_id = $asesorData->user_id;
+			$interview->asesor_name = $asesorName;
+			$interview->status = 'Waiting';
+			$interview->save();
+
+			DB::commit();
+
 			return response()->json([
-				'status' => 404,
-				'message' => 'Data form_1 tidak ditemukan.'
-			], 404);
-		}
+				'status' => 201,
+				'message' => 'Pengajuan konsultasi pra asesmen berhasil disimpan.',
+				'data' => $interview
+			], 201);
 
-		// Ambil data asesor dari DataAsesorModel berdasarkan no_reg
-		$asesorData = DataAsesorModel::where('no_reg', $bidang->no_reg)->first();
+		} catch (\Exception $e) {
+			DB::rollBack();
 
-		if (!$asesorData) {
 			return response()->json([
-				'status' => 404,
-				'message' => 'Data asesor dengan no_reg tersebut tidak ditemukan.'
-			]);
+				'status' => 500,
+				'message' => 'Terjadi kesalahan saat menyimpan pengajuan konsultasi.',
+				'error' => $e->getMessage()
+			], 500);
 		}
-
-		// Ambil nama asesor dari tabel users
-		$userAsesor = DaftarUser::where('user_id', $asesorData->user_id)->first();
-		$asesorName = $userAsesor ? $userAsesor->nama : 'Nama tidak tersedia';
-
-		// Simpan data ke InterviewModel
-		$interview = new InterviewModel();
-		$interview->asesi_name = $user->nama;
-		$interview->user_id = $user->user_id;
-		$interview->date = $request->date;
-		$interview->time = $request->time;
-		$interview->place = $request->place;
-		$interview->form_1_id = $request->form_1_id;
-		$interview->asesor_id = $asesorData->user_id;
-		$interview->asesor_name = $asesorName;
-		$interview->status = 'Waiting';
-		$interview->save();
-
-		return response()->json([
-			'status' => 201,
-			'message' => 'Pengajuan konsultasi pra asesmen berhasil disimpan.',
-			'data' => $interview
-		], 201);
 	}
 
-	
+
+
 	public function getJadwalInterviewByAsesor(Request $request)
 	{
 		$user = Auth::user();
@@ -321,7 +339,6 @@ class Form5Controller extends BaseController
 		]);
 	}
 
-	
 	public function getLangkahDanKegiatan()
 	{
 		try {
