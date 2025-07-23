@@ -4,7 +4,7 @@ namespace App\Docs;
 
 /**
  * @OA\Get(
- *     path="/api/tracks-by-form",
+ *     path="/tracks-by-form",
  *     summary="Ambil log aktivitas asesmen berdasarkan form_id",
  *     description="API ini digunakan untuk mengambil log atau jejak aktivitas asesmen berdasarkan form_id. Data yang dikembalikan berupa daftar aktivitas dari tabel kompetensi_tracks berdasarkan progres_id yang diambil dari tabel kompetensi_progres.",
  *     tags={"PROGRESS"},
