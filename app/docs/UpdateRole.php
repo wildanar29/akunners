@@ -5,7 +5,7 @@ namespace App\Docs;
  * @OA\Post(
  *     path="/user/update-role",
  *     summary="Ubah role user",
- *     tags={"Akun"},
+ *     tags={"Auth"},
  *     @OA\RequestBody(
  *         required=true,
  *         @OA\JsonContent(
