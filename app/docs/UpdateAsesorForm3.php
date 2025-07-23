@@ -6,7 +6,7 @@ namespace App\Docs;
  *     path="/form3/update/{form3_id}",
  *     summary="Approve Form 3 oleh Asesor",
  *     description="API ini digunakan oleh Asesor untuk meng-approve Form 3 setelah disetujui oleh Asesi. Menandai progres sebagai Completed dan menyimpan data asesor yang meng-approve.",
- *     tags={"Form 3"},
+ *     tags={"FORM 3"},
  *     security={{"bearerAuth":{}}},
  *     @OA\Parameter(
  *         name="form3_id",

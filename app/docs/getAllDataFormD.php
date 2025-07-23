@@ -5,7 +5,7 @@ namespace App\Docs;
  * @OA\Get(
  *     path="/get-form3-d",
  *     summary="Ambil seluruh data Form 3D berdasarkan pk_id",
- *     tags={"Form 3D"},
+ *     tags={"FORM 3"},
  *     @OA\Parameter(
  *         name="pk_id",
  *         in="query",

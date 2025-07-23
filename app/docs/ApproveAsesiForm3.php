@@ -6,7 +6,7 @@ namespace App\Docs;
  *     path="/approve-form3-asesi",
  *     summary="Approve Form 3 oleh Asesi",
  *     description="API ini digunakan untuk approve Form 3 oleh asesi (melakukan update karena Form 3 sebelumnya sudah diinisialisasi pada saat Form 2 selesai).",
- *     tags={"Form 3"},
+ *     tags={"FORM 3"},
  *     security={{"bearerAuth":{}}},
  *     @OA\Response(
  *         response=201,
