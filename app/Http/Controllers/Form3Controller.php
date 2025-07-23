@@ -499,58 +499,6 @@ class Form3Controller extends BaseController
         return response($html);
     }
 
-
-   /**
- * @OA\Post(
- *     path="/input-form3/{user_id}",
- *     summary="Input Data Form 3",
- *     description="Membuat data baru di Form3 dengan mengambil data dari Form2 berdasarkan user_id, serta mengupdate pk_progress dan pk_status.",
- *     tags={"Asesor"},
- *     @OA\Parameter(
- *         name="user_id",
- *         in="path",
- *         required=true,
- *         description="ID pengguna yang digunakan untuk mengambil data dari Form2",
- *         @OA\Schema(type="integer", example=123)
- *     ),
- *     @OA\Response(
- *         response=201,
- *         description="Form3 berhasil dibuat dengan status Approved dan pk_progress serta pk_status diperbarui.",
- *         @OA\JsonContent(
- *             @OA\Property(property="status", type="integer", example=201),
- *             @OA\Property(property="message", type="string", example="Form3 created successfully with status Approved."),
- *             @OA\Property(property="data", type="object")
- *         )
- *     ),
- *     @OA\Response(
- *         response=400,
- *         description="Permintaan tidak valid.",
- *         @OA\JsonContent(
- *             @OA\Property(property="status", type="integer", example=400),
- *             @OA\Property(property="message", type="string", example="Invalid request."),
- *             @OA\Property(property="errors", type="object")
- *         )
- *     ),
- *     @OA\Response(
- *         response=404,
- *         description="Data Form2 tidak ditemukan untuk user_id yang diberikan.",
- *         @OA\JsonContent(
- *             @OA\Property(property="status", type="integer", example=404),
- *             @OA\Property(property="message", type="string", example="No data found for the given user_id.")
- *         )
- *     ),
- *     @OA\Response(
- *         response=403,
- *         description="User yang mencoba input bukan asesor (role_id bukan 2).",
- *         @OA\JsonContent(
- *             @OA\Property(property="status", type="integer", example=403),
- *             @OA\Property(property="message", type="string", example="Unauthorized. Only assessors (role_id = 2) can input Form3.")
- *         )
- *     )
- * )
- */
-
-
     public function Form3Input(Request $request, $user_id)
 	{
 		// Validasi apakah user_id ada di form_2
