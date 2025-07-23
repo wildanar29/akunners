@@ -5,7 +5,7 @@ namespace App\Docs;
  * @OA\Get(
  *     path="/progress/assessment/{asesi_id}",
  *     summary="Mengambil data progres asesmen berdasarkan asesi dan pk_id",
- *     tags={"Progress"},
+ *     tags={"PROGRESS"},
  *     @OA\Parameter(
  *         name="asesi_id",
  *         in="path",
