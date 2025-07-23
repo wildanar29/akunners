@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ElemenKompetensiForm2Model;
 use App\Models\JawabanForm2Model;
 use App\Models\SoalForm2Model;
+use App\Models\Form3Model;
 use App\Models\DaftarUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -266,7 +267,7 @@ class Form2Controller extends Controller
 
         try {
             DB::transaction(function () use ($userAsesor, $formId) {
-                $title = 'Penugasan Asesor';
+                $title = 'Update Asesmen';
                 $message = "Asesi telah selesai mengerjakan Form 2.";
 
                 // Log sebelum pengiriman notifikasi
@@ -369,6 +370,7 @@ class Form2Controller extends Controller
                     'bk' => $bk_count,
                     'penilaian_asesi' => $penilaian_asesi,
                     'asesi_name' => $form->asesi_name,
+                    'no_reg' => $form->no_reg,
                     'asesor_name' => $form->asesor_name,
                     'asesi_date' => Carbon::now(),
                 ]
@@ -398,6 +400,52 @@ class Form2Controller extends Controller
                 'activity_time' => Carbon::now(),
                 'description' => 'Asesi selesai mengisi self assessment.',
             ]);
+
+            $form_1_id = $form->form_1_id;
+
+            // Cek apakah form_1_id punya status InAssessment di KompetensiProgres
+            $existingProgress = KompetensiProgres::where('form_id', $form_1_id)
+                ->where('status', 'InAssessment')
+                ->first();
+
+            if (!$existingProgress) {
+                return response()->json([
+                    'status' => 'ERROR',
+                    'message' => 'Form tidak dapat diproses. Status InAssessment pada Form 1 tidak ditemukan.',
+                    'data' => [],
+                ], 400);
+            }
+
+            // Jika lolos pengecekan, lanjut simpan Form 3
+            $form3 = Form3Model::updateOrCreate(
+                ['user_id' => $user->user_id],
+                [
+                    'asesi_name' => $form->asesi_name,
+                    'asesi_date' => Carbon::now(),
+                    'asesor_name' => $form->asesor_name,
+                    'asesor_date' => null,
+                    'no_reg' => $form->no_reg,
+                    'status' => null,
+                ]
+            );
+
+            // Simpan progres baru untuk Form 3
+            $progresForm3 = KompetensiProgres::updateOrCreate([
+                'form_id' => $form3->form_3_id,
+                'parent_form_id' => $form->form_1_id,
+                'user_id' => $user->user_id,
+                'status' => 'InAssessment',
+            ]);
+
+            // Simpan riwayat track
+            KompetensiTrack::create([
+                'progres_id' => $progresForm3->id,
+                'form_type' => 'form_3',
+                'activity' => 'InAssessment',
+                'activity_time' => Carbon::now(),
+                'description' => 'Form 3 dimulai untuk asesmen oleh Asesor.',
+            ]);
+
 
             DB::commit();
             Log::info('ada');

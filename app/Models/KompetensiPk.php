@@ -25,4 +25,9 @@ class KompetensiPk extends Model
     // Jika tidak pakai auto increment atau beda format, bisa atur di sini
     // public $incrementing = true;
     // protected $keyType = 'int';
+    public function elemenForm3()
+    {
+        return $this->hasMany(ElemenForm3::class, 'pk_id', 'pk_id');
+    }
+
 }

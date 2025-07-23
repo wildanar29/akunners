@@ -10,278 +10,241 @@ use App\Models\TypeForm3_A;
 use App\Models\TypeForm3_D;
 use App\Models\PenilaianForm2Model;
 use App\Models\Form3Model;
+use App\Models\UserRole;
+use App\Models\DaftarUser;
+use App\Models\BidangModel;
+use App\Models\KompetensiProgres;
+use App\Models\KompetensiTrack;
 use App\Models\DataAsesorModel;
 use App\Models\PkProgressModel;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;  
 use Carbon\Carbon; // Tambahkan ini untuk menggunakan Carbon
-
+use App\Service\OneSignalService;
+use App\Models\Notification;
 
 class Form3Controller extends BaseController
 {
-    /**
-     * Mengambil semua data dari tabel form3_b dengan relasi yang lengkap.
-     */
 
+    protected $oneSignalService;
 
-    /**
- * @OA\Get(
- *     path="/get-form3-b",
- *     summary="Ambil seluruh data untuk Form 3 B dan berbentuk HTML",
- *     description="Mengambil semua data Form 3 B yang dikelompokkan berdasarkan Elemen, KUK, dan IUK. Data dapat difilter menggunakan parameter no_elemen.",
- *     tags={"Form 3"},
- *     @OA\Parameter(
- *         name="no_elemen",
- *         in="query",
- *         description="Filter berdasarkan no_elemen_form_3",
- *         required=false,
- *         @OA\Schema(
- *             type="string"
- *         )
- *     ),
- *     @OA\Response(
- *         response=200,
- *         description="Operasi berhasil. Mengembalikan tampilan HTML.",
- *         @OA\MediaType(
- *             mediaType="text/html"
- *         )
- *     ),
- *     @OA\Response(
- *         response=404,
- *         description="Data tidak ditemukan"
- *     ),
- *     @OA\Response(
- *         response=500,
- *         description="Terjadi kesalahan pada server"
- *     )
- * )
- */
+	public function __construct(OneSignalService $oneSignalService)
+	{
+		$this->oneSignalService = $oneSignalService;
+	}
 
-    
-     public function getAllDataFormB(Request $request)
-     {
-         $no_elemen = $request->query('no_elemen');
-     
-         // Ambil data dengan relasi
-         $query = TypeForm3_B::with(['iukForm3.kukForm3.elemenForm3'])->orderBy('id', 'asc');
-     
-         if ($no_elemen) {
-             $query->whereHas('iukForm3.kukForm3.elemenForm3', function ($q) use ($no_elemen) {
-                 $q->where('no_elemen_form_3', $no_elemen);
-             });
-         }
-     
-         $data = $query->get();
-     
-         // Mengelompokkan data berdasarkan Elemen, KUK, dan IUK
-         $elemen_group = [];
-         foreach ($data as $item) {
-             $elemen_key = ($item->iukForm3->kukForm3->elemenForm3->no_elemen_form_3 ?? '-') . ' : ' . 
-                           ($item->iukForm3->kukForm3->elemenForm3->isi_elemen ?? '-');
-     
-             $kuk_key = ($item->iukForm3->kukForm3->no_kuk ?? '-') . ' : ' . 
-                        ($item->iukForm3->kukForm3->kuk_name ?? '-');
-     
-             $iuk_key = ($item->iukForm3->no_iuk ?? '-') . ' : ' . 
-                        ($item->iukForm3->iuk_name ?? '-');
-     
-             // Konversi indikator_pencapaian ke dalam format bullet list
-             $indikator_pencapaian = trim($item->indikator_pencapaian ?? '-');
-             $indikator_list = "<ul>";
-             foreach (explode("\n", $indikator_pencapaian) as $line) {
-                 $line = trim($line);
-                 if (!empty($line)) {
-                     $line = ltrim($line, '- '); // Hapus tanda "-" di awal
-                     $indikator_list .= "<li>{$line}</li>";
-                 }
-             }
-             $indikator_list .= "</ul>";
-     
-             $elemen_group[$elemen_key][$kuk_key][$iuk_key][] = [
-                 'no_soal' => $item->no_soal ?? '-',
-                 'pertanyaan' => $item->pertanyaan ?? '-',
-                 'indikator_pencapaian' => $indikator_list
-             ];
-         }
-		 
-		 // Generate URL untuk WebView
-		 $base_url = url('/'); // URL utama Laravel (otomatis support WebView)
-     
-         // Buat tampilan HTML
-         $html = '<!DOCTYPE html>
-         <html lang="id">
-         <head>
-             <meta charset="UTF-8">
-             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-             <title>Form 3 B</title>
-             <style>
-                 table { width: 100%; max-width: 100%; border-collapse: collapse; overflow-x: auto; display: block;}
+    public function getAllDataFormB(Request $request)
+    {
+        $no_elemen = $request->query('no_elemen');
+        $pk_id = $request->query('pk_id');
 
-                 th, td { border: 2px solid black; padding: 8px; text-align: left; }
+        // Validasi: pk_id wajib
+        if (!$pk_id) {
+            return response()->json([
+                'status' => 'ERROR',
+                'message' => 'Parameter pk_id wajib diisi.',
+                'data' => null
+            ], 400);
+        }
 
-                 th { background-color: #f2f2f2; text-align: center; }
+        // Ambil data dengan relasi
+        $query = TypeForm3_B::with(['iukForm3.kukForm3.elemenForm3.kompetensiPk'])->orderBy('id', 'asc');
 
-                 ul { margin: 0; padding-left: 20px; }
+        // Filter berdasarkan elemen jika diberikan
+        if ($no_elemen) {
+            $query->whereHas('iukForm3.kukForm3.elemenForm3', function ($q) use ($no_elemen) {
+                $q->where('no_elemen_form_3', $no_elemen);
+            });
+        }
 
+        // Filter berdasarkan pk_id
+        $query->whereHas('iukForm3.kukForm3.elemenForm3.kompetensiPk', function ($q) use ($pk_id) {
+            $q->where('pk_id', $pk_id);
+        });
+
+        $data = $query->get();
+
+        // Mengelompokkan data berdasarkan Elemen, KUK, dan IUK
+        $elemen_group = [];
+        foreach ($data as $item) {
+            $elemen_key = ($item->iukForm3->kukForm3->elemenForm3->no_elemen_form_3 ?? '-') . ' : ' . 
+                        ($item->iukForm3->kukForm3->elemenForm3->isi_elemen ?? '-');
+
+            $kuk_key = ($item->iukForm3->kukForm3->no_kuk ?? '-') . ' : ' . 
+                    ($item->iukForm3->kukForm3->kuk_name ?? '-');
+
+            $iuk_key = ($item->iukForm3->no_iuk ?? '-') . ' : ' . 
+                    ($item->iukForm3->iuk_name ?? '-');
+
+            // Konversi indikator_pencapaian ke format bullet list
+            $indikator_pencapaian = trim($item->indikator_pencapaian ?? '-');
+            $indikator_list = "<ul>";
+            foreach (explode("\n", $indikator_pencapaian) as $line) {
+                $line = trim($line);
+                if (!empty($line)) {
+                    $line = ltrim($line, '- ');
+                    $indikator_list .= "<li>{$line}</li>";
+                }
+            }
+            $indikator_list .= "</ul>";
+
+            $elemen_group[$elemen_key][$kuk_key][$iuk_key][] = [
+                'no_soal' => $item->no_soal ?? '-',
+                'pertanyaan' => $item->pertanyaan ?? '-',
+                'indikator_pencapaian' => $indikator_list
+            ];
+        }
+
+        // Buat tampilan HTML
+        $html = '<!DOCTYPE html>
+        <html lang="id">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Form 3 B</title>
+            <style>
+                table { width: 100%; max-width: 100%; border-collapse: collapse; overflow-x: auto; display: block;}
+                th, td { border: 2px solid black; padding: 8px; text-align: left; }
+                th { background-color: #f2f2f2; text-align: center; }
+                ul { margin: 0; padding-left: 20px; }
                 .elemen-header { background-color: #d9d9d9; font-weight: bold; text-align: left; padding: 10px; }
-
                 @media (max-width: 600px) {
                     th, td {
                         padding: 5px;
                         font-size: 12px;
                     }
                 }
+            </style>
+        </head>
+        <body>
+        <h2>Form 3 B</h2>';
 
-             </style>
-         </head>
-         <body>
-         <h2>Form 3 B</h2>';
-     
-         // Looping elemen, KUK, IUK, dan soal
-         foreach ($elemen_group as $elemen => $kuk_list) {
-             $html .= '<table>
-                 <thead>
-                     <tr>
-                         <th colspan="5" class="elemen-header">Elemen: ' . $elemen . '</th>
-                     </tr>
-                     <tr>
-                         <th>KUK</th>
-                         <th>IUK</th>
-                         <th>No. Soal</th>
-                         <th>Pertanyaan</th>
-                         <th>Indikator Pencapaian</th>
-                     </tr>
-                 </thead>
-                 <tbody>';
-     
-             foreach ($kuk_list as $kuk => $iuk_list) {
-                 $rowspan_kuk = array_sum(array_map('count', $iuk_list));
-                 $html .= '<tr><td rowspan="' . $rowspan_kuk . '">' . $kuk . '</td>';
-     
-                 foreach ($iuk_list as $iuk => $soal_list) {
-                     $rowspan_iuk = count($soal_list);
-                     $html .= '<td rowspan="' . $rowspan_iuk . '">' . $iuk . '</td>';
-     
-                     foreach ($soal_list as $index => $soal) {
-                         if ($index > 0) {
-                             $html .= '<tr>';
-                         }
-                         $html .= '<td>' . $soal['no_soal'] . '</td>
-                                   <td>' . $soal['pertanyaan'] . '</td>
-                                   <td>' . $soal['indikator_pencapaian'] . '</td>
-                               </tr>';
-                     }
-                 }
-             }
-     
-             $html .= '</tbody></table><br>';
-         }
-     
-         $html .= '</body></html>';
-     
-		 return response($html)->header('Content-Type', 'text/html');
-     }
+        foreach ($elemen_group as $elemen => $kuk_list) {
+            $html .= '<table>
+                <thead>
+                    <tr>
+                        <th colspan="5" class="elemen-header">Elemen: ' . $elemen . '</th>
+                    </tr>
+                    <tr>
+                        <th>KUK</th>
+                        <th>IUK</th>
+                        <th>No. Soal</th>
+                        <th>Pertanyaan</th>
+                        <th>Indikator Pencapaian</th>
+                    </tr>
+                </thead>
+                <tbody>';
 
+            foreach ($kuk_list as $kuk => $iuk_list) {
+                $rowspan_kuk = array_sum(array_map('count', $iuk_list));
+                $html .= '<tr><td rowspan="' . $rowspan_kuk . '">' . $kuk . '</td>';
 
-     /**
- * @OA\Get(
- *     path="/get-form3-c",
- *     summary="Ambil seluruh data untuk Form 3 C dan Berbentuk HTML",
- *     description="Mengambil semua data Form 3 C yang dikelompokkan berdasarkan Elemen, KUK, dan IUK.",
- *     tags={"Form 3"},
- *     @OA\Parameter(
- *         name="no_elemen",
- *         in="query",
- *         description="Filter berdasarkan no_elemen_form_3",
- *         required=false,
- *         @OA\Schema(
- *             type="string"
- *         )
- *     ),
- *     @OA\Response(
- *         response=200,
- *         description="Operasi berhasil. Mengembalikan tampilan HTML.",
- *         @OA\MediaType(
- *             mediaType="text/html"
- *         )
- *     ),
- *     @OA\Response(
- *         response=404,
- *         description="Data tidak ditemukan"
- *     ),
- *     @OA\Response(
- *         response=500,
- *         description="Terjadi kesalahan pada server"
- *     )
- * )
- */
+                foreach ($iuk_list as $iuk => $soal_list) {
+                    $rowspan_iuk = count($soal_list);
+                    $html .= '<td rowspan="' . $rowspan_iuk . '">' . $iuk . '</td>';
 
-     public function getAllDataFormC(Request $request)
+                    foreach ($soal_list as $index => $soal) {
+                        if ($index > 0) {
+                            $html .= '<tr>';
+                        }
+                        $html .= '<td>' . $soal['no_soal'] . '</td>
+                                <td>' . $soal['pertanyaan'] . '</td>
+                                <td>' . $soal['indikator_pencapaian'] . '</td>
+                            </tr>';
+                    }
+                }
+            }
+
+            $html .= '</tbody></table><br>';
+        }
+
+        $html .= '</body></html>';
+
+        return response($html)->header('Content-Type', 'text/html');
+    }
+
+    public function getAllDataFormC(Request $request)
     {
         $no_elemen = $request->query('no_elemen');
-     
+        $pk_id = $request->query('pk_id');
+
+        // Validasi: pk_id wajib
+        if (!$pk_id) {
+            return response()->json([
+                'status' => 'ERROR',
+                'message' => 'Parameter pk_id wajib diisi.',
+                'data' => null
+            ], 400);
+        }
+
         // Ambil data dengan relasi
-        $query = TypeForm3_C::with(['iukForm3.kukForm3.elemenForm3'])->orderBy('id', 'asc');
-    
+        $query = TypeForm3_C::with(['iukForm3.kukForm3.elemenForm3.kompetensiPk'])->orderBy('id', 'asc');
+
+        // Filter berdasarkan elemen jika diberikan
         if ($no_elemen) {
             $query->whereHas('iukForm3.kukForm3.elemenForm3', function ($q) use ($no_elemen) {
                 $q->where('no_elemen_form_3', $no_elemen);
             });
         }
-    
+
+        // Filter berdasarkan pk_id
+        $query->whereHas('iukForm3.kukForm3.elemenForm3.kompetensiPk', function ($q) use ($pk_id) {
+            $q->where('pk_id', $pk_id);
+        });
+
         $data = $query->get();
-    
+
         // Mengelompokkan data berdasarkan Elemen, KUK, dan IUK
         $elemen_group = [];
         foreach ($data as $item) {
-            $elemen_key = ($item->iukForm3->kukForm3->elemenForm3->no_elemen_form_3 ?? '-') . ' : ' . 
-                          ($item->iukForm3->kukForm3->elemenForm3->isi_elemen ?? '-');
-    
-            $kuk_key = ($item->iukForm3->kukForm3->no_kuk ?? '-') . ' : ' . 
-                       ($item->iukForm3->kukForm3->kuk_name ?? '-');
-    
-            $iuk_key = ($item->iukForm3->no_iuk ?? '-') . ' : ' . 
-                       ($item->iukForm3->iuk_name ?? '-');
-    
-            // Konversi indikator_pencapaian ke dalam format bullet list
+            $elemen_key = ($item->iukForm3->kukForm3->elemenForm3->no_elemen_form_3 ?? '-') . ' : ' .
+                        ($item->iukForm3->kukForm3->elemenForm3->isi_elemen ?? '-');
+
+            $kuk_key = ($item->iukForm3->kukForm3->no_kuk ?? '-') . ' : ' .
+                    ($item->iukForm3->kukForm3->kuk_name ?? '-');
+
+            $iuk_key = ($item->iukForm3->no_iuk ?? '-') . ' : ' .
+                    ($item->iukForm3->iuk_name ?? '-');
+
+            // Format standar jawaban
             $standar_jawaban_text = trim($item->standar_jawaban ?? '-');
             if (!empty($standar_jawaban_text) && $standar_jawaban_text !== '-') {
                 $standar_jawaban = "";
                 foreach (explode("\n", $standar_jawaban_text) as $line) {
                     $line = trim($line);
                     if (!empty($line)) {
-                        $line = ltrim($line, '- '); // Hapus tanda "-" di awal
-                        $standar_jawaban .= "{$line}<br><br>"; // Jarak antar item
+                        $line = ltrim($line, '- ');
+                        $standar_jawaban .= "{$line}<br><br>";
                     }
                 }
             } else {
                 $standar_jawaban = "-";
             }
 
-            // Format pertanyaan tanpa bullet list
+            // Format pertanyaan
             $pertanyaan_text = trim($item->pertanyaan ?? '-');
             if (!empty($pertanyaan_text) && $pertanyaan_text !== '-') {
                 $pertanyaan = "";
                 foreach (explode("\n", $pertanyaan_text) as $line) {
                     $line = trim($line);
                     if (!empty($line)) {
-                        $line = ltrim($line, '- '); // Hapus tanda "-" di awal
-                        $pertanyaan .= "{$line}<br><br>"; // Jarak antar item
+                        $line = ltrim($line, '- ');
+                        $pertanyaan .= "{$line}<br><br>";
                     }
                 }
             } else {
                 $pertanyaan = "-";
             }
 
-            
             $elemen_group[$elemen_key][$kuk_key][$iuk_key][] = [
                 'no_soal' => $item->no_soal ?? '-',
-                'pertanyaan' => $pertanyaan ?? '-',
+                'pertanyaan' => $pertanyaan,
                 'standar_jawaban' => $standar_jawaban
             ];
         }
-    
+
         // Buat tampilan HTML
         $html = '<!DOCTYPE html>
         <html lang="id">
@@ -290,29 +253,22 @@ class Form3Controller extends BaseController
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Form 3 C</title>
             <style>
-                table { width: 100%; max-width: 100%; border-collapse: collapse;  overflow-x: auto; display: block; }
-
+                table { width: 100%; max-width: 100%; border-collapse: collapse; overflow-x: auto; display: block; }
                 th, td { border: 2px solid black; padding: 8px; text-align: left; }
-
                 th { background-color: #f2f2f2; text-align: center; }
-
                 ul { margin: 0; padding-left: 20px; }
-
-               .elemen-header { background-color: #d9d9d9; font-weight: bold; text-align: left; padding: 10px; }
-
-               @media (max-width: 600px) {
-                th, td {
-                    padding: 5px;
-                    font-size: 12px;
+                .elemen-header { background-color: #d9d9d9; font-weight: bold; text-align: left; padding: 10px; }
+                @media (max-width: 600px) {
+                    th, td {
+                        padding: 5px;
+                        font-size: 12px;
+                    }
                 }
-            }
-
             </style>
         </head>
         <body>
         <h2>Form 3 C</h2>';
-    
-        // Looping elemen, KUK, IUK, dan soal
+
         foreach ($elemen_group as $elemen => $kuk_list) {
             $html .= '<table>
                 <thead>
@@ -328,87 +284,66 @@ class Form3Controller extends BaseController
                     </tr>
                 </thead>
                 <tbody>';
-    
+
             foreach ($kuk_list as $kuk => $iuk_list) {
                 $rowspan_kuk = array_sum(array_map('count', $iuk_list));
                 $html .= '<tr><td rowspan="' . $rowspan_kuk . '">' . $kuk . '</td>';
-    
+
                 foreach ($iuk_list as $iuk => $soal_list) {
                     $rowspan_iuk = count($soal_list);
                     $html .= '<td rowspan="' . $rowspan_iuk . '">' . $iuk . '</td>';
-    
+
                     foreach ($soal_list as $index => $soal) {
                         if ($index > 0) {
                             $html .= '<tr>';
                         }
                         $html .= '<td>' . $soal['no_soal'] . '</td>
-                                  <td>' . $soal['pertanyaan'] . '</td>
-                                  <td>' . $soal['standar_jawaban'] . '</td>
-                              </tr>';
+                                <td>' . $soal['pertanyaan'] . '</td>
+                                <td>' . $soal['standar_jawaban'] . '</td>
+                            </tr>';
                     }
                 }
             }
-    
+
             $html .= '</tbody></table><br>';
         }
-    
-        $html .= '</body></html>';
-    
-        return response($html);
-    }
 
-/**
- * @OA\Get(
- *     path="/get-form3-a",
- *     summary="Ambil seluruh data untuk Form 3 A dan Berbentuk HTML",
- *     description="Mengambil semua data Form 3 A yang dikelompokkan berdasarkan Elemen, KUK, dan IUK",
- *     tags={"Form 3"},
- *     @OA\Parameter(
- *         name="no_elemen_form_3",
- *         in="query",
- *         description="Filter berdasarkan no_elemen_form_3",
- *         required=false,
- *         @OA\Schema(
- *             type="string"
- *         )
- *     ),
- *     @OA\Response(
- *         response=200,
- *         description="Operasi berhasil. Mengembalikan tampilan HTML.",
- *         @OA\MediaType(
- *             mediaType="text/html"
- *         )
- *     ),
- *     @OA\Response(
- *         response=404,
- *         description="Data tidak ditemukan"
- *     ),
- *     @OA\Response(
- *         response=500,
- *         description="Terjadi kesalahan pada server"
- *     )
- * )
- */
+        $html .= '</body></html>';
+
+        return response($html)->header('Content-Type', 'text/html');
+    }
 
     public function getAllDataFormA(Request $request)
     {
-        $no_elemen_form_3 = $request->query('no_elemen_form_3'); // Ambil parameter opsional
+        // Ambil parameter
+        $no_elemen_form_3 = $request->query('no_elemen_form_3');
+        $pk_id = $request->query('pk_id');
+
+        // Validasi: pk_id wajib diisi
+        if (!$pk_id) {
+            return response('<h3 style="color:red;">Parameter <strong>pk_id</strong> wajib diisi.</h3>', 400);
+        }
 
         $query = TypeForm3_A::with([
-            'iukForm3.kukForm3.elemenForm3', // Relasi ke Elemen
-            'poinForm3' // Relasi ke PoinForm3 (hasMany)
+            'iukForm3.kukForm3.elemenForm3.kompetensiPk',
+            'poinForm3'
         ]);
 
-        // Filter berdasarkan no_elemen_form_3 jika diberikan
+        // Filter berdasarkan elemen
         if ($no_elemen_form_3) {
             $query->whereHas('iukForm3.kukForm3.elemenForm3', function ($q) use ($no_elemen_form_3) {
                 $q->where('no_elemen_form_3', $no_elemen_form_3);
             });
         }
 
+        // Filter berdasarkan pk_id (pasti ada karena validasi di atas)
+        $query->whereHas('iukForm3.kukForm3.elemenForm3', function ($q) use ($pk_id) {
+            $q->where('pk_id', $pk_id);
+        });
+
         $data = $query->get();
-        
-        // Buat tampilan HTML dalam bentuk tabel
+
+        // Mulai HTML
         $html = '<!DOCTYPE html>
         <html lang="id">
         <head>
@@ -416,109 +351,106 @@ class Form3Controller extends BaseController
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Form 3 A</title>
             <style>
-                table { width: 100%; max-width: 100%; border-collapse: collapse; overflow-x: auto; display: block;}
-
+                table { width: 100%; max-width: 100%; border-collapse: collapse; overflow-x: auto; display: block; }
                 th, td { border: 2px solid black; padding: 8px; text-align: left; }
-
                 th { background-color: #f2f2f2; text-align: center; }
-
                 ul { margin: 0; padding-left: 20px; }
-
                 .elemen-header { background-color: #d9d9d9; font-weight: bold; text-align: left; padding: 10px; }
-
+                .pk-header { background-color: #c9e3ff; font-weight: bold; padding: 10px; font-size: 18px; }
                 @media (max-width: 600px) {
-                    th, td {
-                        padding: 5px;
-                        font-size: 12px;
-                    }
+                    th, td { padding: 5px; font-size: 12px; }
                 }
-
             </style>
         </head>
         <body>
         <h2>Form 3 A</h2>';
-        
-        $elemen_group = [];
+
+        // Kelompokkan berdasarkan PK → Elemen → KUK → IUK
+        $grouped = [];
+
         foreach ($data as $item) {
             $elemen = optional($item->iukForm3->kukForm3->elemenForm3);
+            $kompetensiPk = optional($elemen->kompetensiPk);
+
+            $pkKey = "{$kompetensiPk->pk_id} : {$kompetensiPk->nama_level}";
             $elemenKey = "{$elemen->no_elemen_form_3} : {$elemen->isi_elemen}";
-            
-            $kukKey = "{$item->iukForm3->no_kuk} : {$item->iukForm3->kukForm3->kuk_name}";
+            $kukKey = "{$item->iukForm3->no_kuk} : " . optional($item->iukForm3->kukForm3)->kuk_name;
             $iukKey = "{$item->no_iuk} : {$item->iukForm3->iuk_name}";
             $poinList = $item->poinForm3->pluck('poin_diamati')->toArray();
 
-            $elemen_group[$elemenKey][$kukKey][$iukKey] = $poinList;
+            $grouped[$pkKey][$elemenKey][$kukKey][$iukKey] = $poinList;
         }
-        
-        foreach ($elemen_group as $elemen => $kuk_list) {
-            $html .= '<table>
-                <thead>
-                    <tr>
-                        <th colspan="3" class="elemen-header">Elemen: ' . $elemen . '</th>
-                    </tr>
-                    <tr>
-                        <th>KUK</th>
-                        <th>IUK</th>
-                        <th>Poin Diamati</th>
-                    </tr>
-                </thead>
-                <tbody>';
 
-            foreach ($kuk_list as $kuk => $iuk_list) {
-                foreach ($iuk_list as $iuk => $poin_diamati) {
-                    $poinHtml = '<ul>';
-                    foreach ($poin_diamati as $poin) {
-                        $poinHtml .= "<li>{$poin}</li>";
+        // Buat HTML berdasarkan kelompok
+        foreach ($grouped as $pk => $elemenList) {
+            foreach ($elemenList as $elemen => $kukList) {
+                $html .= '<table>
+                    <thead>
+                        <tr>
+                            <th colspan="3" class="elemen-header">Elemen: ' . $elemen . '</th>
+                        </tr>
+                        <tr>
+                            <th>KUK</th>
+                            <th>IUK</th>
+                            <th>Poin Diamati</th>
+                        </tr>
+                    </thead>
+                    <tbody>';
+
+                foreach ($kukList as $kuk => $iukList) {
+                    foreach ($iukList as $iuk => $poinDiamati) {
+                        $poinHtml = '<ul>';
+                        foreach ($poinDiamati as $poin) {
+                            $poinHtml .= "<li>{$poin}</li>";
+                        }
+                        $poinHtml .= '</ul>';
+
+                        $html .= "<tr>
+                            <td>{$kuk}</td>
+                            <td>{$iuk}</td>
+                            <td>{$poinHtml}</td>
+                        </tr>";
                     }
-                    $poinHtml .= '</ul>';
-
-                    $html .= "<tr>
-                        <td>{$kuk}</td>
-                        <td>{$iuk}</td>
-                        <td>{$poinHtml}</td>
-                    </tr>";
                 }
-            }
 
-            $html .= '</tbody></table><br>';
+                $html .= '</tbody></table><br>';
+            }
         }
 
         $html .= '</body></html>';
         return response($html);
     }
 
-
-    /**
- * @OA\Get(
- *     path="/get-form3-d",
- *     summary="Ambil data untuk Form 3 D dan Berbentuk HTML",
- *     description="Mengambil seluruh data Form 3 D yang menggabungkan informasi KUK dan Dokumen. Data diurutkan berdasarkan 'kuk_info'.",
- *     tags={"Form 3"},
- *     @OA\Response(
- *         response=200,
- *         description="Operasi berhasil. Mengembalikan tampilan HTML.",
- *         @OA\MediaType(
- *             mediaType="text/html"
- *         )
- *     ),
- *     @OA\Response(
- *         response=500,
- *         description="Terjadi kesalahan pada server"
- *     )
- * )
- */
-
-
-    public function getAllDataFormD()
+    public function getAllDataFormD(Request $request)
     {
-        $data = TypeForm3_D::with(['kukForm3', 'document'])->get();
+        $pk_id = $request->input('pk_id');
+
+        if (!$pk_id) {
+            return response()->json([
+                'status' => 'ERROR',
+                'message' => 'Parameter pk_id wajib diisi.',
+                'data' => [],
+            ], 400);
+        }
+
+        $data = TypeForm3_D::with(['kukForm3', 'document'])
+            ->where('pk_id', $pk_id)
+            ->get();
+
+        if ($data->isEmpty()) {
+            return response()->json([
+                'status' => 'ERROR',
+                'message' => 'Data tidak ditemukan untuk pk_id: ' . $pk_id,
+                'data' => [],
+            ], 404);
+        }
 
         $formattedData = [];
 
         foreach ($data as $item) {
             $formattedData[] = [
                 'kuk_info' => $item->no_kuk . ' - ' . ($item->kukForm3->kuk_name ?? 'Tidak ada nama'),
-                'nama_doc' => $item->document->nama_doc ?? null
+                'nama_doc' => $item->document->nama_doc ?? 'Tidak ada dokumen'
             ];
         }
 
@@ -536,22 +468,12 @@ class Form3Controller extends BaseController
             <title>Form 3 D</title>
             <style>
                 h2 { text-align: left; }
-
-                table { width: 100%; max-width: 100%; border-collapse: collapse; margin-top: 20px; overflow-x: auto; }
-
-                th, td { border: 2px solid black; padding: 10px; }
-                
-                th { background-color: #f2f2f2; text-align: left; }
-
-                td { text-align: left; }
-
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                th, td { border: 1px solid #000; padding: 10px; text-align: left; }
+                th { background-color: #f2f2f2; }
                 @media (max-width: 600px) {
-                    th, td {
-                        padding: 5px;
-                        font-size: 12px;
-                    }
+                    th, td { padding: 5px; font-size: 12px; }
                 }
-                
             </style>
         </head>
         <body>
@@ -576,6 +498,7 @@ class Form3Controller extends BaseController
 
         return response($html);
     }
+
 
    /**
  * @OA\Post(
@@ -683,111 +606,289 @@ class Form3Controller extends BaseController
 		], 201);
 	}
     
+
+    private function kirimNotifikasiKeAsesor(DaftarUser $userAsesor, $formId)
+    {
+        if (empty($userAsesor->device_token)) {
+            Log::warning("Asesor user_id={$userAsesor->user_id} tidak memiliki device_token.");
+            return;
+        }
+
+        try {
+            DB::transaction(function () use ($userAsesor, $formId) {
+                $title = 'Rencana Asesmen';
+                $message = "Asesi Menyetujui Rencana Asesmen Form 3.";
+
+                // Log sebelum pengiriman notifikasi
+                Log::info("Mengirim notifikasi ke OneSignal untuk user_id={$userAsesor->user_id}, form_id={$formId}");
+
+                // Kirim notifikasi ke OneSignal
+                $this->oneSignalService->sendNotification(
+                    [$userAsesor->device_token],
+                    $title,
+                    $message
+                );
+
+                Log::info("Notifikasi berhasil dikirim ke OneSignal untuk user_id={$userAsesor->user_id}");
+
+                // Simpan notifikasi ke database
+                Notification::create([
+                    'user_id' => $userAsesor->user_id,
+                    'title' => $title,
+                    'description' => $message,
+                    'is_read' => 0,
+                    'created_at' => Carbon::now(),
+                    'updated_at' => Carbon::now(),
+                ]);
+
+                Log::info("Notifikasi berhasil disimpan di database untuk user_id={$userAsesor->user_id}, form_id={$formId}");
+            });
+
+        } catch (\Exception $e) {
+            Log::error("Gagal mengirim notifikasi ke asesor.", [
+                'user_id' => $userAsesor->user_id,
+                'form_id' => $formId,
+                'error_message' => $e->getMessage(),
+                'error_trace' => $e->getTraceAsString(),
+            ]);
+        }
+    }
+
 	public function ApproveAsesiForm3()
-	{
-		$user = auth()->user(); // Ambil user yang sedang login
+    {
+        $user = auth()->user(); // Ambil user login
 
-		if (!$user) {
-			return response()->json([
-				'status' => 401,
-				'message' => 'User belum login.',
-				'data' => null
-			], 401);
-		}
+        if (!$user) {
+            return response()->json([
+                'status' => 'ERROR',
+                'message' => 'User belum login.',
+                'data' => null
+            ], 401);
+        }
 
-		// Validasi apakah user punya role_id = 1 (asesi)
-		$isAsesi = $user->roles()->where('role_id', 1)->exists();
+        // Cek apakah user adalah Asesi
+        $isAsesi = UserRole::where('user_id', $user->user_id)
+            ->where('role_id', 1)
+            ->exists();
 
-		if (!$isAsesi) {
-			return response()->json([
-				'status' => 403,
-				'message' => 'Anda tidak memiliki izin untuk mengisi Form3.',
-				'data' => null
-			], 403);
-		}
+        if (!$isAsesi) {
+            return response()->json([
+                'status' => 'ERROR',
+                'message' => 'Anda tidak memiliki izin untuk mengisi Form3.',
+                'data' => null
+            ], 403);
+        }
 
-		// Cek apakah user_id sudah pernah mengisi Form3
-		$existing = Form3Model::where('user_id', $user->user_id)->first();
+        // Cek apakah user memiliki form_1_id di BidangModel
+        $bidang = BidangModel::where('asesi_id', $user->user_id)->first();
 
-		if ($existing) {
-			return response()->json([
-				'status' => 409,
-				'message' => 'Anda sudah pernah mengisi Form3.',
-				'data' => $existing
-			], 409);
-		}
+        if (!$bidang || !$bidang->form_1_id) {
+            return response()->json([
+                'status' => 'ERROR',
+                'message' => 'Form 1 belum tersedia untuk user ini.',
+                'data' => null
+            ], 404);
+        }
 
-		// Simpan data ke model Form3Model
-		$form3 = new Form3Model();
-		$form3->user_id = $user->user_id;
-		$form3->asesi_name = $user->nama;
-		$form3->asesi_date = Carbon::now();
-		$form3->status = 'Waiting';
-		$form3->save();
+        // Ambil data progres dari KompetensiProgres berdasarkan form_1_id
+        $progres = KompetensiProgres::where('form_id', $bidang->form_1_id)->first();
 
-		return response()->json([
-			'status' => 201,
-			'message' => 'Form3 created successfully with status Waiting.',
-			'data' => $form3
-		], 201);
-	}
+        if (!$progres) {
+            return response()->json([
+                'status' => 'ERROR',
+                'message' => 'Progres tidak ditemukan untuk Form 1 ini.',
+                'data' => null
+            ], 404);
+        }
 
+        // Cek apakah sudah ada form_type = form_3 untuk progres ini
+        $existingForm3Track = KompetensiTrack::where('progres_id', $progres->progres_id)
+            ->where('form_type', 'form_3')
+            ->exists();
+
+        if ($existingForm3Track) {
+            return response()->json([
+                'status' => 'ERROR',
+                'message' => 'Form 3 sudah pernah dibuat untuk progres ini.',
+                'data' => null
+            ], 409);
+        }
+
+        // Update atau create Form3Model (hanya update ases_date)
+        $form3 = Form3Model::firstOrNew(['user_id' => $user->user_id]);
+        $form3->user_id = $user->user_id;
+        $form3->asesi_name = $user->nama;
+        $form3->asesi_date = Carbon::now();
+        $form3->status = 'Waiting';
+        $form3->save();
+
+         $progres = KompetensiProgres::updateOrCreate(
+            ['form_id' => $form3->form_3_id],
+            ['status' => 'Submitted']
+        );
+
+
+        KompetensiTrack::create([
+            'progres_id' => $progres->id,
+            'form_type' => 'form_2',
+            'activity' => 'Submitted',
+            'activity_time' => Carbon::now(),
+            'description' => 'Asesi Menyetujui rencana asesmen.',
+        ]);
+
+        // Kirim notifikasi ke Asesor jika ada
+        if (!empty($bidang->asesor_id)) {
+            $userAsesor = DaftarUser::where('user_id', $bidang->asesor_id)->first();
+            if ($userAsesor) {
+                $this->kirimNotifikasiKeAsesor($userAsesor, $form3->form_3_id);
+            }
+        }
+
+        return response()->json([
+            'status' => 'OK',
+            'message' => 'Form3 berhasil disimpan atau diperbarui.',
+            'data' => $form3
+        ], 201);
+    }
+
+    private function kirimNotifikasiKeUser(DaftarUser $userTarget, string $title, string $message, $formId)
+    {
+        if (empty($userTarget->device_token)) {
+            Log::warning("User user_id={$userTarget->user_id} tidak memiliki device_token.");
+            return;
+        }
+
+        try {
+            DB::transaction(function () use ($userTarget, $title, $message, $formId) {
+                Log::info("Mengirim notifikasi ke OneSignal untuk user_id={$userTarget->user_id}, form_id={$formId}");
+
+                $this->oneSignalService->sendNotification(
+                    [$userTarget->device_token],
+                    $title,
+                    $message
+                );
+
+                Log::info("Notifikasi berhasil dikirim ke OneSignal untuk user_id={$userTarget->user_id}");
+
+                Notification::create([
+                    'user_id' => $userTarget->user_id,
+                    'title' => $title,
+                    'description' => $message,
+                    'is_read' => 0,
+                    'created_at' => Carbon::now(),
+                    'updated_at' => Carbon::now(),
+                ]);
+
+                Log::info("Notifikasi berhasil disimpan di database untuk user_id={$userTarget->user_id}, form_id={$formId}");
+            });
+        } catch (\Exception $e) {
+            Log::error("Gagal mengirim notifikasi ke user.", [
+                'user_id' => $userTarget->user_id,
+                'form_id' => $formId,
+                'error_message' => $e->getMessage(),
+                'error_trace' => $e->getTraceAsString(),
+            ]);
+        }
+    }
 
 	public function UpdateAsesorForm3($form3_id)
-	{
-		$user = auth()->user(); // Ambil user yang sedang login
+    {
+        $user = auth()->user();
 
-		if (!$user) {
-			return response()->json([
-				'status' => 401,
-				'message' => 'User belum login.',
-				'data' => null
-			], 401);
-		}
+        if (!$user) {
+            return response()->json([
+                'status' => 401,
+                'message' => 'User belum login.',
+                'data' => null
+            ], 401);
+        }
 
-		// Validasi apakah user memiliki role Asesor (role_id = 2)
-		$isAsesor = $user->roles()->where('role_id', 2)->exists();
-		if (!$isAsesor) {
-			return response()->json([
-				'status' => 403,
-				'message' => 'Anda tidak memiliki izin untuk mengisi bagian asesor.',
-				'data' => null
-			], 403);
-		}
+        $hasRoleAsesor = UserRole::where('user_id', $user->user_id)
+            ->where('role_id', 2)
+            ->exists();
 
-		// Cari Form3 berdasarkan ID
-		$form3 = Form3Model::find($form3_id);
-		if (!$form3) {
-			return response()->json([
-				'status' => 404,
-				'message' => 'Data Form3 tidak ditemukan.',
-				'data' => null
-			], 404);
-		}
+        if (!$hasRoleAsesor) {
+            return response()->json([
+                'status' => 403,
+                'message' => 'Anda tidak memiliki izin untuk mengisi bagian asesor.',
+                'data' => null
+            ], 403);
+        }
 
-		// Ambil data asesor aktif berdasarkan user_id
-		$asesor = DataAsesorModel::where('user_id', $user->user_id)->where('aktif', 1)->first();
-		if (!$asesor) {
-			return response()->json([
-				'status' => 404,
-				'message' => 'Data no_reg asesor tidak ditemukan.',
-				'data' => null
-			], 404);
-		}
+        // Mulai transaksi
+        DB::beginTransaction();
 
-		// Update data asesor ke Form3
-		$form3->asesor_name = $user->nama;
-		$form3->asesor_date = Carbon::now();
-		$form3->no_reg = $asesor->no_reg;
-		$form3->status = 'Approved';
-		$form3->save();
+        try {
+            $form3 = Form3Model::find($form3_id);
+            if (!$form3) {
+                DB::rollBack();
+                return response()->json([
+                    'status' => 404,
+                    'message' => 'Data Form3 tidak ditemukan.',
+                    'data' => null
+                ], 404);
+            }
 
-		return response()->json([
-			'status' => 200,
-			'message' => 'Form3 updated successfully with asesor data and status set to Approved.',
-			'data' => $form3
-		], 200);
-	}
+            $asesor = DataAsesorModel::where('user_id', $user->user_id)
+                ->where('aktif', 1)
+                ->first();
+
+            if (!$asesor) {
+                DB::rollBack();
+                return response()->json([
+                    'status' => 404,
+                    'message' => 'Data no_reg asesor tidak ditemukan.',
+                    'data' => null
+                ], 404);
+            }
+
+            $form3->asesor_name = $user->nama;
+            $form3->asesor_date = Carbon::now();
+            $form3->no_reg = $asesor->no_reg;
+            $form3->save();
+
+            $progres = KompetensiProgres::where('form_id', $form3->form_3_id)->first();
+            if ($progres) {
+                $progres->status = 'Completed';
+                $progres->save();
+
+                KompetensiTrack::create([
+                    'progres_id' => $progres->id,
+                    'form_type' => 'form_3',
+                    'form_id' => $form3->form_3_id,
+                    'activity' => 'Completed',
+                    'updated_by' => $user->user_id,
+                    'updated_at' => Carbon::now()
+                ]);
+            }
+
+            // Commit jika semua berhasil
+            DB::commit();
+
+            // ✅ Kirim notifikasi ke Asesi
+            $userAsesi = DaftarUser::where('user_id', $form3->user_id)->first();
+            if ($userAsesi) {
+                $title = 'Form 3 Disetujui';
+                $message = 'Form 3 Anda telah disetujui oleh asesor. Anda bisa mengajukan jadwal wawancara asesmen.';
+                $this->kirimNotifikasiKeUser($userAsesi, $title, $message, $form3->form_3_id);
+            }
+
+            return response()->json([
+                'status' => 200,
+                'message' => 'Form3 berhasil diperbarui dan progres ditandai Completed.',
+                'data' => $form3
+            ]);
+        } catch (\Exception $e) {
+            // Rollback jika ada error
+            DB::rollBack();
+
+            return response()->json([
+                'status' => 500,
+                'message' => 'Terjadi kesalahan saat memperbarui data.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 
 
 }

@@ -16,7 +16,9 @@ class ElemenForm3 extends Model
     protected $fillable = [
         'no_elemen_form_3',
         'isi_elemen',
+        'pk_id',
     ];
+
 
     // Relasi dengan tabel kuk_form3 berdasarkan no_elemen_form_3
     public function kukForm3()
@@ -24,5 +26,9 @@ class ElemenForm3 extends Model
         return $this->hasMany(KukModel::class, 'no_elemen_form_3', 'no_elemen_form_3');
     }
 
+    public function kompetensiPk()
+    {
+        return $this->belongsTo(KompetensiPk::class, 'pk_id', 'pk_id');
+    }
     
 }
