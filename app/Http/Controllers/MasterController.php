@@ -4,13 +4,11 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Education;
+use App\Models\ElemenForm3;
 use App\Models\KompetensiPk;
 
 class MasterController extends Controller
 {
-    /**
-     * Ambil semua data pendidikan
-     */
     public function getEducations()
     {
         try {
@@ -38,9 +36,6 @@ class MasterController extends Controller
         }
     }
 
-    /**
-     * Ambil semua data kompetensi perawat klinis (PK)
-     */
     public function getKompetensiPk()
     {
         try {
@@ -68,5 +63,18 @@ class MasterController extends Controller
                 'data' => []
             ], 500);
         }
+    }
+
+    public function getElemenAsesmen($pk_id)
+    {
+        $data = ElemenForm3::where('pk_id', $pk_id)
+            ->orderByRaw('CAST(no_elemen_form_3 AS UNSIGNED) ASC')
+            ->get();
+
+
+        return response()->json([
+            'status' => 'OK',
+            'data' => $data,
+        ]);
     }
 }

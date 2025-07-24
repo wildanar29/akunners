@@ -21,6 +21,8 @@ $router->get('/', function () use ($router) {
 // MASTER DATA
 $router->get('/get-educations', 'MasterController@getEducations');
 $router->get('/get-kompetensi-pk', 'MasterController@getKompetensiPk');
+$router->get('/get-elemen-pk/{pk_id}', 'MasterController@getElemenAsesmen');
+
 // PROGRES TRACKING
 $router->get('/progress/asesi/{asesorId}', 'AsesiPermohonanController@getAsesiProgressByAsesor');
 $router->get('/progress/assessment/{asesi_id}', 'ProgressController@getProgresByAsesi');
@@ -31,7 +33,7 @@ $router->post('/get-form1-byasesi', 'AsesiPermohonanController@getForm1ByAsesi')
 
 // Bagian API Form 5
 $router->post('/konsultasi/pra-asesmen', 'Form5Controller@pengajuanKonsultasiPraAsesmen');
-$router->get('/jadwal/interview/asesor', 'Form5Controller@getJadwalInterviewGabungan');
+$router->get('/jadwal/interview', 'Form5Controller@getJadwalInterviewGabungan');
 $router->post('/interview/update-status', 'Form5Controller@updateStatusInterview');
 $router->post('/interview/bidang', 'Form5Controller@getJadwalInterviewByBidang');
 $router->get('/form5/langkah-kegiatan', 'Form5Controller@getLangkahDanKegiatan');
