@@ -84,110 +84,123 @@ class IjazahController extends Controller
  
 
    public function upload(Request $request)    
-	{    
-		// Validasi permintaan yang masuk    
-		$validation = $this->validator->make($request->all(), [    
-			'path_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',    
-			'valid' => 'nullable|boolean',    
-			'authentic' => 'nullable|boolean',    
-			'current' => 'nullable|boolean',    
-			'sufficient' => 'nullable|boolean',    
-			'ket' => 'nullable|string|max:255',    
-		]);  
+    {    
+        // Validasi permintaan yang masuk    
+        $validation = $this->validator->make($request->all(), [    
+            'path_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',    
+            'valid' => 'nullable|boolean',    
+            'authentic' => 'nullable|boolean',    
+            'current' => 'nullable|boolean',    
+            'sufficient' => 'nullable|boolean',    
+            'ket' => 'nullable|string|max:255',    
+        ]);  
 
-		if ($validation->fails()) {    
-			return response()->json([    
-				'success' => false,    
-				'message' => 'Validation failed. Please ensure all data entered is correct.',
-				'errors' => $validation->errors(),    
-				'status_code' => 400,    
-			], 400);    
-		}  
+        if ($validation->fails()) {
+            Log::warning('Validation failed on upload:', $validation->errors()->toArray());    
 
-		try {    
-			// Ambil pengguna dari token JWT    
-			$user = JWTAuth::parseToken()->authenticate();    
+            return response()->json([    
+                'success' => false,    
+                'message' => 'Validation failed. Please ensure all data entered is correct.',
+                'errors' => $validation->errors(),    
+                'status_code' => 400,    
+            ], 400);    
+        }  
 
-			if (!$user) {  
-				Log::error('User not found with the provided token.');  
-				return response()->json([
-					'success' => false,
-					'message' => 'User not found.',
-					'status_code' => 404
-				], 404);  
-			}  
+        try {    
+            // Ambil pengguna dari token JWT    
+            $user = JWTAuth::parseToken()->authenticate();    
 
-			$existingFile = IjazahModel::where('user_id', $user->user_id)->first();
-			$filePath = null;
+            if (!$user) {  
+                Log::error('User not found with the provided token.');  
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not found.',
+                    'status_code' => 404
+                ], 404);  
+            }  
 
-			// Cek dan simpan file jika ada
-			if ($request->hasFile('path_file')) {
-				$file = $request->file('path_file');
-				$fileName = time() . '_' . $file->getClientOriginalName();
-				$filePath = $file->storeAs('ijazah', $fileName, 'public');
+            $existingFile = IjazahModel::where('user_id', $user->user_id)->first();
+            $filePath = null;
 
-				// Hapus file lama jika ada dan update
-				if ($existingFile && $existingFile->path_file && Storage::exists($existingFile->path_file)) {
-					Storage::delete($existingFile->path_file);
-				}
-			}
+            // Cek dan simpan file jika ada
+            if ($request->hasFile('path_file')) {
+                $file = $request->file('path_file');
+                $fileName = time() . '_' . $file->getClientOriginalName();
+                $filePath = $file->storeAs('ijazah', $fileName, 'public');
 
-			if ($existingFile) {
-				// Update data yang sudah ada
-				$existingFile->update([
-					'path_file' => $filePath ?? $existingFile->path_file,
-					'valid' => $request->input('valid', null),
-					'authentic' => $request->input('authentic', null),
-					'current' => $request->input('current', null),
-					'sufficient' => $request->input('sufficient', null),
-					'ket' => $request->input('ket', null),
-				]);
+                Log::info("File uploaded: {$fileName} saved to {$filePath}");
 
-				return response()->json([
-					'success' => true,
-					'message' => 'Data updated successfully.',
-					'data' => [
-						'ijazah_id' => $existingFile->ijazah_id,
-						'user_id' => $user->user_id,
-						'file_path' => $existingFile->path_file,
-					],
-					'status_code' => 200
-				], 200);
-			}
+                // Hapus file lama jika ada dan update
+                if ($existingFile && $existingFile->path_file && Storage::exists($existingFile->path_file)) {
+                    Storage::delete($existingFile->path_file);
+                    Log::info("Old file deleted: {$existingFile->path_file}");
+                }
+            }
 
-			// Insert data baru ke database  
-			$newFile = IjazahModel::create([
-				'path_file' => $filePath,    
-				'user_id' => $user->user_id,
-				'valid' => $request->input('valid', null),    
-				'authentic' => $request->input('authentic', null),    
-				'current' => $request->input('current', null),    
-				'sufficient' => $request->input('sufficient', null),    
-				'ket' => $request->input('ket', null),    
-			]);
+            if ($existingFile) {
+                // Update data yang sudah ada
+                $existingFile->update([
+                    'path_file' => $filePath ?? $existingFile->path_file,
+                    'valid' => $request->input('valid', null),
+                    'authentic' => $request->input('authentic', null),
+                    'current' => $request->input('current', null),
+                    'sufficient' => $request->input('sufficient', null),
+                    'ket' => $request->input('ket', null),
+                ]);
 
-			return response()->json([
-				'success' => true,
-				'message' => 'Data uploaded successfully.',
-				'data' => [
-					'ijazah_id' => $newFile->ijazah_id,
-					'user_id' => $user->user_id,
-					'file_path' => $newFile->path_file,
-				],
-				'status_code' => 201
-			], 201);
-			
-		} catch (\Exception $e) {    
-			Log::error('File upload error: ' . $e->getMessage());  
+                Log::info("Ijazah data updated for user_id: {$user->user_id}");
 
-			return response()->json([
-				'success' => false,
-				'message' => 'An unexpected server error occurred.',
-				'error' => $e->getMessage(),
-				'status_code' => 500
-			], 500);    
-		}    
-	}
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Data updated successfully.',
+                    'data' => [
+                        'ijazah_id' => $existingFile->ijazah_id,
+                        'user_id' => $user->user_id,
+                        'file_path' => $existingFile->path_file,
+                    ],
+                    'status_code' => 200
+                ], 200);
+            }
+
+            // Insert data baru ke database  
+            $newFile = IjazahModel::create([
+                'path_file' => $filePath,    
+                'user_id' => $user->user_id,
+                'valid' => $request->input('valid', null),    
+                'authentic' => $request->input('authentic', null),    
+                'current' => $request->input('current', null),    
+                'sufficient' => $request->input('sufficient', null),    
+                'ket' => $request->input('ket', null),    
+            ]);
+
+            Log::info("New ijazah data inserted for user_id: {$user->user_id}");
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Data uploaded successfully.',
+                'data' => [
+                    'ijazah_id' => $newFile->ijazah_id,
+                    'user_id' => $user->user_id,
+                    'file_path' => $newFile->path_file,
+                ],
+                'status_code' => 201
+            ], 201);
+            
+        } catch (\Exception $e) {    
+            Log::error('File upload error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An unexpected server error occurred.',
+                'error' => $e->getMessage(),
+                'status_code' => 500
+            ], 500);    
+        }    
+    }
+
 
     
 
