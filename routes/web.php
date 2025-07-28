@@ -108,10 +108,10 @@ $router->get('/storage/ijazah/{path}', function ($path) {
 
 
 //Sip Controller
-$router->post('/upload-sipp', 'SipController@upload');
-$router->put('/update-sipp/{nik}', 'SipController@updateFile');
-$router->delete('/sipp/file/{nik}', 'SipController@deleteFile');
-$router->get('/get-no-expired-sipp/{nik}', 'SipController@getSipByNik');
+$router->post('/upload-sip', 'SipController@upload');
+$router->put('/update-sip/{nik}', 'SipController@updateFile');
+$router->delete('/sip/file/{nik}', 'SipController@deleteFile');
+$router->get('/get-no-expired-sip/{nik}', 'SipController@getSipByNik');
 $router->get('/storage/sip/{path}', function ($path) {  
     return response()->file(storage_path('app/public/Sip/' . $path));  
 });  
