@@ -95,4 +95,4 @@ namespace App\Docs;
  */
 
 
- class AjuanPermohonanAsesi {}
+ class UploadSertifikat {}
