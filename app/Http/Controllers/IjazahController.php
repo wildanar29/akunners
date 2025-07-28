@@ -84,10 +84,22 @@ class IjazahController extends Controller
  
 
    public function upload(Request $request)    
-    {    
+    {
+        // Debug awal: apakah file ada?
+        Log::debug('Cek file upload: ', [
+            'hasFile' => $request->hasFile('path_file'),
+            'fileInfo' => $request->hasFile('path_file') ? [
+                'originalName' => $request->file('path_file')->getClientOriginalName(),
+                'mimeType' => $request->file('path_file')->getMimeType(),
+                'size' => $request->file('path_file')->getSize(),
+                'extension' => $request->file('path_file')->getClientOriginalExtension(),
+                'error' => $request->file('path_file')->getError(), // 0 = no error
+            ] : null
+        ]);
+
         // Validasi permintaan yang masuk    
         $validation = $this->validator->make($request->all(), [    
-            'path_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png',    
+            'path_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',    
             'valid' => 'nullable|boolean',    
             'authentic' => 'nullable|boolean',    
             'current' => 'nullable|boolean',    
@@ -107,7 +119,6 @@ class IjazahController extends Controller
         }  
 
         try {    
-            // Ambil pengguna dari token JWT    
             $user = JWTAuth::parseToken()->authenticate();    
 
             if (!$user) {  
@@ -122,7 +133,6 @@ class IjazahController extends Controller
             $existingFile = IjazahModel::where('user_id', $user->user_id)->first();
             $filePath = null;
 
-            // Cek dan simpan file jika ada
             if ($request->hasFile('path_file')) {
                 $file = $request->file('path_file');
                 $fileName = time() . '_' . $file->getClientOriginalName();
@@ -130,7 +140,6 @@ class IjazahController extends Controller
 
                 Log::info("File uploaded: {$fileName} saved to {$filePath}");
 
-                // Hapus file lama jika ada dan update
                 if ($existingFile && $existingFile->path_file && Storage::exists($existingFile->path_file)) {
                     Storage::delete($existingFile->path_file);
                     Log::info("Old file deleted: {$existingFile->path_file}");
@@ -138,7 +147,6 @@ class IjazahController extends Controller
             }
 
             if ($existingFile) {
-                // Update data yang sudah ada
                 $existingFile->update([
                     'path_file' => $filePath ?? $existingFile->path_file,
                     'valid' => $request->input('valid', null),
@@ -162,7 +170,6 @@ class IjazahController extends Controller
                 ], 200);
             }
 
-            // Insert data baru ke database  
             $newFile = IjazahModel::create([
                 'path_file' => $filePath,    
                 'user_id' => $user->user_id,
@@ -186,7 +193,7 @@ class IjazahController extends Controller
                 'status_code' => 201
             ], 201);
             
-        } catch (\Exception $e) {    
+        } catch (\Exception $e) {
             Log::error('File upload error: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
                 'request_data' => $request->all()
@@ -200,6 +207,7 @@ class IjazahController extends Controller
             ], 500);    
         }    
     }
+
 
 
     
