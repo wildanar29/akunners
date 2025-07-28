@@ -24,100 +24,14 @@ class UjikomController extends Controller
         $this->validator = $validator;
     }
 
- /**
- * @OA\Post(
- *     path="/upload-ujikom",
- *     summary="Upload File Ujikom",
- *     description="Mengunggah file Ujikom dan menyimpan detailnya ke database.",
- *     operationId="uploadFileUjikom",
- *     tags={"Upload Ujikom"},
- *     @OA\RequestBody(
- *         required=true,
- *         @OA\MediaType(
- *             mediaType="multipart/form-data",
- *             @OA\Schema(
- *                 required={"path_file", "nomor_kompetensi", "masa_berlaku_kompetensi"},
- *                 @OA\Property(
- *                     property="path_file",
- *                     type="string",
- *                     format="binary",
- *                     description="File yang akan diunggah (PDF, JPG, JPEG, PNG, maksimal 2MB)."
- *                 ),
- *                 @OA\Property(
- *                     property="nomor_kompetensi",
- *                     type="string",
- *                     description="Nomor sertifikat kompetensi yang diunggah.",
- *                     example="KOMP-202500789"
- *                 ),
- *                 @OA\Property(
- *                     property="masa_berlaku_kompetensi",
- *                     type="string",
- *                     format="date",
- *                     description="Tanggal masa berlaku sertifikat kompetensi.",
- *                     example="2027-05-30"
- *                 )
- *             )
- *         )
- *     ),
- *     @OA\Response(
- *         response=200,
- *         description="File berhasil diunggah.",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="success", type="boolean", example=true),
- *             @OA\Property(property="message", type="string", example="File uploaded successfully."),
- *             @OA\Property(
- *                 property="data",
- *                 type="object",
- *                 @OA\Property(property="ujikom_id", type="integer", example=4, description="ID file Ujikom yang tersimpan."),
- *                 @OA\Property(property="user_id", type="integer", example=11, description="ID pengguna yang mengunggah."),
- *                 @OA\Property(property="nomor_kompetensi", type="string", example="KOMP-202500789"),
- *                 @OA\Property(property="masa_berlaku_kompetensi", type="string", example="2027-05-30"),
- *                 @OA\Property(property="path_file", type="string", example="http://app.rsimmanuel.net:9091/storage/Ujikom/file.pdf"),
- *                 @OA\Property(property="valid", type="boolean", example=null),
- *                 @OA\Property(property="authentic", type="boolean", example=null),
- *                 @OA\Property(property="current", type="boolean", example=null),
- *                 @OA\Property(property="sufficient", type="boolean", example=null),
- *                 @OA\Property(property="ket", type="string", example="null")
- *             )
- *         )
- *     ),
- *     @OA\Response(
- *         response=400,
- *         description="Validasi gagal atau file tidak ditemukan.",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="success", type="boolean", example=false),
- *             @OA\Property(property="message", type="string", example="Validasi gagal. Pastikan file di Upload."),
- *             @OA\Property(
- *                 property="errors",
- *                 type="object",
- *                 description="Detail kesalahan validasi."
- *             )
- *         )
- *     ),
- *     @OA\Response(
- *         response=500,
- *         description="Kesalahan tak terduga di server.",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="success", type="boolean", example=false),
- *             @OA\Property(property="message", type="string", example="Terjadi kesalahan tak terduga di server."),
- *             @OA\Property(property="error", type="string", example="Detail kesalahan server.")
- *         )
- *     )
- * )
- */
-
-
 
   public function upload(Request $request)
 	{
 		// Validasi permintaan yang masuk
 		$validation = $this->validator->make($request->all(), [
 			'path_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
-			'nomor_kompetensi' => 'required|string',
-			'masa_berlaku_kompetensi' => 'required|date',
+			'nomor_kompetensi' => 'nullable|string',
+			'masa_berlaku_kompetensi' => 'nullable|date',
 			'valid' => 'nullable|boolean',
 			'authentic' => 'nullable|boolean',
 			'current' => 'nullable|boolean',

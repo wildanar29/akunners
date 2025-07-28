@@ -146,7 +146,7 @@ $router->get('/storage/sak/{path}', function ($path) {
 });  
 
 //Ujikom Controller
-$router->post('/upload-ujikom', 'UjikomController@upload');
+$router->post('/upload-sertifikat', 'UjikomController@upload');
 $router->put('/update-ujikom/{nik}', 'UjikomController@updateFile');
 $router->delete('/ujikom/file/{nik}', 'UjikomController@deleteFile');
 $router->get('/get-no-expired-ujikom/{nik}', 'UjikomController@getUjikomByNik');
