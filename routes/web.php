@@ -38,6 +38,9 @@ $router->post('/interview/update-status', 'Form5Controller@updateStatusInterview
 $router->post('/interview/bidang', 'Form5Controller@getJadwalInterviewByBidang');
 $router->get('/form5/langkah-kegiatan', 'Form5Controller@getLangkahDanKegiatan');
 $router->post('/form5/jawaban-kegiatan', 'Form5Controller@simpanJawabanKegiatan');
+$router->get('/form5/soal-jawab', 'Form5Controller@getLangkahKegiatanDenganJawaban');
+$router->get('/form5/asesi-approve', 'Form5Controller@approveKompetensiProgres');
+
 
 $router->get('/tracks-by-form', 'ProgressController@getTracksByFormId');
 // Bagian API Form 3

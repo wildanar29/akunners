@@ -71,10 +71,29 @@ class MasterController extends Controller
             ->orderByRaw('CAST(no_elemen_form_3 AS UNSIGNED) ASC')
             ->get();
 
+        if ($data->isEmpty()) {
+            return response('<p>Tidak ada data elemen asesmen.</p>', 200, ['Content-Type' => 'text/html']);
+        }
 
-        return response()->json([
-            'status' => 'OK',
-            'data' => $data,
-        ]);
+        $html = '<table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%;">';
+        $html .= '<thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Isi Elemen</th>
+                    </tr>
+                </thead>';
+        $html .= '<tbody>';
+        
+        foreach ($data as $row) {
+            $html .= '<tr>';
+            $html .= '<td>' . htmlspecialchars($row->no_elemen_form_3) . '</td>';
+            $html .= '<td>' . nl2br(htmlspecialchars($row->isi_elemen)) . '</td>';
+            $html .= '</tr>';
+        }
+
+        $html .= '</tbody></table>';
+
+        return response($html, 200, ['Content-Type' => 'text/html']);
     }
+
 }

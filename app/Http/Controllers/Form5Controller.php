@@ -5,12 +5,17 @@ namespace App\Http\Controllers;
 use Laravel\Lumen\Routing\Controller as BaseController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Service\OneSignalService;
 use App\Models\InterviewModel;
 use App\Models\DataAsesorModel;
 use App\Models\DaftarUser;
 use App\Models\UserRole;
+use App\Models\Form5;
 use App\Models\BidangModel;
 use App\Models\LangkahForm5;
+use App\Models\KompetensiTrack;
+use App\Models\KompetensiProgres;
+use App\Models\Notification;
 use App\Models\Form5KegiatanUser;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -20,6 +25,92 @@ use Carbon\Carbon;
 
 class Form5Controller extends BaseController
 {
+
+	protected $oneSignalService;
+
+    public function __construct(OneSignalService $oneSignalService)
+    {
+        $this->oneSignalService = $oneSignalService;
+    }
+
+	private function kirimNotifikasiKeAsesor(DaftarUser $userAsesor, $formId)
+	{
+		if (empty($userAsesor->device_token)) {
+			Log::warning("Asesor user_id={$userAsesor->user_id} tidak memiliki device_token.");
+			return;
+		}
+
+		try {
+			$title = 'Pengajuan baru';
+			$message = "Anda memiliki Pengajuan konsultasi pra asesmen. cek disini.";
+
+			// Kirim notifikasi ke OneSignal
+			$this->oneSignalService->sendNotification(
+				[$userAsesor->device_token],
+				$title,
+				$message
+			);
+
+			// Simpan notifikasi ke database
+			Notification::create([
+				'user_id' => $userAsesor->user_id,
+				'title' => $title,
+				'description' => $message,
+				'is_read' => 0,
+				'created_at' => Carbon::now(),
+				'updated_at' => Carbon::now(),
+			]);
+
+			Log::info("Notifikasi penugasan dikirim ke asesor user_id={$userAsesor->user_id}, nama={$userAsesor->nama}");
+
+		} catch (\Exception $e) {
+			Log::error("Gagal mengirim notifikasi ke asesor.", [
+				'user_id' => $userAsesor->user_id,
+				'error_message' => $e->getMessage(),
+				'error_trace' => $e->getTraceAsString(),
+			]);
+		}
+	}
+
+	private function kirimNotifikasiKeAsesorForm5(DaftarUser $userAsesor)
+	{
+		if (empty($userAsesor->device_token)) {
+			Log::warning("Asesor user_id={$userAsesor->user_id} tidak memiliki device_token.");
+			return;
+		}
+
+		try {
+			$title = 'Form 5';
+			$message = "Form 5 sudah disetujui oleh asesi.";
+
+			// Kirim notifikasi ke OneSignal
+			$this->oneSignalService->sendNotification(
+				[$userAsesor->device_token],
+				$title,
+				$message
+			);
+
+			// Simpan notifikasi ke database
+			Notification::create([
+				'user_id' => $userAsesor->user_id,
+				'title' => $title,
+				'description' => $message,
+				'is_read' => 0,
+				'created_at' => Carbon::now(),
+				'updated_at' => Carbon::now(),
+			]);
+
+			Log::info("Notifikasi penugasan dikirim ke asesor user_id={$userAsesor->user_id}, nama={$userAsesor->nama}");
+
+		} catch (\Exception $e) {
+			Log::error("Gagal mengirim notifikasi ke asesor.", [
+				'user_id' => $userAsesor->user_id,
+				'error_message' => $e->getMessage(),
+				'error_trace' => $e->getTraceAsString(),
+			]);
+		}
+	}
+	
 	public function pengajuanKonsultasiPraAsesmen(Request $request)
 	{
 		$user = auth()->user();
@@ -113,7 +204,25 @@ class Form5Controller extends BaseController
 
 			$interview->save();
 
+			if ($userAsesor) {
+				$this->kirimNotifikasiKeAsesor($userAsesor, $request->form_1_id);
+			}
 			DB::commit();
+
+			$progres = KompetensiProgres::create([
+				'form_id' => $interview->interview_id,
+				'parent_form_id' => $request->form_1_id,
+				'user_id' => $user->user_id,
+				'status' => 'Submitted',
+			]);
+
+			KompetensiTrack::create([
+				'progres_id' => $progres->id,
+				'form_type' => 'intv_pra_asesmen',
+				'activity' => 'Submitted',
+				'activity_time' => Carbon::now(),
+				'description' => 'Asesi mengajukan konsultasi pra asesmen.',
+			]);
 
 			return response()->json([
 				'status' => 201,
@@ -234,23 +343,126 @@ class Form5Controller extends BaseController
 		]);
 	}
 
+	private function kirimNotifikasiApprovalKePengaju($formData)
+	{
+		if (!$formData || empty($formData->user_id)) {
+			Log::warning('Gagal kirim notifikasi: user_id pengaju kosong');
+			return;
+		}
+
+		$pengaju = DaftarUser::where('user_id', $formData->user_id)->first();
+
+		if (!$pengaju) {
+			Log::warning('User pengaju tidak ditemukan', ['user_id' => $formData->user_id]);
+			return;
+		}
+
+		if (empty($pengaju->device_token)) {
+			Log::warning("User pengaju tidak memiliki device_token", ['user_id' => $pengaju->user_id]);
+			return;
+		}
+
+		try {
+			$title = 'Pengajuan Disetujui';
+			$message = "Pengajuan konsultasi pra asesmen disetujui.";
+
+			// Kirim notifikasi ke OneSignal
+			$this->oneSignalService->sendNotification(
+				[$pengaju->device_token],
+				$title,
+				$message
+			);
+
+			Log::info('Notifikasi berhasil dikirim ke pengaju', [
+				'user_id' => $pengaju->user_id,
+				'nama' => $pengaju->nama ?? null,
+			]);
+
+			// Simpan ke tabel notification
+			Notification::create([
+				'user_id' => $pengaju->user_id,
+				'title' => $title,
+				'description' => $message,
+				'is_read' => 0,
+				'created_at' => Carbon::now(),
+				'updated_at' => Carbon::now(),
+			]);
+
+		} catch (\Exception $e) {
+			Log::error('Gagal kirim notifikasi ke pengaju', [
+				'user_id' => $pengaju->user_id,
+				'error' => $e->getMessage(),
+			]);
+		}
+	}
+
+	private function kirimNotifikasiApprovalKeAsesiForm5($formData)
+	{
+		if (!$formData || empty($formData->user_id)) {
+			Log::warning('Gagal kirim notifikasi: user_id pengaju kosong');
+			return;
+		}
+
+		$pengaju = DaftarUser::where('user_id', $formData->user_id)->first();
+
+		if (!$pengaju) {
+			Log::warning('User pengaju tidak ditemukan', ['user_id' => $formData->user_id]);
+			return;
+		}
+
+		if (empty($pengaju->device_token)) {
+			Log::warning("User pengaju tidak memiliki device_token", ['user_id' => $pengaju->user_id]);
+			return;
+		}
+
+		try {
+			$title = 'Form 5';
+			$message = "Silahkan baca dan setujui Form 5.";
+
+			// Kirim notifikasi ke OneSignal
+			$this->oneSignalService->sendNotification(
+				[$pengaju->device_token],
+				$title,
+				$message
+			);
+
+			Log::info('Notifikasi berhasil dikirim ke pengaju', [
+				'user_id' => $pengaju->user_id,
+				'nama' => $pengaju->nama ?? null,
+			]);
+
+			// Simpan ke tabel notification
+			Notification::create([
+				'user_id' => $pengaju->user_id,
+				'title' => $title,
+				'description' => $message,
+				'is_read' => 0,
+				'created_at' => Carbon::now(),
+				'updated_at' => Carbon::now(),
+			]);
+
+		} catch (\Exception $e) {
+			Log::error('Gagal kirim notifikasi ke pengaju', [
+				'user_id' => $pengaju->user_id,
+				'error' => $e->getMessage(),
+			]);
+		}
+	}
+
 	public function updateStatusInterview(Request $request)
 	{
 		$this->validate($request, [
 			'interview_id' => 'required|integer|exists:schedule_interview,interview_id',
-			'action' => 'required|in:accepted,canceled,reschedule',
-			'date' => 'required_if:action,reschedule|date',
-			'time' => 'required_if:action,reschedule',
-			'place' => 'required_if:action,reschedule|string|max:255',
-			'asesor_id' => 'nullable|integer|exists:data_asesor,user_id' // opsional, valid jika ada
+			'action' => 'required|in:Approved,Rejected,Reschedule',
+			'date' => 'required_if:action,Reschedule|date',
+			'time' => 'required_if:action,Reschedule',
+			'place' => 'required_if:action,Reschedule|string|max:255',
+			'asesor_id' => 'nullable|integer|exists:data_asesor,user_id'
 		]);
 
 		$user = Auth::user();
-
-		// Ambil ID asesor dari login atau dari request
 		$asesorId = $request->input('asesor_id', $user?->user_id);
 
-		// Validasi keberadaan user (jika tidak login dan tidak ada asesor_id dikirim)
 		if (!$asesorId) {
 			return response()->json([
 				'status' => 401,
@@ -259,7 +471,6 @@ class Form5Controller extends BaseController
 			], 401);
 		}
 
-		// Cek apakah asesor_id valid di tabel data_asesor
 		$asesor = DB::table('data_asesor')->where('user_id', $asesorId)->first();
 		if (!$asesor) {
 			return response()->json([
@@ -269,7 +480,6 @@ class Form5Controller extends BaseController
 			], 403);
 		}
 
-		// Ambil data interview
 		$interview = DB::table('schedule_interview')->where('interview_id', $request->interview_id)->first();
 		if (!$interview) {
 			return response()->json([
@@ -279,7 +489,6 @@ class Form5Controller extends BaseController
 			], 404);
 		}
 
-		// Cek apakah interview dimiliki oleh asesor_id yang sedang login atau dikirimkan
 		if ($interview->asesor_id != $asesorId) {
 			return response()->json([
 				'status' => 403,
@@ -288,19 +497,16 @@ class Form5Controller extends BaseController
 			], 403);
 		}
 
-		// Proses update berdasarkan action
 		$updateData = [];
 
 		switch ($request->action) {
-			case 'accepted':
-				$updateData['status'] = 'Accepted';
+			case 'Approved':
+				$updateData['status'] = 'Approved';
 				break;
-
-			case 'canceled':
-				$updateData['status'] = 'Canceled';
+			case 'Rejected':
+				$updateData['status'] = 'Rejected';
 				break;
-
-			case 'reschedule':
+			case 'Reschedule':
 				$updateData['status'] = 'Rescheduled';
 				$updateData['date'] = $request->date;
 				$updateData['time'] = $request->time;
@@ -312,17 +518,151 @@ class Form5Controller extends BaseController
 			->where('interview_id', $request->interview_id)
 			->update($updateData);
 
+		// Update or Create KompetensiProgres
+		$progres = KompetensiProgres::firstOrCreate(
+			['form_id' => $request->interview_id],
+			['status' => 'Approved']
+		);
+		$progres->status = 'Approved';
+		$progres->save();
+
+		// Tambahkan track untuk interview approval
+		KompetensiTrack::create([
+			'progres_id' => $progres->id,
+			'form_type' => 'intv_pra_asesmen',
+			'activity' => 'Approved',
+			'activity_time' => Carbon::now(),
+			'description' => 'Pengajuan konsultasi pra asesmen disetujui oleh Asesor.',
+		]);
+
+		// Proses Form5
+		$form5Result = $this->initForm5($user?->user_id, $request->asesor_id);
+
+		if (!$form5Result || !isset($form5Result['form5'])) {
+			return response()->json([
+				'status' => 'FAILED',
+				'message' => 'Form5 gagal dibuat.',
+			], 500);
+		}
+
+		$form5 = $form5Result['form5'];
+
+		// Hanya proses jika Form5 baru dibuat
+		if (!$form5Result['exists']) {
+			$this->initJawabanKosongForm5($form5->form_5_id, $interview->pk_id ?? null);
+			$this->kirimNotifikasiApprovalKePengaju($interview);
+
+			$newProgres = KompetensiProgres::create([
+				'form_id' => $form5->form_5_id,
+				'parent_form_id' => $progres->parent_form_id ?? null,
+				'user_id' => $form5->asesi_id,
+				'status' => 'InAssessment',
+			]);
+
+			KompetensiTrack::create([
+				'progres_id' => $newProgres->id,
+				'form_type' => 'form_5',
+				'activity' => 'InAssessment',
+				'activity_time' => Carbon::now(),
+				'description' => 'Formulir 5 berhasil dibuat dan proses asesmen dimulai.',
+			]);
+		}
+
 		return response()->json([
-			'status' => 200,
-			'message' => 'Status interview berhasil diperbarui.',
-			'data' => $updateData
+			'status' => "SUCCESS",
+			'message' => $form5Result['message'] ?? 'Status interview berhasil diperbarui.',
+			'data' => $updateData,
+			'form5_exists' => $form5Result['exists'],
+			'form_5_id' => $form5->form_5_id
 		]);
 	}
-	
-	public function getLangkahDanKegiatan()
+
+	private function initForm5(?int $userId, ?int $asesorId)
+	{
+		$finalAsesorId = $asesorId ?? $userId;
+
+		if (!$finalAsesorId) {
+			Log::warning('Validasi asesor gagal: user_id dan asesor_id keduanya null.');
+			return false;
+		}
+
+		$asesor = DB::table('data_asesor')->where('user_id', $finalAsesorId)->first();
+		if (!$asesor) {
+			Log::warning('Validasi asesor gagal. Data tidak ditemukan di tabel data_asesor.', [
+				'user_id' => $finalAsesorId
+			]);
+			return false;
+		}
+
+		$asesorUser = DaftarUser::where('user_id', $finalAsesorId)->first();
+		if (!$asesorUser) {
+			Log::warning('Data user untuk asesor tidak ditemukan di DaftarUser.', [
+				'user_id' => $finalAsesorId
+			]);
+			return false;
+		}
+
+		$asesi = DaftarUser::where('user_id', $userId)->first();
+		if (!$asesi) {
+			Log::warning('Data asesi tidak ditemukan.', [
+				'asesi_id' => $userId
+			]);
+			return false;
+		}
+
+		$form5Exist = Form5::where('asesi_id', $userId)
+			->where('status', '!=', 'Cancel')
+			->first();
+
+		if ($form5Exist) {
+			Log::info('Form5 sudah ada sebelumnya.', ['form_5_id' => $form5Exist->form_5_id]);
+			return [
+				'message' => 'Form5 sudah ada sebelumnya.',
+				'exists' => true,
+				'form5' => $form5Exist,
+			];
+		}
+
+		try {
+			$form5 = Form5::create([
+				'asesi_id'     => $userId,
+				'asesi_name'   => $asesi->nama ?? '',
+				'asesi_date'   => Carbon::now()->toDateString(),
+				'asesor_id'    => $asesor->user_id,
+				'asesor_name'  => $asesorUser->nama ?? '',
+				'asesor_date'  => Carbon::now()->toDateString(),
+				'no_reg'       => $asesor->no_reg ?? '',
+				'status'       => 'InAssessment',
+			]);
+
+			Log::info('Form5 berhasil dibuat.', ['form_5_id' => $form5->form_5_id]);
+
+			return [
+				'message' => 'Form5 berhasil dibuat.',
+				'exists' => false,
+				'form5' => $form5,
+			];
+		} catch (\Exception $e) {
+			Log::error('Gagal menyimpan Form5.', ['error' => $e->getMessage()]);
+			return false;
+		}
+	}
+
+	public function getLangkahDanKegiatan(Request $request)
 	{
 		try {
-			$data = LangkahForm5::with(['kegiatans'])
+			$pk_id = $request->input('pk_id');
+
+			if (!$pk_id) {
+				return response()->json([
+					'status' => 400,
+					'message' => 'Parameter pk_id wajib diisi.',
+					'data' => [],
+				], 400);
+			}
+
+			$data = LangkahForm5::with('kegiatans')
+				->where('pk_id', $pk_id)
 				->orderBy('nomor_langkah')
 				->get();
 
@@ -332,7 +672,6 @@ class Form5Controller extends BaseController
 				'data' => $data
 			]);
 		} catch (\Exception $e) {
-			// Log kesalahan ke file log Laravel
 			Log::error('Gagal mengambil data langkah dan kegiatan: ' . $e->getMessage());
 
 			return response()->json([
@@ -342,10 +681,9 @@ class Form5Controller extends BaseController
 			], 500);
 		}
 	}
-	
+
 	public function simpanJawabanKegiatan(Request $request)
 	{
-		// Validasi format data 'jawaban'
 		$validator = Validator::make($request->all(), [
 			'jawaban' => 'required|array|min:1',
 			'jawaban.*.form_5_id'   => 'required|integer|exists:form_5,form_5_id',
@@ -364,7 +702,9 @@ class Form5Controller extends BaseController
 
 		try {
 			$data = $request->input('jawaban');
+			$form5Id = $data[0]['form_5_id']; // Ambil satu form_5_id dari jawaban
 
+			// Simpan atau update jawaban kegiatan
 			foreach ($data as $item) {
 				Form5KegiatanUser::updateOrCreate(
 					[
@@ -372,16 +712,45 @@ class Form5Controller extends BaseController
 						'kegiatan_id' => $item['kegiatan_id']
 					],
 					[
-						'is_tercapai' => (int) $item['is_tercapai'], // Konversi boolean ke 0/1
+						'is_tercapai' => (int) $item['is_tercapai'],
 						'catatan'     => $item['catatan'] ?? null,
-						'updated_at'  => now()
+						'updated_at'  => Carbon::now()
 					]
 				);
 			}
 
+			// Ambil data Form 5 dan relasi ke KompetensiProgres
+			$form5 = Form5::find($form5Id);
+
+			// $progres = KompetensiProgres::where('form_id', $form5->form_5_id)->first();
+			if ($form5) {
+				Log::info('masuk ke update status Form5', ['form_5_id' => $form5Id]);
+
+				// Ambil data progres dulu
+				$progres = KompetensiProgres::where('form_id', $form5Id)->first();
+
+				if ($progres) {
+					// Update status
+					$progres->update([
+						'status' => 'Submitted',
+						'updated_at' => Carbon::now()
+					]);
+
+					// Tambahkan ke track
+					KompetensiTrack::create([
+						'progres_id'  => $progres->id,
+						'status'      => 'Submitted',
+						'form_type'   => 'form_5',
+						'description' => 'Asesor selesai mengisi Form 5',
+						'created_at'  => Carbon::now()
+					]);
+				}
+			}
+
+			$this->kirimNotifikasiApprovalKeAsesiForm5($progres);
 			return response()->json([
 				'status' => 200,
-				'message' => 'Jawaban kegiatan berhasil disimpan.'
+				'message' => 'Jawaban kegiatan berhasil disimpan dan status diperbarui.'
 			]);
 		} catch (\Exception $e) {
 			Log::error('Gagal menyimpan jawaban kegiatan: ' . $e->getMessage());
@@ -393,4 +762,157 @@ class Form5Controller extends BaseController
 			], 500);
 		}
 	}
+
+	private function initJawabanKosongForm5(int $form5Id, ?int $pkId = null)
+	{
+		$query = DB::table('kegiatan_form5')->select('id');
+		if ($pkId) {
+			$query->where('pk_id', $pkId);
+		}
+
+		$kegiatanList = $query->get();
+
+		foreach ($kegiatanList as $kegiatan) {
+			Form5KegiatanUser::updateOrCreate(
+				[
+					'form_5_id'   => $form5Id,
+					'kegiatan_id' => $kegiatan->id,
+				],
+				[
+					'is_tercapai' => 0,
+					'catatan'     => null,
+					'updated_at'  => Carbon::now(),
+				]
+			);
+		}
+	}
+
+	public function getLangkahKegiatanDenganJawaban(Request $request)
+	{
+		try {
+			$pk_id = $request->input('pk_id');
+			$form5_id = $request->input('form_5_id');
+
+			if (!$pk_id || !$form5_id) {
+				return response()->json([
+					'status' => 400,
+					'message' => 'Parameter pk_id dan form_5_id wajib diisi.',
+					'data' => [],
+				], 400);
+			}
+
+			// Ambil semua jawaban user untuk form_5_id
+			$jawabanUser = Form5KegiatanUser::where('form_5_id', $form5_id)->get()
+				->keyBy('kegiatan_id'); // key untuk mempermudah pencocokan
+
+			// Ambil langkah beserta kegiatan
+			$data = LangkahForm5::with(['kegiatans' => function ($query) use ($jawabanUser) {
+				$query->orderBy('created_at', 'asc');
+			}])
+				->where('pk_id', $pk_id)
+				->orderBy('created_at', 'asc')
+				->get();
+
+			// Tambahkan jawaban ke setiap kegiatan
+			$data->transform(function ($langkah) use ($jawabanUser) {
+				$langkah->kegiatans->transform(function ($kegiatan) use ($jawabanUser) {
+					$jawaban = $jawabanUser->get($kegiatan->id);
+
+					$kegiatan->is_tercapai = $jawaban->is_tercapai ?? null;
+					$kegiatan->catatan = $jawaban->catatan ?? null;
+
+					return $kegiatan;
+				});
+				return $langkah;
+			});
+
+			return response()->json([
+				'status' => 200,
+				'message' => 'Data langkah, kegiatan, dan jawaban berhasil diambil.',
+				'data' => $data
+			]);
+		} catch (\Exception $e) {
+			Log::error('Gagal mengambil data langkah + jawaban: ' . $e->getMessage());
+
+			return response()->json([
+				'status' => 500,
+				'message' => 'Terjadi kesalahan saat mengambil data.',
+				'error' => $e->getMessage()
+			], 500);
+		}
+	}
+
+	public function approveKompetensiProgres(Request $request)
+	{
+		try {
+			$id = $request->input('id'); // ID dari tabel KompetensiProgres langsung
+			$pk_id = $request->input('pk_id'); // opsional, jika butuh filter tambahan
+
+			if (!$id) {
+				return response()->json([
+					'status' => 400,
+					'message' => 'Parameter id wajib diisi.',
+				], 400);
+			}
+
+			// Query update berdasarkan ID utama dari KompetensiProgres
+			$query = KompetensiProgres::where('id', $id);
+
+			if ($pk_id) {
+				$query->where('pk_id', $pk_id); // Filter tambahan jika diperlukan
+			}
+
+			$updated = $query->update([
+				'status' => 'Approved',
+				'updated_at' => Carbon::now(),
+			]);
+
+			if ($updated) {
+				Log::info('Status KompetensiProgres berhasil diupdate ke Approved', [
+					'id' => $id,
+					'pk_id' => $pk_id ?? null
+				]);
+
+				KompetensiTrack::create([
+					'progres_id' => $id,
+					'form_type' => 'form_5',
+					'activity' => 'Approved',
+					'activity_time' => Carbon::now(),
+					'description' => 'Form 5 telah disetujui oleh asesi.',
+				]);
+				
+				$progresForm5 = KompetensiProgres::find($id)->form_id ?? null;
+				$form5 = Form5::find($progresForm5);
+				$asesor_id = $form5->asesor_id ?? null;
+				if ($asesor_id) {
+					Log::info("Mengirim notifikasi ke asesor dengan user_id={$asesor_id} untuk form 5 ID={$id}");
+					$asesor = DaftarUser::where('user_id', $asesor_id)->first();
+					if ($asesor) {
+						$this->kirimNotifikasiKeAsesorForm5($asesor);
+					} else {
+						Log::warning("Asesor dengan user_id={$asesor_id} tidak ditemukan.");
+					}
+				}
+
+				return response()->json([
+					'status' => 200,
+					'message' => 'Status KompetensiProgres berhasil diupdate ke Approved.'
+				]);
+			} else {
+				return response()->json([
+					'status' => 404,
+					'message' => 'Data KompetensiProgres tidak ditemukan atau tidak diubah.'
+				], 404);
+			}
+		} catch (\Exception $e) {
+			Log::error('Gagal update status KompetensiProgres: ' . $e->getMessage());
+
+			return response()->json([
+				'status' => 500,
+				'message' => 'Terjadi kesalahan saat update status.',
+				'error' => $e->getMessage()
+			], 500);
+		}
+	}
+
 }
