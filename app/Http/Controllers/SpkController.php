@@ -548,7 +548,7 @@ class SpkController extends Controller
     {
         // Cari user berdasarkan NIK
         $user = DaftarUser::where('nik', $nik)->first();
-    
+
         if (!$user) {
             return response()->json([
                 'success' => false,
@@ -560,7 +560,7 @@ class SpkController extends Controller
                 'status_code' => 404
             ], 404);
         }
-    
+
         // Cari file berdasarkan user_id
         $file = TranskripModel::where('user_id', $user->user_id)->first();
         if (!$file) {
@@ -573,42 +573,36 @@ class SpkController extends Controller
                 'status_code' => 404
             ], 404);
         }
-    
+
         // Hapus file dari storage jika ada
         $fileDeletedFromStorage = false;
         if ($file->path_file && Storage::exists($file->path_file)) {
             Storage::delete($file->path_file);
             $fileDeletedFromStorage = true;
         }
-    
-        // Hapus Rekaman Database
-        $file->update([
-            'path_file' => null,
-            'valid' => null,
-            'authentic' => null,
-            'current' => null,
-            'sufficient' => null,
-            'ket' => null,
-            'nomor_str' => null,
-            'masa_berlaku_str' => null,
-        ]);
-    
-        // Response sukses dengan user_id & ijazah_id
+
+        // Simpan ID sebelum dihapus (untuk log/respons)
+        $spk_id = $file->spk_id;
+
+        // Hapus record dari database
+        $file->delete();
+
+        // Response sukses
         return response()->json([
             'success' => true,
-            'message' => 'File successfully deleted from the system.',
+            'message' => 'File record and associated file successfully deleted.',
             'details' => [
-                'spk_id' => $file->spk_id, // Menampilkan ID file ijazah
+                'spk_id' => $spk_id,
                 'user_id' => $user->user_id,
-                'file_path' => $file->path_file,
                 'storage_status' => $fileDeletedFromStorage 
                     ? 'File deleted from storage.' 
                     : 'File not found in storage.',
-                'database_status' => 'File record has been deleted from the database.',
+                'database_status' => 'Record has been permanently deleted.'
             ],
             'status_code' => 200
         ], 200);
     }
+
  
 	
 	/**
