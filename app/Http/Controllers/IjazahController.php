@@ -87,7 +87,7 @@ class IjazahController extends Controller
     {    
         // Validasi permintaan yang masuk    
         $validation = $this->validator->make($request->all(), [    
-            'path_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',    
+            'path_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png',    
             'valid' => 'nullable|boolean',    
             'authentic' => 'nullable|boolean',    
             'current' => 'nullable|boolean',    
