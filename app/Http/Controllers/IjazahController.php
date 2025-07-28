@@ -108,15 +108,33 @@ class IjazahController extends Controller
         ]);  
 
         if ($validation->fails()) {
-            Log::warning('Validation failed on upload:', $validation->errors()->toArray());    
+            $errors = $validation->errors();
+            $customMessages = [];
 
-            return response()->json([    
-                'success' => false,    
-                'message' => 'Validation failed. Please ensure all data entered is correct.',
-                'errors' => $validation->errors(),    
-                'status_code' => 400,    
-            ], 400);    
-        }  
+            if ($errors->has('path_file')) {
+                foreach ($errors->get('path_file') as $msg) {
+                    if (str_contains($msg, 'uploaded')) {
+                        $customMessages[] = 'Gagal mengunggah file. Ukuran melebihi batas maksimum atau ada kesalahan saat upload.';
+                    } elseif (str_contains($msg, 'mimes')) {
+                        $customMessages[] = 'Format file tidak didukung. Hanya diperbolehkan: pdf, jpg, jpeg, png.';
+                    } elseif (str_contains($msg, 'max')) {
+                        $customMessages[] = 'File terlalu besar. Maksimum ukuran 2MB.';
+                    } else {
+                        $customMessages[] = $msg;
+                    }
+                }
+            }
+
+            Log::warning('Validation failed on upload:', $errors->toArray());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal.',
+                'errors' => $customMessages ?: $errors->toArray(),
+                'status_code' => 400,
+            ], 400);
+        }
+
 
         try {    
             $user = JWTAuth::parseToken()->authenticate();    
