@@ -5,7 +5,7 @@ namespace App\Docs;
 /**
  * @OA\Post(
  *     path="/form5/jawaban-kegiatan",
- *     tags={"Form 5"},
+ *     tags={"FORM 5"},
  *     summary="Simpan Jawaban Kegiatan Form 5",
  *     description="API ini digunakan untuk mengisi jawaban Form 5 oleh asesor.",
  *     operationId="simpanJawabanKegiatan",

@@ -7,7 +7,7 @@ namespace App\Docs;
  *     path="/form5/asesi-approve",
  *     summary="Menyetujui Form 5 oleh Asesi",
  *     description="API ini digunakan untuk menyetujui isi dari form 5 yang dilakukan oleh asesi",
- *     tags={"Form 5"},
+ *     tags={"FORM 5"},
  *     @OA\Parameter(
  *         name="id",
  *         in="query",

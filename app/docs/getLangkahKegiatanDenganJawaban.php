@@ -8,7 +8,7 @@ namespace App\Docs;
  *     summary="Ambil Soal dan Jawaban Form 5",
  *     description="API ini digunakan untuk mengambil soal dan jawaban pada Form 5",
  *     operationId="getLangkahKegiatanDenganJawaban",
- *     tags={"Form 5"},
+ *     tags={"FORM 5"},
  *     @OA\Parameter(
  *         name="pk_id",
  *         in="query",

@@ -4,7 +4,7 @@ namespace App\Docs;
 /**
  * @OA\Post(
  *     path="/interview/update-status",
- *     tags={"Interview"},
+ *     tags={"FORM 5"},
  *     summary="Update Status Interview",
  *     description="API ini digunakan untuk menyetujui ajuan jadwal konsultasi pra asesmen sebelum mengerjakan form 5.",
  *     operationId="updateStatusInterview",
