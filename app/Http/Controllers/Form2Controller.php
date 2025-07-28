@@ -526,6 +526,7 @@ class Form2Controller extends Controller
                 's.no_id',
                 's.sub_komponen_id',
                 's.daftar_pertanyaan',
+                'j.jawab_form_2_id as jawab_form_2_id',
                 'j.k as jawaban_k',
                 'j.bk as jawaban_bk'
             )

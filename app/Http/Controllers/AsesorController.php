@@ -333,10 +333,8 @@ class AsesorController extends Controller
 	 
 	public function updateJawabanForm2ByNoId(Request $request)
 	{
-		// Autentikasi user
-		$user = auth()->user(); // atau JWTAuth::parseToken()->authenticate();
+		$user = auth()->user();
 
-		// Cek apakah user memiliki role dengan role_id = 2 (misalnya: Asesor)
 		$isAsesor = $user && $user->roles->contains('role_id', 2);
 
 		if (!$isAsesor) {
@@ -346,10 +344,12 @@ class AsesorController extends Controller
 			], 403);
 		}
 
-		// Validasi input array
+		// Validasi input
 		$this->validate($request, [
+			'form_2_id' => 'required|integer|exists:kompetensi_progres,form_id',
+			'pk_id' => 'nullable|integer',
 			'data' => 'required|array',
-			'data.*.no_id' => 'required|integer',
+			'data.*.jawab_form_2_id' => 'required|integer|exists:jawaban_form_2,jawab_form_2_id',
 			'data.*.k_asesor' => 'required|boolean',
 			'data.*.bk_asesor' => 'required|boolean',
 		]);
@@ -358,19 +358,19 @@ class AsesorController extends Controller
 		$notFound = [];
 
 		foreach ($request->data as $item) {
-			$no_id = $item['no_id'];
+			$jawabForm2Id = $item['jawab_form_2_id'];
 
-			// Cek apakah no_id ada
-			$exists = DB::table('jawaban_form_2')->where('no_id', $no_id)->exists();
+			$exists = DB::table('jawaban_form_2')
+				->where('jawab_form_2_id', $jawabForm2Id)
+				->exists();
 
 			if (!$exists) {
-				$notFound[] = $no_id;
+				$notFound[] = ['jawab_form_2_id' => $jawabForm2Id];
 				continue;
 			}
 
-			// Lakukan update
 			DB::table('jawaban_form_2')
-				->where('no_id', $no_id)
+				->where('jawab_form_2_id', $jawabForm2Id)
 				->update([
 					'k_asesor' => (int) $item['k_asesor'],
 					'bk_asesor' => (int) $item['bk_asesor'],
@@ -379,6 +379,35 @@ class AsesorController extends Controller
 			$updated++;
 		}
 
+		// ✅ Update status KompetensiProgres menjadi "Approved"
+		$id = $request->form_2_id;
+		$pk_id = $request->pk_id;
+
+		$progres = KompetensiProgres::where('form_id', $id)->first();
+
+		if ($progres) {
+			$progres->update([
+				'status' => 'Approved',
+				'updated_at' => Carbon::now(),
+			]);
+
+			Log::info('Status KompetensiProgres berhasil diupdate ke Approved', [
+				'id' => $id,
+				'pk_id' => $pk_id ?? null
+			]);
+
+			// Tambahkan ke KompetensiTrack
+			KompetensiTrack::create([
+				'progres_id'    => $progres->id,
+				'form_type'     => 'form_2',
+				'activity'      => 'Approved',
+				'activity_time' => Carbon::now(),
+				'description'   => 'Form 2 telah disetujui dan dinilai oleh asesor.',
+			]);
+		}
+
+		$this->kirimNotifikasiKeAsesiSetelahDinilai($progres);
+
 		return response()->json([
 			'status' => 200,
 			'message' => 'Update selesai.',
@@ -386,6 +415,59 @@ class AsesorController extends Controller
 			'not_found' => $notFound,
 		]);
 	}
+
+	private function kirimNotifikasiKeAsesiSetelahDinilai($formData)
+	{
+		if (!$formData || empty($formData->user_id)) {
+			Log::warning('Gagal kirim notifikasi: asesi_id kosong');
+			return;
+		}
+
+		$asesi = DaftarUser::where('user_id', $formData->user_id)->first();
+
+		if (!$asesi) {
+			Log::warning('User asesi tidak ditemukan', ['user_id' => $formData->user_id]);
+			return;
+		}
+
+		if (empty($asesi->device_token)) {
+			Log::warning("User asesi tidak memiliki device_token", ['user_id' => $asesi->user_id]);
+			return;
+		}
+
+		try {
+			$title = 'Form 2 Dinilai';
+			$message = "Form 2 Anda telah dinilai oleh asesor.";
+
+			$this->oneSignalService->sendNotification(
+				[$asesi->device_token],
+				$title,
+				$message
+			);
+
+			Log::info('Notifikasi berhasil dikirim ke asesi', [
+				'user_id' => $asesi->user_id,
+				'nama' => $asesi->nama ?? null,
+			]);
+
+			Notification::create([
+				'user_id' => $asesi->user_id,
+				'title' => $title,
+				'description' => $message,
+				'is_read' => 0,
+				'created_at' => Carbon::now(),
+				'updated_at' => Carbon::now(),
+			]);
+
+		} catch (\Exception $e) {
+			Log::error('Gagal kirim notifikasi ke asesi', [
+				'user_id' => $asesi->user_id,
+				'error' => $e->getMessage(),
+			]);
+		}
+	}
+
+
 
 
 public function updateIfEmptyByUserJawabForm2Id($user_jawab_form2_id)
