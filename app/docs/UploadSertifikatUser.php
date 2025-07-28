@@ -120,5 +120,4 @@ namespace App\Docs;
  * )
  */
 
-
- class UploadSertifikat {}
+ class UploadSertifikatUser {}
