@@ -6,7 +6,7 @@ namespace App\Docs;
  * @OA\Post(
  *     path="/upload-sertifikat",
  *     summary="Upload file sertifikat",
- *     tags={"Sertifikat"},
+ *     tags={"Upload Sertifikat"},
  *     security={{"bearerAuth":{}}},
  *     @OA\RequestBody(
  *         required=true,
