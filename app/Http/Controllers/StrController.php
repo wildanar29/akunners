@@ -119,7 +119,7 @@ class StrController extends Controller
 	{
 		// Validasi permintaan yang masuk    
 		$validation = $this->validator->make($request->all(), [    
-			'path_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:3048', // <- nullable
+			'path_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048', // <- nullable
 			'nomor_str' => 'required|string',
 			'masa_berlaku_str' => 'required|date',   
 			'valid' => 'nullable|boolean',    

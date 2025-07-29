@@ -30,7 +30,7 @@ class SertifikatController extends Controller
     {
         // Validate the incoming request
         $validation = $this->validator->make($request->all(), [
-            'path_file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5048',
+            'path_file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048',
             'nomor_sertifikat' => 'nullable|string',
             'masa_berlaku_sertifikat' => 'nullable|date',
             'valid' => 'nullable|boolean', // Optional

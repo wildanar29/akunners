@@ -113,7 +113,7 @@ class SipController extends Controller
    public function upload(Request $request)
 	{
 		$validation = $this->validator->make($request->all(), [    
-			'path_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:3048',
+			'path_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
 			'nomor_sip' => 'required|string',
 			'masa_berlaku_sip' =>'required|date',
 			'valid' => 'nullable|boolean',    
