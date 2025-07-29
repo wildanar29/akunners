@@ -114,7 +114,7 @@ class SpkController extends Controller
 	{
 		// Validasi permintaan yang masuk    
 		$validation = $this->validator->make($request->all(), [    
-			'path_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
+			'path_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:3048',
 			'nomor_spk' => 'required|string',
 			'masa_berlaku_spk' => 'required|date',    
 			'valid' => 'nullable|boolean',    
