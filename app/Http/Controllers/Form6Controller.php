@@ -6,6 +6,7 @@ use Laravel\Lumen\Routing\Controller as BaseController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Service\OneSignalService;
 use App\Models\DataAsesorModel;
@@ -14,9 +15,8 @@ use App\Models\UserRole;
 use App\Models\KompetensiTrack;
 use App\Models\KompetensiProgres;
 use App\Models\Notification;
-use Illuminate\Support\Facades\DB;
+use App\Models\Form6;
 use Carbon\Carbon;
-
 
 class Form6Controller extends BaseController
 {
@@ -64,32 +64,77 @@ class Form6Controller extends BaseController
 		}
 	}
 
-	function simpanProgresDanTrack($formId, $formType, $status, $userId, $parentFormId = null)
+	function createProgresDanTrack($formId, $formType, $status, $userId, $parentFormId = null)
 	{
-		$progres = KompetensiProgres::firstOrNew([
-			'form_id' => $formId
+		$progres = KompetensiProgres::create([
+			'form_id' => $formId,
+			'parent_form_id' => $parentFormId,
+			'user_id' => $userId,
+			'status' => $status,
 		]);
 
-		// Jika data baru, set parent_form_id dan user_id
-		if (!$progres->exists) {
-			$progres->parent_form_id = $parentFormId;
-			$progres->user_id = $userId;
-		}
-
-		$progres->status = $status;
-		$progres->save();
-
-		// Buat track aktivitas
 		KompetensiTrack::create([
 			'progres_id' => $progres->id,
 			'form_type' => $formType,
 			'form_id' => $formId,
 			'activity' => $status,
 			'updated_by' => $userId,
-			'updated_at' => Carbon::now()
+			'updated_at' => Carbon::now(),
 		]);
 
 		return $progres;
+	}
+
+	function updateProgresDanTrack($formId, $formType, $status, $userId)
+	{
+		$progres = KompetensiProgres::where('form_id', $formId)->firstOrFail();
+		$progres->status = $status;
+		$progres->save();
+
+		KompetensiTrack::create([
+			'progres_id' => $progres->id,
+			'form_type' => $formType,
+			'form_id' => $formId,
+			'activity' => $status,
+			'updated_by' => $userId,
+			'updated_at' => Carbon::now(),
+		]);
+
+		return $progres;
+	}
+
+	function inputForm6($pkId, $asesiId, $asesiName, $asesorId, $asesorName, $noReg)
+	{
+		return Form6::create([
+			'pk_id'         => $pkId,
+			'asesi_id'      => $asesiId,
+			'asesi_name'    => $asesiName,
+			'asesi_date'    => Carbon::now(),
+			'asesor_id'     => $asesorId,
+			'asesor_name'   => $asesorName,
+			'asesor_date'   => Carbon::now(),
+			'no_reg'        => $noReg,
+			'status'        => 'Submitted',
+		]);
+	}
+
+	function updateForm6($form6Id, $pkId = null, $asesiId = null, $asesiName = null, $asesorId = null, $asesorName = null, $noReg = null)
+	{
+		$form6 = Form6::findOrFail($form6Id);
+
+		$form6->update([
+			'pk_id'         => $pkId         ?? $form6->pk_id,
+			'asesi_id'      => $asesiId      ?? $form6->asesi_id,
+			'asesi_name'    => $asesiName    ?? $form6->asesi_name,
+			'asesi_date'    => Carbon::now(),
+			'asesor_id'     => $asesorId     ?? $form6->asesor_id,
+			'asesor_name'   => $asesorName   ?? $form6->asesor_name,
+			'asesor_date'   => Carbon::now(),
+			'no_reg'        => $noReg        ?? $form6->no_reg,
+			'status'        => 'Submitted',
+		]);
+
+		return $form6;
 	}
 
 	function isUserAsesor(?int $userId): bool

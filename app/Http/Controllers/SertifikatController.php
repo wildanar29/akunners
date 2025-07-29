@@ -38,7 +38,7 @@ class SertifikatController extends Controller
             'current' => 'nullable|boolean', // Optional
             'sufficient' => 'nullable|boolean', // Optional            
             'ket' => 'nullable|string|max:255',       // Optional
-            'type_sertifikat' => 'nullable|in:NIRA,SPK', // <-- tambah validasi ENUM dan nullable
+            // 'type_sertifikat' => 'nullable|in:NIRA,SPK', // <-- tambah validasi ENUM dan nullable
         ]);
 
         if ($validation->fails()) {
@@ -83,7 +83,7 @@ class SertifikatController extends Controller
                 $ijazahFile->ket = $request->input('ket', null);
                 $ijazahFile->nomor_sertifikat = $request->input('nomor_sertifikat', null);
                 $ijazahFile->masa_berlaku_sertifikat = $request->input('masa_berlaku_sertifikat', null);
-                $ijazahFile->type_sertifikat = $request->input('type_sertifikat', null); // <-- Tambahkan di sini
+                // $ijazahFile->type_sertifikat = $request->input('type_sertifikat', null); // <-- Tambahkan di sini
     
                 // Save record
                 $ijazahFile->save();
@@ -102,7 +102,7 @@ class SertifikatController extends Controller
                         'ket' => $ijazahFile->ket,
                         'nomor_sertifikat' => $ijazahFile->nomor_sertifikat,
                         'masa_berlaku_sertifikat' => $ijazahFile->masa_berlaku_sertifikat,
-                        'type_sertifikat' => $ijazahFile->type_sertifikat, // <-- Tampilkan juga
+                        // 'type_sertifikat' => $ijazahFile->type_sertifikat, // <-- Tampilkan juga
                     ],
                     'status_code' => 200,
                 ], 200);
@@ -609,7 +609,7 @@ class SertifikatController extends Controller
             'success' => true,
             'message' => 'Sertifikat data found',
             'data' => [
-                'type_sertifikat' => $sertifikat->type_sertifikat,
+                // 'type_sertifikat' => $sertifikat->type_sertifikat,
                 'nomor_sertifikat' => $sertifikat->nomor_sertifikat,
                 'masa_berlaku_sertifikat' => $sertifikat->masa_berlaku_sertifikat
             ],
