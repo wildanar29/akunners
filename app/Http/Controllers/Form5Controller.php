@@ -845,65 +845,67 @@ class Form5Controller extends BaseController
 	public function approveKompetensiProgres(Request $request)
 	{
 		try {
-			$id = $request->input('id'); // ID dari tabel KompetensiProgres langsung
-			$pk_id = $request->input('pk_id'); // opsional, jika butuh filter tambahan
+			$formId = $request->input('form_id'); // Ganti dari 'id' menjadi 'form_id'
+			$pk_id = $request->input('pk_id');    // opsional, jika butuh filter tambahan
 
-			if (!$id) {
+			if (!$formId) {
 				return response()->json([
 					'status' => 400,
-					'message' => 'Parameter id wajib diisi.',
+					'message' => 'Parameter form_id wajib diisi.',
 				], 400);
 			}
 
-			// Query update berdasarkan ID utama dari KompetensiProgres
-			$query = KompetensiProgres::where('id', $id);
+			// Cari progres berdasarkan form_id (dan pk_id jika tersedia)
+			$query = KompetensiProgres::where('form_id', $formId);
 
 			if ($pk_id) {
-				$query->where('pk_id', $pk_id); // Filter tambahan jika diperlukan
+				$query->where('pk_id', $pk_id);
 			}
 
-			$updated = $query->update([
-				'status' => 'Approved',
-				'updated_at' => Carbon::now(),
-			]);
+			$progres = $query->first();
 
-			if ($updated) {
-				Log::info('Status KompetensiProgres berhasil diupdate ke Approved', [
-					'id' => $id,
-					'pk_id' => $pk_id ?? null
-				]);
-
-				KompetensiTrack::create([
-					'progres_id' => $id,
-					'form_type' => 'form_5',
-					'activity' => 'Approved',
-					'activity_time' => Carbon::now(),
-					'description' => 'Form 5 telah disetujui oleh asesi.',
-				]);
-				
-				$progresForm5 = KompetensiProgres::find($id)->form_id ?? null;
-				$form5 = Form5::find($progresForm5);
-				$asesor_id = $form5->asesor_id ?? null;
-				if ($asesor_id) {
-					Log::info("Mengirim notifikasi ke asesor dengan user_id={$asesor_id} untuk form 5 ID={$id}");
-					$asesor = DaftarUser::where('user_id', $asesor_id)->first();
-					if ($asesor) {
-						$this->kirimNotifikasiKeAsesorForm5($asesor);
-					} else {
-						Log::warning("Asesor dengan user_id={$asesor_id} tidak ditemukan.");
-					}
-				}
-
-				return response()->json([
-					'status' => 200,
-					'message' => 'Status KompetensiProgres berhasil diupdate ke Approved.'
-				]);
-			} else {
+			if (!$progres) {
 				return response()->json([
 					'status' => 404,
-					'message' => 'Data KompetensiProgres tidak ditemukan atau tidak diubah.'
+					'message' => 'Data KompetensiProgres tidak ditemukan.',
 				], 404);
 			}
+
+			$progres->status = 'Approved';
+			$progres->updated_at = Carbon::now();
+			$progres->save();
+
+			Log::info('Status KompetensiProgres berhasil diupdate ke Approved', [
+				'form_id' => $formId,
+				'pk_id' => $pk_id ?? null
+			]);
+
+			KompetensiTrack::create([
+				'progres_id' => $progres->id,
+				'form_type' => 'form_5',
+				'activity' => 'Approved',
+				'activity_time' => Carbon::now(),
+				'description' => 'Form 5 telah disetujui oleh asesi.',
+			]);
+
+			$form5 = Form5::find($formId);
+			$asesor_id = $form5->asesor_id ?? null;
+
+			if ($asesor_id) {
+				Log::info("Mengirim notifikasi ke asesor dengan user_id={$asesor_id} untuk form 5 ID={$formId}");
+				$asesor = DaftarUser::where('user_id', $asesor_id)->first();
+				if ($asesor) {
+					$this->kirimNotifikasiKeAsesorForm5($asesor);
+				} else {
+					Log::warning("Asesor dengan usZer_id={$asesor_id} tidak ditemukan.");
+				}
+			}
+
+			return response()->json([
+				'status' => 200,
+				'message' => 'Status KompetensiProgres berhasil diupdate ke Approved.'
+			]);
+
 		} catch (\Exception $e) {
 			Log::error('Gagal update status KompetensiProgres: ' . $e->getMessage());
 
@@ -914,5 +916,4 @@ class Form5Controller extends BaseController
 			], 500);
 		}
 	}
-
 }

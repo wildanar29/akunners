@@ -8,9 +8,11 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Form6Controller;
 use App\Service\OneSignalService;
 use App\Models\DataAsesorModel;
 use App\Models\DaftarUser;
+use App\Models\BidangModel;
 use App\Models\UserRole;
 use App\Models\KompetensiTrack;
 use App\Models\KompetensiProgres;
@@ -137,6 +139,18 @@ class Form6Controller extends BaseController
 		return $form6;
 	}
 
+	function getParentFormIdByFormId($formId)
+	{
+		$progres = KompetensiProgres::where('form_id', $formId)->first();
+
+		return $progres?->parent_form_id; // gunakan null-safe operator jika data tidak ditemukan
+	}
+
+	function getParentDataByFormId($form1Id)
+	{
+		return BidangModel::find($form1Id);
+	}
+
 	function isUserAsesor(?int $userId): bool
 	{
 		if (!$userId) {
@@ -145,6 +159,5 @@ class Form6Controller extends BaseController
 
 		return DataAsesorModel::where('user_id', $userId)->exists();
 	}
-
 	
 }
