@@ -652,6 +652,7 @@ class UsersController extends Controller
 				return [
 					'url' => url('storage/' . $item->path_file),
 					'type' => $item->type_sertifikat,
+					'sertifikat_id' => $item->sertifikat_id,
 					'nomor' => $item->nomor_sertifikat,
 					'masa_berlaku' => $item->masa_berlaku_sertifikat ?? null
 					
