@@ -61,4 +61,4 @@ namespace App\Docs;
  * )
  */
 
- class getSoalDanJawabanForm6 {}
+ class GetSoalDanJawabanForm6 {}
