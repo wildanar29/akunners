@@ -29,4 +29,9 @@ class LangkahForm6 extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    public function kegiatan()
+    {
+        return $this->hasMany(KegiatanForm6::class, 'langkah_id');
+    }
 }

@@ -210,6 +210,11 @@ $router->post('/input-form3/{user_id}', 'Form3Controller@Form3Input');
 
 $router->get('/form1', 'ProgressController@getForm1');
 
+// FORM 6
+$router->get('/form6/soal/{pkId}', 'Form6Controller@SoalForm6');
+$router->post('/form6/jawaban', 'Form6Controller@simpanJawabanForm6');
+$router->get('/form6/soal-jawab/{pkId}', 'Form6Controller@getSoalDanJawabanForm6');
+$router->post('/form6/approve', 'Form6Controller@ApproveForm6ByAsesi');
 
 //Notifikasi 
 $router->get('/send-notification-to-bidang', action: 'NotificationController@notifikasiPengajuankeBidang');
@@ -227,3 +232,16 @@ $router->get('/api-docs.json', function () {
     return response()->file(storage_path('api-docs/api-docs.json'));
 });
 
+
+$router->get('/test-form-service', function () {
+    $service = app(\App\Service\FormService::class);
+    
+    $asesiId = 68; // ganti sesuai dengan data di database kamu
+    $pkId = 1; // ganti sesuai dengan data di database kamu
+    $form_type = 'form_6'; // ganti sesuai dengan jenis form yang ingin dicek
+    $exists = $service->isFormExist($asesiId, $pkId, $form_type);
+
+    return response()->json([
+        'isForm6Exists' => $exists,
+    ]);
+});

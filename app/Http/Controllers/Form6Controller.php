@@ -10,7 +10,12 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Form6Controller;
 use App\Service\OneSignalService;
+use App\Service\FormService;
 use App\Models\DataAsesorModel;
+use App\Models\LangkahForm6;
+use App\Models\KegiatanForm6;
+use App\Models\PoinForm6;
+use App\Models\JawabanForm6;
 use App\Models\DaftarUser;
 use App\Models\BidangModel;
 use App\Models\UserRole;
@@ -23,141 +28,237 @@ use Carbon\Carbon;
 class Form6Controller extends BaseController
 {
 
-	protected $oneSignalService;
+	protected $formService;
 
-    public function __construct(OneSignalService $oneSignalService)
+    public function __construct(FormService $formService)
     {
-        $this->oneSignalService = $oneSignalService;
+        $this->formService = $formService;
     }
 
-	private function kirimNotifikasiKeUser(DaftarUser $user, string $title, string $message)
-	{
-		if (empty($user->device_token)) {
-			Log::warning("User user_id={$user->user_id} tidak memiliki device_token.");
-			return;
-		}
+    public function SoalForm6($pkId)
+    {
+        try {
+            // Ambil data langkah beserta relasi nested-nya
+            $langkah = LangkahForm6::with([
+                'kegiatan.poin.subPoin'
+            ])
+            ->where('pk_id', $pkId)
+            ->orderBy('nomor_langkah')
+            ->get();
 
-		try {
-			// Kirim notifikasi ke OneSignal
-			$this->oneSignalService->sendNotification(
-				[$user->device_token],
-				$title,
-				$message
-			);
+            // Jika data kosong
+            if ($langkah->isEmpty()) {
+                return response()->json([
+                    'message' => 'Data soal tidak ditemukan untuk pk_id: ' . $pkId,
+                    'data' => []
+                ], 404);
+            }
 
-			// Simpan notifikasi ke database
-			Notification::create([
-				'user_id'     => $user->user_id,
-				'title'       => $title,
-				'description' => $message,
-				'is_read'     => 0,
-				'created_at'  => now(),
-				'updated_at'  => now(),
-			]);
+            // Sembunyikan kolom pencapaian (jika diperlukan)
+            $langkah->each(function ($item) {
+                $item->kegiatan->each(function ($kegiatan) {
+                    $kegiatan->makeHidden('pencapaian');
+                });
+            });
 
-			Log::info("Notifikasi dikirim ke user user_id={$user->user_id}, nama={$user->nama}");
+            return response()->json([
+                'message' => 'Data soal berhasil diambil.',
+                'data' => $langkah
+            ], 200);
 
-		} catch (\Exception $e) {
-			Log::error("Gagal mengirim notifikasi ke user.", [
-				'user_id'       => $user->user_id,
-				'error_message' => $e->getMessage(),
-				'error_trace'   => $e->getTraceAsString(),
-			]);
-		}
-	}
+        } catch (\Exception $e) {
+            // Catat error ke file log
+            Log::error('Gagal mengambil soal Form6', [
+                'pk_id' => $pkId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
 
-	function createProgresDanTrack($formId, $formType, $status, $userId, $parentFormId = null)
-	{
-		$progres = KompetensiProgres::create([
-			'form_id' => $formId,
-			'parent_form_id' => $parentFormId,
-			'user_id' => $userId,
-			'status' => $status,
-		]);
+            // Berikan respon error ke client
+            return response()->json([
+                'message' => 'Terjadi kesalahan saat mengambil data soal.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 
-		KompetensiTrack::create([
-			'progres_id' => $progres->id,
-			'form_type' => $formType,
-			'form_id' => $formId,
-			'activity' => $status,
-			'updated_by' => $userId,
-			'updated_at' => Carbon::now(),
-		]);
+    public function simpanJawabanForm6(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'pk_id' => 'required|integer',
+                'jawaban' => 'required|array|min:1',
+                'jawaban.*.kegiatan_id' => 'required|integer|exists:kegiatan_form6,id',
+                'jawaban.*.pencapaian' => 'required|boolean',
+            ]);
 
-		return $progres;
-	}
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' => 'Validasi gagal.',
+                    'errors' => $validator->errors(),
+                ], 422);
+            }
 
-	function updateProgresDanTrack($formId, $formType, $status, $userId)
-	{
-		$progres = KompetensiProgres::where('form_id', $formId)->firstOrFail();
-		$progres->status = $status;
-		$progres->save();
+            $validated = $validator->validated();
+            $userId = Auth::id();
 
-		KompetensiTrack::create([
-			'progres_id' => $progres->id,
-			'form_type' => $formType,
-			'form_id' => $formId,
-			'activity' => $status,
-			'updated_by' => $userId,
-			'updated_at' => Carbon::now(),
-		]);
+            DB::beginTransaction(); // Mulai transaksi
+            foreach ($validated['jawaban'] as $item) {
+                $sudahAda = JawabanForm6::where('pk_id', $validated['pk_id'])
+                    ->where('kegiatan_id', $item['kegiatan_id'])
+                    ->where('user_id', $userId)
+                    ->exists();
 
-		return $progres;
-	}
+                if ($sudahAda) {
+                    // Rollback transaksi jika ditemukan duplikasi
+                    DB::rollBack();
 
-	function inputForm6($pkId, $asesiId, $asesiName, $asesorId, $asesorName, $noReg)
-	{
-		return Form6::create([
-			'pk_id'         => $pkId,
-			'asesi_id'      => $asesiId,
-			'asesi_name'    => $asesiName,
-			'asesi_date'    => Carbon::now(),
-			'asesor_id'     => $asesorId,
-			'asesor_name'   => $asesorName,
-			'asesor_date'   => Carbon::now(),
-			'no_reg'        => $noReg,
-			'status'        => 'Submitted',
-		]);
-	}
+                    return response()->json([
+                        'message' => 'Jawaban untuk kegiatan ID ' . $item['kegiatan_id'] . ' sudah pernah disimpan.',
+                    ], 409); // 409 Conflict
+                }
 
-	function updateForm6($form6Id, $pkId = null, $asesiId = null, $asesiName = null, $asesorId = null, $asesorName = null, $noReg = null)
-	{
-		$form6 = Form6::findOrFail($form6Id);
+                JawabanForm6::create([
+                    'pk_id' => $validated['pk_id'],
+                    'kegiatan_id' => $item['kegiatan_id'],
+                    'user_id' => $userId,
+                    'pencapaian' => $item['pencapaian'],
+                ]);
+            }
 
-		$form6->update([
-			'pk_id'         => $pkId         ?? $form6->pk_id,
-			'asesi_id'      => $asesiId      ?? $form6->asesi_id,
-			'asesi_name'    => $asesiName    ?? $form6->asesi_name,
-			'asesi_date'    => Carbon::now(),
-			'asesor_id'     => $asesorId     ?? $form6->asesor_id,
-			'asesor_name'   => $asesorName   ?? $form6->asesor_name,
-			'asesor_date'   => Carbon::now(),
-			'no_reg'        => $noReg        ?? $form6->no_reg,
-			'status'        => 'Submitted',
-		]);
+            $form1 = $this->formService->getForm1ByAsesiIdAndPkId($userId, $validated['pk_id']);
+            $userAsesor = $this->formService->findUser($form1->asesor_id);
+            $AsesorNotif = $this->formService->KirimNotifikasiKeUser($userAsesor, 'Jawaban Form 6 Tersimpan', 'Jawaban Form 6 telah disimpan oleh asesor.');
 
-		return $form6;
-	}
+            $isFormExist = $this->formService->isFormExist($userId, $validated['pk_id'], 'form_6');
+            if ($isFormExist) {
+                $form6 = $this->formService->getFormIdsByParentFormIdAndType($form1->form_1_id, 'form_6');
+                $this->formService->updateProgresDanTrack($form6, 'form_6', 'Submitted', $form1->asesi_id, 'jawaban Form 6 telah diisi Asesor');
+            }
 
-	function getParentFormIdByFormId($formId)
-	{
-		$progres = KompetensiProgres::where('form_id', $formId)->first();
+            DB::commit(); // Simpan semua perubahan jika tidak ada error
+            return response()->json([
+                'message' => 'Jawaban berhasil disimpan.',
+            ], 200);
 
-		return $progres?->parent_form_id; // gunakan null-safe operator jika data tidak ditemukan
-	}
+        } catch (\Exception $e) {
+            DB::rollBack(); // Batalkan semua perubahan jika terjadi error
 
-	function getParentDataByFormId($form1Id)
-	{
-		return BidangModel::find($form1Id);
-	}
+            Log::error('Gagal menyimpan Jawaban Form 6', [
+                'error_message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all(),
+                'user_id' => Auth::id(),
+            ]);
 
-	function isUserAsesor(?int $userId): bool
-	{
-		if (!$userId) {
-			return false;
-		}
+            return response()->json([
+                'message' => 'Terjadi kesalahan saat menyimpan jawaban.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 
-		return DataAsesorModel::where('user_id', $userId)->exists();
-	}
-	
+    public function getSoalDanJawabanForm6(Request $request, $pkId)
+    {
+        try {
+            // Validasi manual user_id (jika dikirim)
+            $validator = Validator::make($request->all(), [
+                'user_id' => 'nullable|integer|exists:users,user_id',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' => 'Validasi gagal.',
+                    'errors' => $validator->errors(),
+                ], 422);
+            }
+
+            // Ambil user_id dari input atau fallback ke Auth
+            $userId = $request->input('user_id', Auth::id());
+
+            $langkah = LangkahForm6::with([
+                'kegiatan.poin.subPoin',
+                'kegiatan.jawabanForm6' => function ($query) use ($pkId, $userId) {
+                    $query->where('pk_id', $pkId)
+                        ->where('user_id', $userId);
+                }
+            ])
+            ->where('pk_id', $pkId)
+            ->orderBy('nomor_langkah')
+            ->get();
+
+            // Jika data kosong
+            if ($langkah->isEmpty()) {
+                return response()->json([
+                    'message' => 'Data soal tidak ditemukan untuk pk_id: ' . $pkId,
+                    'data' => []
+                ], 404);
+            }
+
+            // Tambahkan 'pencapaian' ke dalam kegiatan
+            $langkah->each(function ($item) {
+                $item->kegiatan->each(function ($kegiatan) {
+                    $jawaban = $kegiatan->jawabanForm6->first();
+                    $kegiatan->pencapaian = $jawaban ? $jawaban->pencapaian : null;
+                    $kegiatan->makeHidden('jawabanForm6');
+                });
+            });
+
+            return response()->json([
+                'message' => 'Data soal dan jawaban berhasil diambil.',
+                'data' => $langkah
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Terjadi kesalahan saat mengambil data soal.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function ApproveForm6ByAsesi(Request $request)
+    {
+        // Validasi input
+        $validator = Validator::make($request->all(), [
+            'form_6_id' => 'required|integer|exists:form_6,form_6_id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $form1Id = $this->formService->getParentFormIdByFormId($request->form_6_id);
+            $form1 = $this->formService->getParentDataByFormId($form1Id);
+            $form6Status = $this->formService->getStatusByParentFormIdAndType($form1Id, 'form_6')->first();
+
+            if ($form6Status === 'Submitted') {
+                $updatedForm6 = $this->formService->updateForm6($request->form_6_id, null, null, null, null, null, null, Carbon::now(), null, 'Approved');
+                $updateProgres = $this->formService->updateProgresDanTrack($request->form_6_id, 'form_6', 'Approved', Auth::id(), 'Form 6 telah di-approve oleh Asesi');
+                $this->formService->KirimNotifikasiKeUser($form1->asesor_id, 'Form 6 Approved', 'Form 6 telah di-approve oleh Asesi.');
+            }
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Form6 berhasil di-approve oleh Asesi',
+                'data' => $form6Status
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat menyimpan data: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
 }

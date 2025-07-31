@@ -28,4 +28,10 @@ class PoinForm6 extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    public function subPoin()
+    {
+        return $this->hasMany(PoinForm6::class, 'parent_id');
+    }
+
 }

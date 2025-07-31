@@ -5,26 +5,27 @@ namespace App\Docs;
 /**
  * @OA\Get(
  *     path="/form5/asesi-approve",
- *     summary="Menyetujui Form 5 oleh Asesi",
- *     description="API ini digunakan untuk menyetujui isi dari form 5 yang dilakukan oleh asesi",
+ *     summary="Approve Form 5 oleh Asesi",
+ *     description="API ini digunakan untuk menyetujui isi dari form 5 yang dilakukan oleh asesi.",
+ *     operationId="approveKompetensiProgres",
  *     tags={"FORM 5"},
  *     @OA\Parameter(
- *         name="id",
+ *         name="form_id",
  *         in="query",
- *         description="ID dari data KompetensiProgres",
  *         required=true,
- *         @OA\Schema(type="integer", example=123)
+ *         description="ID Form 5 yang akan disetujui",
+ *         @OA\Schema(type="integer")
  *     ),
  *     @OA\Parameter(
  *         name="pk_id",
  *         in="query",
- *         description="ID PK (opsional) untuk filter tambahan",
  *         required=false,
- *         @OA\Schema(type="integer", example=456)
+ *         description="ID PK jika diperlukan untuk pencarian progres",
+ *         @OA\Schema(type="integer")
  *     ),
  *     @OA\Response(
  *         response=200,
- *         description="Status berhasil diupdate",
+ *         description="Status KompetensiProgres berhasil diupdate ke Approved",
  *         @OA\JsonContent(
  *             @OA\Property(property="status", type="integer", example=200),
  *             @OA\Property(property="message", type="string", example="Status KompetensiProgres berhasil diupdate ke Approved.")
@@ -32,23 +33,23 @@ namespace App\Docs;
  *     ),
  *     @OA\Response(
  *         response=400,
- *         description="Parameter id wajib diisi",
+ *         description="Parameter form_id wajib diisi",
  *         @OA\JsonContent(
  *             @OA\Property(property="status", type="integer", example=400),
- *             @OA\Property(property="message", type="string", example="Parameter id wajib diisi.")
+ *             @OA\Property(property="message", type="string", example="Parameter form_id wajib diisi.")
  *         )
  *     ),
  *     @OA\Response(
  *         response=404,
- *         description="Data tidak ditemukan",
+ *         description="Data KompetensiProgres tidak ditemukan",
  *         @OA\JsonContent(
  *             @OA\Property(property="status", type="integer", example=404),
- *             @OA\Property(property="message", type="string", example="Data KompetensiProgres tidak ditemukan atau tidak diubah.")
+ *             @OA\Property(property="message", type="string", example="Data KompetensiProgres tidak ditemukan.")
  *         )
  *     ),
  *     @OA\Response(
  *         response=500,
- *         description="Kesalahan server",
+ *         description="Terjadi kesalahan saat update status",
  *         @OA\JsonContent(
  *             @OA\Property(property="status", type="integer", example=500),
  *             @OA\Property(property="message", type="string", example="Terjadi kesalahan saat update status."),
@@ -57,6 +58,5 @@ namespace App\Docs;
  *     )
  * )
  */
-
 
  class approveKompetensiProgres {}

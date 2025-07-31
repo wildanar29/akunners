@@ -30,4 +30,20 @@ class KegiatanForm6 extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    public function langkah()
+    {
+        return $this->belongsTo(LangkahForm6::class, 'langkah_id');
+    }
+    // App\Models\KegiatanForm6.php
+
+    public function poin()
+    {
+        return $this->hasMany(PoinForm6::class, 'kegiatan_id')->whereNull('parent_id');
+    }
+
+    public function jawabanForm6()
+    {
+        return $this->hasMany(JawabanForm6::class, 'kegiatan_id');
+    }
 }

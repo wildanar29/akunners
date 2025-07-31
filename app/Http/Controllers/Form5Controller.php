@@ -6,6 +6,7 @@ use Laravel\Lumen\Routing\Controller as BaseController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Service\OneSignalService;
+use App\Service\FormService;
 use App\Models\InterviewModel;
 use App\Models\DataAsesorModel;
 use App\Models\DaftarUser;
@@ -27,9 +28,11 @@ class Form5Controller extends BaseController
 {
 
 	protected $oneSignalService;
+	protected $formService;
 
-    public function __construct(OneSignalService $oneSignalService)
+    public function __construct(FormService $formService, OneSignalService $oneSignalService)
     {
+        $this->formService = $formService;
         $this->oneSignalService = $oneSignalService;
     }
 
@@ -845,26 +848,25 @@ class Form5Controller extends BaseController
 	public function approveKompetensiProgres(Request $request)
 	{
 		try {
-			$formId = $request->input('form_id'); // Ganti dari 'id' menjadi 'form_id'
-			$pk_id = $request->input('pk_id');    // opsional, jika butuh filter tambahan
+			$formId = $request->input('form_id');
+			$pk_id = $request->input('pk_id');
 
 			if (!$formId) {
+				Log::warning('approveKompetensiProgres: form_id tidak ditemukan dalam request.');
 				return response()->json([
 					'status' => 400,
 					'message' => 'Parameter form_id wajib diisi.',
 				], 400);
 			}
 
-			// Cari progres berdasarkan form_id (dan pk_id jika tersedia)
 			$query = KompetensiProgres::where('form_id', $formId);
-
 			if ($pk_id) {
 				$query->where('pk_id', $pk_id);
 			}
 
 			$progres = $query->first();
-
 			if (!$progres) {
+				Log::warning("approveKompetensiProgres: Data progres tidak ditemukan untuk form_id={$formId}, pk_id={$pk_id}");
 				return response()->json([
 					'status' => 404,
 					'message' => 'Data KompetensiProgres tidak ditemukan.',
@@ -875,30 +877,83 @@ class Form5Controller extends BaseController
 			$progres->updated_at = Carbon::now();
 			$progres->save();
 
-			Log::info('Status KompetensiProgres berhasil diupdate ke Approved', [
+			Log::info("Status KompetensiProgres updated ke Approved", [
 				'form_id' => $formId,
-				'pk_id' => $pk_id ?? null
+				'pk_id' => $pk_id
 			]);
 
-			KompetensiTrack::create([
-				'progres_id' => $progres->id,
-				'form_type' => 'form_5',
-				'activity' => 'Approved',
-				'activity_time' => Carbon::now(),
-				'description' => 'Form 5 telah disetujui oleh asesi.',
-			]);
+			// TRACKING
+			try {
+				KompetensiTrack::create([
+					'progres_id' => $progres->id,
+					'form_type' => 'form_5',
+					'activity' => 'Approved',
+					'activity_time' => Carbon::now(),
+					'description' => 'Form 5 telah disetujui oleh asesi.',
+				]);
+			} catch (\Exception $e) {
+				Log::error("Gagal membuat KompetensiTrack: " . $e->getMessage());
+			}
 
-			$form5 = Form5::find($formId);
-			$asesor_id = $form5->asesor_id ?? null;
-
-			if ($asesor_id) {
-				Log::info("Mengirim notifikasi ke asesor dengan user_id={$asesor_id} untuk form 5 ID={$formId}");
-				$asesor = DaftarUser::where('user_id', $asesor_id)->first();
-				if ($asesor) {
-					$this->kirimNotifikasiKeAsesorForm5($asesor);
-				} else {
-					Log::warning("Asesor dengan usZer_id={$asesor_id} tidak ditemukan.");
+			// NOTIFIKASI
+			try {
+				$form5 = Form5::find($formId);
+				$asesor_id = $form5->asesor_id ?? null;
+				if ($asesor_id) {
+					Log::info("Kirim notifikasi ke asesor user_id={$asesor_id} untuk form_5 id={$formId}");
+					$asesor = DaftarUser::where('user_id', $asesor_id)->first();
+					if ($asesor) {
+						$this->kirimNotifikasiKeAsesorForm5($asesor);
+					} else {
+						Log::warning("Asesor dengan user_id={$asesor_id} tidak ditemukan di tabel DaftarUser.");
+					}
 				}
+			} catch (\Exception $e) {
+				Log::error("Gagal mengirim notifikasi ke asesor: " . $e->getMessage());
+			}
+
+			// HANDLE FORM6
+			try {
+				$form1Id = $this->formService->getParentFormIdByFormId($formId);
+				$form1Data = $this->formService->getParentDataByFormId($form1Id);
+
+				if (!$form1Data) {
+					Log::warning("Data Form1 tidak ditemukan dengan form_1_id={$form1Id}");
+				} else {
+					Log::info('Cek FormService Data', [
+						'form1Id' => $form1Id,
+						'asesi_id' => $form1Data->asesi_id ?? null,
+						'pk_id' => $form1Data->pk_id ?? null
+					]);
+
+					$isForm6Exist = $this->formService->isFormExist(
+						$form1Data->asesi_id,
+						$form1Data->pk_id,
+						'form_6'
+					);
+
+					Log::info('Hasil Cek isForm6Exist', [
+						'isForm6Exist' => $isForm6Exist
+					]);
+
+					if (!$isForm6Exist) {
+						Log::info("Form 6 belum ada, membuat form 6...");
+						$form6 = $this->formService->inputForm6(
+							$form1Data->pk_id,
+							$form1Data->asesi_id,
+							$form1Data->asesi_name,
+							$form1Data->asesor_id,
+							$form1Data->asesor_name,
+							$form1Data->no_reg
+						);
+
+						$this->formService->createProgresDanTrack($form6->form_6_id, 'form_6', 'InAssessment', $form1Data->asesi_id, $form1Data->form_1_id, 'Form 6 sudah dapat diisi.');
+					} else {
+						Log::info("Form 6 sudah ada, tidak membuat ulang.");
+					}
+				}
+			} catch (\Exception $e) {
+				Log::error("Gagal cek atau input form_6: " . $e->getMessage());
 			}
 
 			return response()->json([
@@ -907,7 +962,9 @@ class Form5Controller extends BaseController
 			]);
 
 		} catch (\Exception $e) {
-			Log::error('Gagal update status KompetensiProgres: ' . $e->getMessage());
+			Log::error('Gagal update status KompetensiProgres (main try/catch): ' . $e->getMessage(), [
+				'trace' => $e->getTraceAsString()
+			]);
 
 			return response()->json([
 				'status' => 500,
@@ -916,4 +973,5 @@ class Form5Controller extends BaseController
 			], 500);
 		}
 	}
+
 }
