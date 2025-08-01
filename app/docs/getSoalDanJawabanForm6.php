@@ -8,7 +8,7 @@ namespace App\Docs;
  *     summary="Ambil Soal dan Jawaban Form 6",
  *     description="Mengambil data soal beserta jawaban dari Form 6 berdasarkan pk_id dan user_id (opsional).",
  *     operationId="getSoalDanJawabanForm6",
- *     tags={"Form6"},
+ *     tags={"FORM 6"},
  *     @OA\Parameter(
  *         name="pkId",
  *         in="path",
