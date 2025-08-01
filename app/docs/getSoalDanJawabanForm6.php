@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Docs;
+
 /**
  * @OA\Get(
  *     path="/form6/soal-jawab/{pkId}",
@@ -60,5 +61,4 @@ namespace App\Docs;
  *     )
  * )
  */
-
- class GetSoalDanJawabanForm6 {}
+ class getSoalDanJawabanForm6 {}
