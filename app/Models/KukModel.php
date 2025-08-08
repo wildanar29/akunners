@@ -18,6 +18,7 @@ class KukModel extends Model
         'isi_elemen',
         'no_kuk',
         'kuk_name',
+        'pk_id',
     ];
 
      // Relasi dengan ElemenForm3 berdasarkan no_elemen_form_3

@@ -210,6 +210,26 @@ $router->post('/input-form3/{user_id}', 'Form3Controller@Form3Input');
 
 $router->get('/form1', 'ProgressController@getForm1');
 
+// FORM 4A
+$router->get('/form4a/elemen-filter', 'Form4Controller@getSoalForm4a');
+$router->post('/form4a/jawaban', 'Form4Controller@simpanJawabanForm4a');
+$router->get('/form4a/soal-jawaban', 'Form4Controller@getSoalDanJawabanForm4a');
+
+// FORM 4B
+$router->get('/form4b/soal', 'Form4Controller@getSoalForm4b');
+$router->post('/form4b/jawaban', 'Form4Controller@storeJawabanForm4b');
+$router->get('/form4b/soal-jawaban', 'Form4Controller@getSoalDanJawabanForm4b');
+
+// FORM 4C
+$router->get('/form4c/soal', 'Form4Controller@getAllPertanyaanForm4c');
+$router->post('/form4c/jawaban', 'Form4Controller@storeJawabanForm4c');
+$router->get('/form4c/soal-jawaban', 'Form4Controller@getSoalDanJawabanForm4c');
+
+// FORM 4D
+$router->get('/form4d/soal', 'Form4Controller@getSoalForm4dByPkId');
+$router->post('/form4d/jawaban', 'Form4Controller@simpanJawabanForm4d');
+$router->get('/form4d/soal-jawaban', 'Form4Controller@getSoalDanJawabanForm4d');
+
 // FORM 6
 $router->get('/form6/soal/{pkId}', 'Form6Controller@SoalForm6');
 $router->post('/form6/jawaban', 'Form6Controller@simpanJawabanForm6');

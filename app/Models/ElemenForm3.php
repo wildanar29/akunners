@@ -30,5 +30,10 @@ class ElemenForm3 extends Model
     {
         return $this->belongsTo(KompetensiPk::class, 'pk_id', 'pk_id');
     }
+
+    public static function getOrderedByNoElemen()
+    {
+        return self::orderBy('no_elemen_form_3')->get();
+    }
     
 }

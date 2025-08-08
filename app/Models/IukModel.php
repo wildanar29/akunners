@@ -16,7 +16,9 @@ class IukModel extends Model
     protected $fillable = [
         'no_kuk',
         'no_iuk',
-        'iuk_name'
+        'iuk_name',
+        'pk_id',
+        'group_no',
     ];
 
     // Relasi dengan KukModel berdasarkan no_kuk
@@ -30,6 +32,19 @@ class IukModel extends Model
     {
         return $this->hasMany(TypeForm3_B::class, 'no_iuk', 'no_iuk');
     }
-
     
+    public function poinForm4()
+    {
+        return $this->hasMany(PoinForm4::class, 'iuk_form_3_id');
+    }
+    public function pertanyaanForm4b()
+    {
+        return $this->hasMany(\App\Models\PertanyaanForm4b::class, 'iuk_form_3_id', 'iuk_form3_id')
+            ->whereNull('parent_id');
+    }
+
+    public function pertanyaanForm4c()
+    {
+        return $this->hasMany(\App\Models\PertanyaanForm4c::class, 'iuk_form_3_id', 'iuk_form3_id');
+    }
 }
