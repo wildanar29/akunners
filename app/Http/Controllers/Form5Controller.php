@@ -912,7 +912,6 @@ class Form5Controller extends BaseController
 				Log::error("Gagal mengirim notifikasi ke asesor: " . $e->getMessage());
 			}
 
-			// HANDLE FORM6
 			try {
 				$form1Id = $this->formService->getParentFormIdByFormId($formId);
 				$form1Data = $this->formService->getParentDataByFormId($form1Id);
@@ -926,19 +925,16 @@ class Form5Controller extends BaseController
 						'pk_id' => $form1Data->pk_id ?? null
 					]);
 
-					$isForm6Exist = $this->formService->isFormExist(
+					// ===== FORM 4A =====
+					$isForm4aExist = $this->formService->isFormExist(
 						$form1Data->asesi_id,
 						$form1Data->pk_id,
-						'form_6'
+						'form_4a'
 					);
 
-					Log::info('Hasil Cek isForm6Exist', [
-						'isForm6Exist' => $isForm6Exist
-					]);
-
-					if (!$isForm6Exist) {
-						Log::info("Form 6 belum ada, membuat form 6...");
-						$form6 = $this->formService->inputForm6(
+					if (!$isForm4aExist) {
+						Log::info("Form 4a belum ada, membuat form 4a...");
+						$form4a = $this->formService->inputForm4a(
 							$form1Data->pk_id,
 							$form1Data->asesi_id,
 							$form1Data->asesi_name,
@@ -947,13 +943,110 @@ class Form5Controller extends BaseController
 							$form1Data->no_reg
 						);
 
-						$this->formService->createProgresDanTrack($form6->form_6_id, 'form_6', 'InAssessment', $form1Data->asesi_id, $form1Data->form_1_id, 'Form 6 sudah dapat diisi.');
+						$this->formService->createProgresDanTrack(
+							$form4a->form_4a_id,
+							'form_4a',
+							'InAssessment',
+							$form1Data->asesi_id,
+							$form1Data->form_1_id,
+							'Form 4A sudah dapat diisi.'
+						);
 					} else {
-						Log::info("Form 6 sudah ada, tidak membuat ulang.");
+						Log::info("Form 4a sudah ada, tidak membuat ulang.");
+					}
+
+					// ===== FORM 4B =====
+					$isForm4bExist = $this->formService->isFormExist(
+						$form1Data->asesi_id,
+						$form1Data->pk_id,
+						'form_4b'
+					);
+
+					if (!$isForm4bExist) {
+						Log::info("Form 4b belum ada, membuat form 4b...");
+						$form4b = $this->formService->inputForm4b(
+							$form1Data->pk_id,
+							$form1Data->asesi_id,
+							$form1Data->asesi_name,
+							$form1Data->asesor_id,
+							$form1Data->asesor_name,
+							$form1Data->no_reg
+						);
+
+						$this->formService->createProgresDanTrack(
+							$form4b->form_4b_id,
+							'form_4b',
+							'InAssessment',
+							$form1Data->asesi_id,
+							$form1Data->form_1_id,
+							'Form 4B sudah dapat diisi.'
+						);
+					} else {
+						Log::info("Form 4b sudah ada, tidak membuat ulang.");
+					}
+
+					// ===== FORM 4C =====
+					$isForm4cExist = $this->formService->isFormExist(
+						$form1Data->asesi_id,
+						$form1Data->pk_id,
+						'form_4c'
+					);
+
+					if (!$isForm4cExist) {
+						Log::info("Form 4c belum ada, membuat form 4c...");
+						$form4c = $this->formService->inputForm4c(
+							$form1Data->pk_id,
+							$form1Data->asesi_id,
+							$form1Data->asesi_name,
+							$form1Data->asesor_id,
+							$form1Data->asesor_name,
+							$form1Data->no_reg
+						);
+
+						$this->formService->createProgresDanTrack(
+							$form4c->form_4c_id,
+							'form_4c',
+							'InAssessment',
+							$form1Data->asesi_id,
+							$form1Data->form_1_id,
+							'Form 4C sudah dapat diisi.'
+						);
+					} else {
+						Log::info("Form 4c sudah ada, tidak membuat ulang.");
+					}
+
+					// ===== FORM 4D =====
+					$isForm4dExist = $this->formService->isFormExist(
+						$form1Data->asesi_id,
+						$form1Data->pk_id,
+						'form_4d'
+					);
+
+					if (!$isForm4dExist) {
+						Log::info("Form 4d belum ada, membuat form 4d...");
+						$form4d = $this->formService->inputForm4d(
+							$form1Data->pk_id,
+							$form1Data->asesi_id,
+							$form1Data->asesi_name,
+							$form1Data->asesor_id,
+							$form1Data->asesor_name,
+							$form1Data->no_reg
+						);
+
+						$this->formService->createProgresDanTrack(
+							$form4d->form_4d_id,
+							'form_4d',
+							'InAssessment',
+							$form1Data->asesi_id,
+							$form1Data->form_1_id,
+							'Form 4D sudah dapat diisi.'
+						);
+					} else {
+						Log::info("Form 4d sudah ada, tidak membuat ulang.");
 					}
 				}
 			} catch (\Exception $e) {
-				Log::error("Gagal cek atau input form_6: " . $e->getMessage());
+				Log::error("Gagal cek atau input form 4b/4c/4d: " . $e->getMessage());
 			}
 
 			return response()->json([

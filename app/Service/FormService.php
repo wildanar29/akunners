@@ -17,6 +17,10 @@ use App\Models\KompetensiTrack;
 use App\Models\KompetensiProgres;
 use App\Models\Notification;
 use App\Models\Form6;
+use App\Models\Form4a;
+use App\Models\Form4b;
+use App\Models\Form4c;
+use App\Models\Form4d;
 use Carbon\Carbon;
 
 class FormService
@@ -174,6 +178,66 @@ class FormService
 			'asesor_date'   => Carbon::now(),
 			'no_reg'        => $noReg,
 			'status'        => 'Submitted',
+		]);
+	}
+
+	function inputForm4a($pkId, $asesiId, $asesiName, $asesorId, $asesorName, $noReg)
+	{
+		return Form4a::create([
+			'pk_id'         => $pkId,
+			'asesi_id'      => $asesiId,
+			'asesi_name'    => $asesiName,
+			'asesi_date'    => Carbon::now(),
+			'asesor_id'     => $asesorId,
+			'asesor_name'   => $asesorName,
+			'asesor_date'   => Carbon::now(),
+			'no_reg'        => $noReg,
+			'status'        => 'InAssessment',
+		]);
+	}
+
+	function inputForm4b($pkId, $asesiId, $asesiName, $asesorId, $asesorName, $noReg)
+	{
+		return Form4b::create([
+			'pk_id'         => $pkId,
+			'asesi_id'      => $asesiId,
+			'asesi_name'    => $asesiName,
+			'asesi_date'    => Carbon::now(),
+			'asesor_id'     => $asesorId,
+			'asesor_name'   => $asesorName,
+			'asesor_date'   => Carbon::now(),
+			'no_reg'        => $noReg,
+			'status'        => 'InAssessment',
+		]);
+	}
+
+	function inputForm4c($pkId, $asesiId, $asesiName, $asesorId, $asesorName, $noReg)
+	{
+		return Form4c::create([
+			'pk_id'         => $pkId,
+			'asesi_id'      => $asesiId,
+			'asesi_name'    => $asesiName,
+			'asesi_date'    => Carbon::now(),
+			'asesor_id'     => $asesorId,
+			'asesor_name'   => $asesorName,
+			'asesor_date'   => Carbon::now(),
+			'no_reg'        => $noReg,
+			'status'        => 'InAssessment',
+		]);
+	}
+
+	function inputForm4d($pkId, $asesiId, $asesiName, $asesorId, $asesorName, $noReg)
+	{
+		return Form4d::create([
+			'pk_id'         => $pkId,
+			'asesi_id'      => $asesiId,
+			'asesi_name'    => $asesiName,
+			'asesi_date'    => Carbon::now(),
+			'asesor_id'     => $asesorId,
+			'asesor_name'   => $asesorName,
+			'asesor_date'   => Carbon::now(),
+			'no_reg'        => $noReg,
+			'status'        => 'InAssessment',
 		]);
 	}
 
