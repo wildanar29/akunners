@@ -5,7 +5,7 @@ namespace App\Docs;
 /**
  * @OA\Post(
  *     path="/jawaban-form2/update/asesor",
- *     tags={"FORM 2"},
+ *     tags={"FORM 2 ASESMEN MANDIRI"},
  *     summary="Update Penilaian Asesor untuk Form 2",
  *     description="API ini digunakan untuk melakukan update penilaian oleh asesor. Digunakan saat asesor mewawancarai asesi pada konsultasi pra asesmen dan memastikan nilai yang diinput oleh asesi adalah benar.",
  *     security={{"bearerAuth":{}}},

@@ -4,7 +4,7 @@ namespace App\Docs;
 /**
  * @OA\Get(
  *     path="/get-soal-jawab-form2",
- *     tags={"FORM 2"},
+ *     tags={"FORM 2 ASESMEN MANDIRI"},
  *     summary="Ambil data soal dan jawaban Form 2",
  *     description="API ini digunakan untuk menampilkan daftar soal Form 2 dan jawaban asesi berdasarkan pk_id dan user_id.",
  *     @OA\Parameter(
