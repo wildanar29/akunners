@@ -6,7 +6,7 @@ namespace App\Docs;
  * @OA\Put(
  *     path="/penilaian-asesor",
  *     summary="Input atau update penilaian asesor untuk Form 2",
- *     tags={"FORM 2 ASESMEN MANDIRI"},
+ *     tags={"FORM 2 (ASESMEN MANDIRI)"},
  *     @OA\RequestBody(
  *         required=true,
  *         @OA\JsonContent(

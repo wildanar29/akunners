@@ -5,7 +5,7 @@ namespace App\Docs;
  * @OA\Post(
  *     path="/jawaban-asesi",
  *     summary="Submit atau update jawaban self assessment oleh Asesi",
- *     tags={"FORM 2 ASESMEN MANDIRI"},
+ *     tags={"FORM 2 (ASESMEN MANDIRI)"},
  *     security={{"bearerAuth":{}}},
  *     @OA\RequestBody(
  *         required=true,

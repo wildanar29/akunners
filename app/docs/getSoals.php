@@ -5,7 +5,7 @@ namespace App\Docs;
  * @OA\Get(
  *     path="/soal-form2",
  *     summary="Ambil daftar soal Form 2 berdasarkan pk_id",
- *     tags={"FORM 2 ASESMEN MANDIRI"},
+ *     tags={"FORM 2 (ASESMEN MANDIRI)"},
  *     @OA\Parameter(
  *         name="pk_id",
  *         in="query",
