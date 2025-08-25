@@ -5,7 +5,7 @@ namespace App\Docs;
 //  * @OA\Post(
 //  *     path="/get-form1-byasesor",
 //  *     summary="Ambil data form_1 berdasarkan user asesor",
-//  *     tags={"FORM 1"},
+//  *     tags={"FORM 1 (PENGAJUAN ASESMEN)"},
 //  *     @OA\RequestBody(
 //  *         required=true,
 //  *         @OA\JsonContent(

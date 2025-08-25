@@ -4,7 +4,7 @@ namespace App\Docs;
 /**
  * @OA\Put(
  *     path="/form1/approve/{form_1_id}",
- *     tags={"FORM 1"},
+ *     tags={"FORM 1 (PENGAJUAN ASESMEN)"},
  *     summary="Menyetujui Form 1 oleh asesor yang ditugaskan",
  *     operationId="approveForm1ById",
  *     security={{"bearerAuth":{}}},

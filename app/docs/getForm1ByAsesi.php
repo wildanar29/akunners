@@ -7,7 +7,7 @@ namespace App\Docs;
  *     summary="Ambil daftar form_1 berdasarkan user_id asesi",
  *     description="Endpoint ini digunakan oleh asesi untuk mengambil daftar form_1 miliknya berdasarkan user_id dan status tertentu (default: Waiting).",
  *     operationId="getForm1ByAsesi",
- *     tags={"FORM 1"},
+ *     tags={"FORM 1 (PENGAJUAN ASESMEN)"},
  *     security={{"bearerAuth": {}}},
  *
  *     @OA\RequestBody(

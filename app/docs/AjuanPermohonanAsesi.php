@@ -5,7 +5,7 @@ namespace App\Docs;
 /**
  * @OA\Post(
  *     path="/ajuan-asesi",
- *     tags={"FORM 1"},
+ *     tags={"FORM 1 (PENGAJUAN ASESMEN)"},
  *     summary="Pengajuan Asesmen (Form 1)",
  *     description="API ini digunakan oleh asesi untuk melakukan pengajuan asesmen atau Form 1. Pengguna harus memiliki token otentikasi dan melengkapi dokumen seperti ijazah, STR, dan SIP sebelum dapat mengajukan.",
  *     security={{"bearerAuth":{}}},

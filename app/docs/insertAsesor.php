@@ -4,7 +4,7 @@ namespace App\Docs;
 /**
  * @OA\Put(
  *     path="/input-asesor",
- *     tags={"FORM 1"},
+ *     tags={"FORM 1 (PENGAJUAN ASESMEN)"},
  *     summary="Input atau tolak asesor oleh user role bidang (role_id = 3)",
  *     description="Endpoint ini digunakan oleh user role bidang untuk menolak form 1 atau menetapkan asesor berdasarkan no_reg. Hanya user dengan role_id = 3 yang dapat mengakses.",
  *     security={{"bearerAuth":{}}},

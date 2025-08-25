@@ -6,7 +6,7 @@ namespace App\Docs;
  * @OA\Get(
  *     path="/form1",
  *     summary="Ambil data Form 1 berdasarkan filter dinamis",
- *     tags={"FORM 1"},
+ *     tags={"FORM 1 (PENGAJUAN ASESMEN)"},
  *     description="Menampilkan daftar Form 1 berdasarkan status tertentu dan filter opsional lainnya.
  *     - `Submitted`: Menampilkan list pengajuan form 1 di bidang
  *     - `Assigned`: Menampilkan list form 1 yang sudah di-assign ke asesor dan muncul juga di bidang
