@@ -130,7 +130,7 @@ class Form6Controller extends BaseController
             $userAsesor = $this->formService->findUser($form1->asesor_id);
             $AsesorNotif = $this->formService->KirimNotifikasiKeUser($userAsesor, 'Jawaban Form 6 Tersimpan', 'Jawaban Form 6 telah disimpan oleh asesor.');
 
-            $isFormExist = $this->formService->isFormExist($userId, $validated['pk_id'], 'form_6');
+            $isFormExist = $this->formService->isFormExistSingle($userId, $validated['pk_id'], 'form_6');
             if ($isFormExist) {
                 $form6 = $this->formService->getFormIdsByParentFormIdAndType($form1->form_1_id, 'form_6');
                 $this->formService->updateProgresDanTrack($form6, 'form_6', 'Submitted', $form1->asesi_id, 'jawaban Form 6 telah diisi Asesor');
