@@ -18,6 +18,7 @@ class Form10 extends Model
     // Kolom yang boleh diisi
     protected $fillable = [
         'pk_id',
+        'form_type',
         'daftar_tilik_id',
         'asesi_id',
         'asesi_name',

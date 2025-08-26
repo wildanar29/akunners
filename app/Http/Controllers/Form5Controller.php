@@ -923,7 +923,6 @@ class Form5Controller extends BaseController
 					Log::warning("Data Form1 tidak ditemukan dengan form_1_id={$form1Id}");
 				} else {
 
-					Log::info("asu");
 					// ===== FORM 4A =====
 					$isForm4aExist = $this->formService->isFormExistSingle(
 						$form1Data->asesi_id,
@@ -1126,7 +1125,6 @@ class Form5Controller extends BaseController
 								$form1Data->pk_id,
 								$formType
 							);
-
 							if (!$isFormExist) {
 								Log::info("{$formType} belum ada, membuat...");
 
