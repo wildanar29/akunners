@@ -1134,7 +1134,7 @@ class Form5Controller extends BaseController
 								$form10 = $this->formService->inputForm10(
 									$form1Data->pk_id,
 									$form->id,                // daftar_tilik_id ✅
-									$form->form_number,       // no_reg ✅
+									$formType,       // no_reg ✅
 									$form1Data->asesi_id,
 									$form1Data->asesi_name,
 									$form1Data->asesor_id,
