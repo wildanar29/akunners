@@ -6,7 +6,7 @@ namespace App\Docs;
  *     path="/get-form3-c",
  *     summary="Menampilkan data Form 3C dalam format HTML",
  *     description="Mengambil data Form 3C berdasarkan pk_id dan opsional no_elemen, lalu menampilkannya dalam bentuk tabel HTML.",
- *     tags={"FORM 3"},
+ *     tags={"FORM 3 (RENCANA ASESMEN)"},
  *     @OA\Parameter(
  *         name="pk_id",
  *         in="query",

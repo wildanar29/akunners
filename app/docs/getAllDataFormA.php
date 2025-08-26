@@ -7,7 +7,7 @@ namespace App\Docs;
  *     path="/get-form3-a",
  *     summary="Menampilkan data Form 3A dalam format HTML",
  *     description="Endpoint ini mengambil dan menampilkan data Form 3A berdasarkan pk_id dan opsional no_elemen_form_3, lalu menghasilkan tampilan HTML tabel poin diamati.",
- *     tags={"FORM 3"},
+ *     tags={"FORM 3 (RENCANA ASESMEN)"},
  *     @OA\Parameter(
  *         name="pk_id",
  *         in="query",

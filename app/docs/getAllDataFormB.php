@@ -6,7 +6,7 @@ namespace App\Docs;
  * @OA\Get(
  *     path="/get-form3-b",
  *     summary="Mengambil data Form 3B dalam format HTML berdasarkan pk_id dan (opsional) no_elemen",
- *     tags={"FORM 3"},
+ *     tags={"FORM 3 (RENCANA ASESMEN)"},
  *     @OA\Parameter(
  *         name="pk_id",
  *         in="query",
