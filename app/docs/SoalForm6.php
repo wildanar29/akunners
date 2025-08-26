@@ -7,7 +7,7 @@ namespace App\Docs;
  *     summary="Ambil Soal Form 6 Berdasarkan PK ID",
  *     description="API ini digunakan untuk menampilkan soal dari form 6 berdasarkan PK id yang dipilih.",
  *     operationId="getSoalForm6",
- *     tags={"FORM 6"},
+ *     tags={"FORM 6 (DAFTAR CEKLIST ASESMEN)"},
  *     @OA\Parameter(
  *         name="pkId",
  *         in="path",

@@ -5,7 +5,7 @@ namespace App\Docs;
 /**
  * @OA\Post(
  *     path="/form6/approve",
- *     tags={"FORM 6"},
+ *     tags={"FORM 6 (DAFTAR CEKLIST ASESMEN)"},
  *     summary="Approve Form 6 oleh Asesi",
  *     description="API ini digunakan untuk memberikan persetujuan atas nilai yang sudah diisi oleh asesor. Persetujuan ini dilakukan oleh asesi.",
  *     operationId="approveForm6ByAsesi",

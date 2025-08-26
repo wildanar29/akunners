@@ -8,7 +8,7 @@ namespace App\Docs;
  *     summary="Simpan Jawaban Form 6 oleh Asesor",
  *     description="API ini digunakan untuk menyimpan jawaban yang diinput oleh asesor.",
  *     operationId="simpanJawabanForm6",
- *     tags={"FORM 6"},
+ *     tags={"FORM 6 (DAFTAR CEKLIST ASESMEN)"},
  *     @OA\RequestBody(
  *         required=true,
  *         @OA\JsonContent(
