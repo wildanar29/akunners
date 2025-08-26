@@ -5,7 +5,7 @@ namespace App\Docs;
 /**
  * @OA\Get(
  *     path="/form5/langkah-kegiatan",
- *     tags={"FORM 5"},
+ *     tags={"FORM 5 (PRA ASESMEN)"},
  *     summary="Ambil Langkah dan Kegiatan",
  *     description="API ini digunakan untuk melihat soal atau langkah dan kegiatan pada Form 5.",
  *     operationId="getLangkahDanKegiatan",

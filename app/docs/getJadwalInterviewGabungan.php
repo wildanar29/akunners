@@ -8,7 +8,7 @@ namespace App\Docs;
  *     summary="Ambil Jadwal Interview Gabungan",
  *     description="API ini digunakan untuk mengambil jadwal interview yang dapat difilter berdasarkan parameter atau request yang dapat diisi sesuai dengan kebutuhan.",
  *     operationId="getJadwalInterviewGabungan",
- *     tags={"FORM 5"},
+ *     tags={"FORM 5 (PRA ASESMEN)"},
  *     security={{"bearerAuth":{}}},
  *     @OA\Parameter(
  *         name="date",

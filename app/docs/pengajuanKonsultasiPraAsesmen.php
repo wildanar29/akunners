@@ -7,7 +7,7 @@ namespace App\Docs;
  *     summary="Pengajuan Konsultasi Pra Asesmen",
  *     description="API ini digunakan untuk melakukan pengajuan jadwal konsultasi pra asesmen yang dilakukan oleh asesi.",
  *     operationId="pengajuanKonsultasiPraAsesmen",
- *     tags={"FORM 5"},
+ *     tags={"FORM 5 (PRA ASESMEN)"},
  *     security={{"bearerAuth":{}}},
  *     @OA\RequestBody(
  *         required=true,

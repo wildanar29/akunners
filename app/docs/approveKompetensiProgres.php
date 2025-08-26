@@ -8,7 +8,7 @@ namespace App\Docs;
  *     summary="Approve Form 5 oleh Asesi",
  *     description="API ini digunakan untuk menyetujui isi dari form 5 yang dilakukan oleh asesi.",
  *     operationId="approveKompetensiProgres",
- *     tags={"FORM 5"},
+ *     tags={"FORM 5 (PRA ASESMEN)"},
  *     @OA\Parameter(
  *         name="form_id",
  *         in="query",

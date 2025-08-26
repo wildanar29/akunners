@@ -4,7 +4,7 @@ namespace App\Docs;
 /**
  * @OA\Post(
  *     path="/konsultasi/pra-asesmen",
- *     tags={"FORM 5"},
+ *     tags={"FORM 5 (PRA ASESMEN)"},
  *     summary="Pengajuan Konsultasi Pra Asesmen oleh Asesi",
  *     description="Endpoint ini digunakan oleh Asesi untuk mengajukan konsultasi pra asesmen berdasarkan Form 1 yang telah diisi.",
  *     operationId="pengajuanKonsultasiPraAsesmen",

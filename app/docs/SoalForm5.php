@@ -4,7 +4,7 @@ namespace App\Docs;
 /**
  * @OA\Get(
  *     path="/form5/langkah-kegiatan",
- *     tags={"FORM 5"},
+ *     tags={"FORM 5 (PRA ASESMEN)"},
  *     summary="Ambil data langkah dan kegiatan Form 5",
  *     description="Mengambil daftar langkah dan kegiatan dalam Form 5",
  *     @OA\Response(

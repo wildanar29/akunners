@@ -5,7 +5,7 @@ namespace App\Docs;
 /**
  * @OA\Post(
  *     path="/form5/jawaban-kegiatan",
- *     tags={"FORM 5"},
+ *     tags={"FORM 5 (PRA ASESMEN)"},
  *     summary="Simpan jawaban kegiatan Form 5",
  *     description="Menyimpan status pencapaian kegiatan untuk Form 5 berdasarkan input dari user",
  *     @OA\RequestBody(
