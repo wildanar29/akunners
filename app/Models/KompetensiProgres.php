@@ -69,7 +69,11 @@ class KompetensiProgres extends Model
 
     public function track()
     {
-        return $this->hasOne(KompetensiTrack::class, 'progres_id');
+        return $this->hasMany(KompetensiTrack::class, 'progres_id', 'id');
     }
 
+    public function trackSingle()
+    {
+        return $this->hasOne(KompetensiTrack::class, 'progres_id', 'id');
+    }
 }

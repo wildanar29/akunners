@@ -133,29 +133,42 @@ class Form4Controller extends BaseController
             ], 422);
         }
 
-        $form1Id = $request->input('form_1_id');
-        $userId = $request->input('user_id');
-        $jawabanData = $request->input('jawaban');
+        DB::beginTransaction();
+        try {
+            $form1Id = $request->input('form_1_id');
+            $userId = $request->input('user_id');
+            $jawabanData = $request->input('jawaban');
 
-        foreach ($jawabanData as $data) {
-            JawabanForm4a::updateOrCreate(
-                [
-                    'form_1_id' => $form1Id,
-                    'user_id' => $userId,
-                    'iuk_form3_id' => $data['iuk_form3_id'],
-                ],
-                [
-                    'pencapaian' => $data['pencapaian'],
-                    'nilai' => $data['nilai'] ?? null,
-                    'catatan' => $data['catatan'] ?? null,
-                ]
-            );
+            foreach ($jawabanData as $data) {
+                JawabanForm4a::updateOrCreate(
+                    [
+                        'form_1_id' => $form1Id,
+                        'user_id' => $userId,
+                        'iuk_form3_id' => $data['iuk_form3_id'],
+                    ],
+                    [
+                        'pencapaian' => $data['pencapaian'],
+                        'nilai' => $data['nilai'] ?? null,
+                        'catatan' => $data['catatan'] ?? null,
+                    ]
+                );
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Jawaban berhasil disimpan',
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Terjadi kesalahan saat menyimpan data',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Jawaban berhasil disimpan',
-        ]);
     }
 
     public function getSoalDanJawabanForm4a(Request $request)
@@ -894,6 +907,4 @@ class Form4Controller extends BaseController
             ], 500);
         }
     }
-
-
 }

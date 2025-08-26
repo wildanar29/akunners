@@ -47,4 +47,17 @@ class IukModel extends Model
     {
         return $this->hasMany(\App\Models\PertanyaanForm4c::class, 'iuk_form_3_id', 'iuk_form3_id');
     }
+
+    public function elemenForm3()
+    {
+        return $this->belongsTo(ElemenForm3::class, 'elemen_form3_id', 'elemen_form3_id');
+    }
+
+    public function soalForm7()
+    {
+        return $this->hasMany(SoalForm7::class, 'iuk_form3_id', 'iuk_form3_id');
+    }
+
+
+
 }

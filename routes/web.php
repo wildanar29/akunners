@@ -211,30 +211,68 @@ $router->post('/input-form3/{user_id}', 'Form3Controller@Form3Input');
 $router->get('/form1', 'ProgressController@getForm1');
 
 // FORM 4A
-$router->get('/form4a/elemen-filter', 'Form4Controller@getSoalForm4a');
-$router->post('/form4a/jawaban', 'Form4Controller@simpanJawabanForm4a');
-$router->get('/form4a/soal-jawaban', 'Form4Controller@getSoalDanJawabanForm4a');
+$router->get('/form4a/elemen-filter', 'Form4aController@getSoalForm4a');
+$router->post('/form4a/jawaban', 'Form4aController@simpanJawabanForm4a');
+$router->get('/form4a/soal-jawaban', 'Form4aController@getSoalDanJawabanForm4a');
+$router->post('/form4a/{form4aId}/approve-asesi', 'Form4aController@ApproveForm4aByAsesi');
 
 // FORM 4B
-$router->get('/form4b/soal', 'Form4Controller@getSoalForm4b');
-$router->post('/form4b/jawaban', 'Form4Controller@storeJawabanForm4b');
-$router->get('/form4b/soal-jawaban', 'Form4Controller@getSoalDanJawabanForm4b');
+$router->get('/form4b/soal', 'Form4bController@getSoalForm4b');
+$router->post('/form4b/jawaban', 'Form4bController@storeJawabanForm4b');
+$router->get('/form4b/soal-jawaban', 'Form4bController@getSoalDanJawabanForm4b');
+$router->post('/form4b/{form4bId}/approve-asesi', 'Form4bController@ApproveForm4bByAsesi');
 
 // FORM 4C
-$router->get('/form4c/soal', 'Form4Controller@getAllPertanyaanForm4c');
-$router->post('/form4c/jawaban', 'Form4Controller@storeJawabanForm4c');
-$router->get('/form4c/soal-jawaban', 'Form4Controller@getSoalDanJawabanForm4c');
+$router->get('/form4c/soal', 'Form4cController@getAllPertanyaanForm4c');
+$router->post('/form4c/jawaban', 'Form4cController@storeJawabanForm4c');
+$router->get('/form4c/soal-jawaban', 'Form4cController@getSoalDanJawabanForm4c');
+$router->post('/form4c/{form4cId}/approve-asesi', 'Form4cController@ApproveForm4cByAsesi');
 
 // FORM 4D
-$router->get('/form4d/soal', 'Form4Controller@getSoalForm4dByPkId');
-$router->post('/form4d/jawaban', 'Form4Controller@simpanJawabanForm4d');
-$router->get('/form4d/soal-jawaban', 'Form4Controller@getSoalDanJawabanForm4d');
+$router->get('/form4d/soal', 'Form4dController@getSoalForm4dByPkId');
+$router->post('/form4d/jawaban', 'Form4dController@simpanJawabanForm4d');
+$router->get('/form4d/soal-jawaban', 'Form4dController@getSoalDanJawabanForm4d');
+$router->post('/form4d/{form4dId}/approve-asesi', 'Form4dController@ApproveForm4dByAsesi');
 
 // FORM 6
 $router->get('/form6/soal/{pkId}', 'Form6Controller@SoalForm6');
 $router->post('/form6/jawaban', 'Form6Controller@simpanJawabanForm6');
 $router->get('/form6/soal-jawab/{pkId}', 'Form6Controller@getSoalDanJawabanForm6');
 $router->post('/form6/approve', 'Form6Controller@ApproveForm6ByAsesi');
+
+
+// FORM 7
+$router->get('/form7/soal/{pkId}', 'Form7Controller@getSoalForm7');
+$router->post('/form7/jawaban', 'Form7Controller@simpanBanyakJawabanForm7');
+$router->get('/form7/soal-jawaban/{pkId}/{asesiId}', 'Form7Controller@getSoalDanJawabanForm7');
+$router->get('/form7/iuk/{pkId}', 'Form7Controller@getIukForm3IdFromForm7');
+$router->get('/form7/keputusan/{pkId}/{form1Id}', 'Form7Controller@getAllKeputusanForm7');
+$router->post('/form7/{form7Id}/approve-asesi', 'Form7Controller@ApproveForm7ByAsesi');
+
+// FORM 8
+$router->post('/form8/banding/store', 'Form8Controller@storeFormBandingAsesmen');
+$router->post('/form8/banding/{bandingId}/approve', 'Form8Controller@approveFormBandingAsesmen');
+
+// FORM 9
+$router->group(['prefix' => 'form9'], function () use ($router) {
+    // ambil pertanyaan berdasarkan subject (section)
+    $router->get('/questions', 'Form9Controller@getQuestionsBySubject');
+    $router->get('/{form9Id}/soal-jawab', 'Form9Controller@getQuestionsAndAnswersByFormId');
+     $router->post('/{form9Id}/save-jawaban', 'Form9Controller@saveOrUpdateAnswers');
+});
+
+// FORM 10 DAFTAR TILIK
+$router->get('/form10/daftar-tilik', 'Form10Controller@getAll');
+$router->get('/form10/soal/{form10Id}', 'Form10Controller@getSoalList');
+$router->post('/form10/{form10Id}/submit', 'Form10Controller@submitSoalList');
+$router->get('/form10/soal-jawab/{form10Id}', 'Form10Controller@getForm10WithAnswersById');
+$router->post('/form10/{form10Id}/approve-asesi', 'Form10Controller@ApproveForm10ByAsesi');
+
+// FORM 12
+$router->post('/form12/by-pk', 'Form12Controller@getByPkId');
+$router->post('/form12/{form12Id}/approve-asesi', 'Form12Controller@ApproveForm12ByAsesi');
+
+$router->get('/form6/soal/{pkId}', 'Form6Controller@SoalForm6');
 
 //Notifikasi 
 $router->get('/send-notification-to-bidang', action: 'NotificationController@notifikasiPengajuankeBidang');

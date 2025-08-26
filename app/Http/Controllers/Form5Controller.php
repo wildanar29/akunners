@@ -12,6 +12,9 @@ use App\Models\DataAsesorModel;
 use App\Models\DaftarUser;
 use App\Models\UserRole;
 use App\Models\Form5;
+use App\Models\DaftarTilik;
+use App\Models\KegiatanDaftarTilik;
+use App\Models\Form10;
 use App\Models\BidangModel;
 use App\Models\LangkahForm5;
 use App\Models\KompetensiTrack;
@@ -919,21 +922,20 @@ class Form5Controller extends BaseController
 				if (!$form1Data) {
 					Log::warning("Data Form1 tidak ditemukan dengan form_1_id={$form1Id}");
 				} else {
-					Log::info('Cek FormService Data', [
-						'form1Id' => $form1Id,
-						'asesi_id' => $form1Data->asesi_id ?? null,
-						'pk_id' => $form1Data->pk_id ?? null
-					]);
 
+					Log::info("asu");
 					// ===== FORM 4A =====
-					$isForm4aExist = $this->formService->isFormExist(
+					$isForm4aExist = $this->formService->isFormExistSingle(
 						$form1Data->asesi_id,
 						$form1Data->pk_id,
 						'form_4a'
 					);
 
+					Log::info("Cek Form 4a: " . json_encode($isForm4aExist));
+
 					if (!$isForm4aExist) {
 						Log::info("Form 4a belum ada, membuat form 4a...");
+
 						$form4a = $this->formService->inputForm4a(
 							$form1Data->pk_id,
 							$form1Data->asesi_id,
@@ -955,8 +957,9 @@ class Form5Controller extends BaseController
 						Log::info("Form 4a sudah ada, tidak membuat ulang.");
 					}
 
-					// ===== FORM 4B =====
-					$isForm4bExist = $this->formService->isFormExist(
+
+					// // ===== FORM 4B =====
+					$isForm4bExist = $this->formService->isFormExistSingle(
 						$form1Data->asesi_id,
 						$form1Data->pk_id,
 						'form_4b'
@@ -985,8 +988,8 @@ class Form5Controller extends BaseController
 						Log::info("Form 4b sudah ada, tidak membuat ulang.");
 					}
 
-					// ===== FORM 4C =====
-					$isForm4cExist = $this->formService->isFormExist(
+					// // ===== FORM 4C =====
+					$isForm4cExist = $this->formService->isFormExistSingle(
 						$form1Data->asesi_id,
 						$form1Data->pk_id,
 						'form_4c'
@@ -1015,8 +1018,8 @@ class Form5Controller extends BaseController
 						Log::info("Form 4c sudah ada, tidak membuat ulang.");
 					}
 
-					// ===== FORM 4D =====
-					$isForm4dExist = $this->formService->isFormExist(
+					// // ===== FORM 4D =====
+					$isForm4dExist = $this->formService->isFormExistSingle(
 						$form1Data->asesi_id,
 						$form1Data->pk_id,
 						'form_4d'
@@ -1043,6 +1046,116 @@ class Form5Controller extends BaseController
 						);
 					} else {
 						Log::info("Form 4d sudah ada, tidak membuat ulang.");
+					}
+
+					// ===== FORM 6 =====
+					$isForm6Exist = $this->formService->isFormExistSingle(
+						$form1Data->asesi_id,
+						$form1Data->pk_id,
+						'form_6'
+					);
+
+					if (!$isForm6Exist) {
+						Log::info("Form 6 belum ada, membuat form 6...");
+						$form6 = $this->formService->inputForm6(
+							$form1Data->pk_id,
+							$form1Data->asesi_id,
+							$form1Data->asesi_name,
+							$form1Data->asesor_id,
+							$form1Data->asesor_name,
+							$form1Data->no_reg
+						);
+
+						$this->formService->createProgresDanTrack(
+							$form6->form_6_id,
+							'form_6',
+							'InAssessment',
+							$form1Data->asesi_id,
+							$form1Data->form_1_id,
+							'Form 6 sudah dapat diisi.'
+						);
+					} else {
+						Log::info("Form 6 sudah ada, tidak membuat ulang.");
+					}
+
+					// ===== FORM 7 =====
+					$isForm7Exist = $this->formService->isFormExistSingle(
+						$form1Data->asesi_id,
+						$form1Data->pk_id,
+						'form_7'
+					);
+
+					if (!$isForm7Exist) {
+						Log::info("Form 7 belum ada, membuat form 7...");
+						$form7 = $this->formService->inputForm7(
+							$form1Data->pk_id,
+							$form1Data->asesi_id,
+							$form1Data->asesi_name,
+							$form1Data->asesor_id,
+							$form1Data->asesor_name,
+							$form1Data->no_reg
+						);
+
+						$this->formService->createProgresDanTrack(
+							$form7->form_7_id,
+							'form_7',
+							'InAssessment',
+							$form1Data->asesi_id,
+							$form1Data->form_1_id,
+							'Form 7 sudah dapat diisi.'
+						);
+					} else {
+						Log::info("Form 7 sudah ada, tidak membuat ulang.");
+					}
+
+					// // ===== FORM 10 =====
+					$forms10 = DaftarTilik::where('pk_id', $form1Data->pk_id)
+						->where('form_number', 'like', 'form_10.%')
+						->orderBy('urutan')
+						->get();
+
+					if ($forms10->isEmpty()) {
+						Log::info("Tidak ada daftar_tilik untuk Form 10 pada PK {$form1Data->pk_id}");
+					} else {
+						foreach ($forms10 as $form) {
+							$formType = $form->form_number; // contoh: form_10.001
+
+							// Cek apakah form sudah ada
+							$isFormExist = $this->formService->isFormExistSingle(
+								$form1Data->asesi_id,
+								$form1Data->pk_id,
+								$formType
+							);
+
+							if (!$isFormExist) {
+								Log::info("{$formType} belum ada, membuat...");
+
+								// Simpan Form 10
+								$form10 = $this->formService->inputForm10(
+									$form1Data->pk_id,
+									$form->id,                // daftar_tilik_id ✅
+									$form->form_number,       // no_reg ✅
+									$form1Data->asesi_id,
+									$form1Data->asesi_name,
+									$form1Data->asesor_id,
+									$form1Data->asesor_name
+								);
+
+								if ($form10) {
+									// Buat progres & track
+									$this->formService->createProgresDanTrack(
+										$form10->form_10_id,
+										$formType,
+										'InAssessment',
+										$form1Data->asesi_id,
+										$form1Data->form_1_id,
+										"Form {$formType} sudah dapat diisi."
+									);
+								}
+							} else {
+								Log::info("{$formType} sudah ada, tidak membuat ulang.");
+							}
+						}
 					}
 				}
 			} catch (\Exception $e) {
