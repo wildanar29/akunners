@@ -171,7 +171,7 @@ class Form4cController extends BaseController
                 'form_4c',
                 'Submitted',
                 $request->user_id,
-                'Form 4C telah di isi oleh Asesor'
+                'Form 4C telah di isi oleh Asesi'
             );
 
             $form1 = $this->formService->getParentDataByFormId($request->form_1_id);
