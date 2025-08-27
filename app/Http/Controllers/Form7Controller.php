@@ -196,6 +196,7 @@ class Form7Controller extends BaseController
         // 1. Ambil asesi_id dari form 1
         $form1Data = $this->formService->getParentDataByFormId($form1Id);
         $asesiId = $form1Data->asesi_id ?? null;
+        $asesorId = $form1Data->asesor_id ?? null;
 
         if (!$asesiId) {
             return response()->json([
@@ -242,6 +243,7 @@ class Form7Controller extends BaseController
                 JawabanForm7::updateOrCreate(
                     [
                         'asesi_id' => $asesiId,
+                        'asesor_id' => $asesorId,
                         'soal_form7_id' => $soal->id
                     ],
                     [
@@ -299,6 +301,7 @@ class Form7Controller extends BaseController
         // 1. Ambil asesi_id dari Form 1
         $form1Data = $this->formService->getParentDataByFormId($form1Id);
         $asesiId = $form1Data->asesi_id ?? null;
+        $asesorId = $form1Data->asesor_id ?? null;
 
         if (!$asesiId) {
             return response()->json([
@@ -346,6 +349,7 @@ class Form7Controller extends BaseController
             JawabanForm7::updateOrCreate(
                 [
                     'asesi_id' => $asesiId,
+                    'asesor_id' => $asesorId,
                     'soal_form7_id' => $soal->id
                 ],
                 [
@@ -365,6 +369,7 @@ class Form7Controller extends BaseController
         // 1. Ambil asesi_id dari Form 1
         $form1Data = $this->formService->getParentDataByFormId($form1Id);
         $asesiId = $form1Data->asesi_id ?? null;
+        $asesorId = $form1Data->asesor_id ?? null;
 
         if (!$asesiId) {
             return response()->json([
@@ -412,6 +417,7 @@ class Form7Controller extends BaseController
             JawabanForm7::updateOrCreate(
                 [
                     'asesi_id' => $asesiId,
+                    'asesor_id' => $asesorId,
                     'soal_form7_id' => $soal->id
                 ],
                 [
