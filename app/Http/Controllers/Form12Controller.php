@@ -55,7 +55,8 @@ class Form12Controller extends BaseController
     {
         // ✅ Validasi request
         $validator = Validator::make($request->all(), [
-            'pk_id' => 'required|integer|min:1',
+            'pk_id'     => 'required|integer|min:1',
+            'asesi_id'  => 'required|integer|min:1', // tambahkan validasi asesi_id
         ]);
 
         if ($validator->fails()) {
@@ -65,37 +66,43 @@ class Form12Controller extends BaseController
             ], 422);
         }
 
-        $pkId = $request->input('pk_id');
+        $pkId     = $request->input('pk_id');
+        $asesiId  = $request->input('asesi_id');
 
-        // ✅ Query ambil data nested
+        // ✅ Query ambil data nested dengan filter asesi_id
         $data = ElemenForm3::with([
-                'kukForm3' => function ($q) {
-                    $q->orderBy('no_kuk', 'asc')
-                    ->with([
-                        'iukForm3' => function ($q2) {
-                            $q2->orderBy('no_iuk', 'asc')
-                                ->with([
-                                    'soalForm7' => function ($q3) {
-                                        $q3->select('id', 'iuk_form3_id')
-                                            ->with([
-                                                'jawabanForm7' => function ($q4) {
-                                                    $q4->select('id', 'soal_form7_id', 'keputusan');
-                                                }
-                                            ]);
-                                    }
-                                ]);
-                        }
-                    ]);
-                }
-            ])
-            ->where('pk_id', $pkId)
-            ->orderBy('no_elemen_form_3', 'asc')
-            ->get();
+            'kukForm3' => function ($q) use ($asesiId) {
+                $q->orderBy('no_kuk', 'asc')
+                ->with([
+                    'iukForm3' => function ($q2) use ($asesiId) {
+                        $q2->orderBy('no_iuk', 'asc')
+                            ->with([
+                                'soalForm7' => function ($q3) use ($asesiId) {
+                                    $q3->select('id', 'iuk_form3_id')
+                                        ->with([
+                                            'jawabanForm7' => function ($q4) use ($asesiId) {
+                                                $q4->select('id', 'soal_form7_id', 'keputusan', 'asesi_id')
+                                                    ->where('asesi_id', $asesiId);
+                                            }
+                                        ]);
+                                }
+                            ]);
+                    }
+                ]);
+            }
+        ])
+        ->where('pk_id', $pkId)
+        // ⬇️ Tambahkan ini supaya hanya ambil Elemen yang punya jawaban sesuai asesi
+        ->whereHas('kukForm3.iukForm3.soalForm7.jawabanForm7', function ($q) use ($asesiId) {
+            $q->where('asesi_id', $asesiId);
+        })
+        ->orderBy('no_elemen_form_3', 'asc')
+        ->get();
 
         if ($data->isEmpty()) {
             return response()->json([
                 'status'  => 'not_found',
-                'message' => "Data tidak ditemukan untuk pk_id: $pkId",
+                'message' => "Data tidak ditemukan untuk pk_id: $pkId dan asesi_id: $asesiId",
             ], 404);
         }
 
@@ -139,6 +146,7 @@ class Form12Controller extends BaseController
             'data'   => $data,
         ]);
     }
+
 
     public function ApproveForm12ByAsesi(Request $request, $form12Id)
     {
