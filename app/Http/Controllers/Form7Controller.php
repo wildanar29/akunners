@@ -282,6 +282,7 @@ class Form7Controller extends BaseController
             JawabanForm7::updateOrCreate(
                 [
                     'asesi_id' => $asesiId,
+                    'asesor_id' => $asesorId,
                     'soal_form7_id' => $soal->id
                 ],
                 [
