@@ -55,7 +55,7 @@ class Form9Controller extends BaseController
             // Query ke model
             $questions = Form9Question::query()
                 ->when($subject, function ($query, $subject) {
-                    $query->where('section', $subject);
+                    $query->where('subject', $subject);
                 })
                 ->when($pkId, function ($query, $pkId) {
                     $query->where('pk_id', $pkId);
