@@ -89,11 +89,12 @@ class ProgressController extends Controller
                 return response()->json([
                     'status' => 'ERROR',
                     'message' => 'Parameter pk_id wajib diisi.',
-                    'data' => [],
+                    'data' => null,
                 ], 400);
             }
 
-            $data = BidangModel::where('pk_id', $pk_id)
+            // Ambil satu data bidang
+            $item = BidangModel::where('pk_id', $pk_id)
                 ->where('asesi_id', $asesi_id)
                 ->select([
                     'form_1_id',
@@ -104,44 +105,51 @@ class ProgressController extends Controller
                     'asesor_name',
                     'asesor_date',
                 ])
+                ->first();
+
+            if (!$item) {
+                return response()->json([
+                    'status' => 'ERROR',
+                    'message' => 'Data tidak ditemukan.',
+                    'data' => null,
+                ], 404);
+            }
+
+            // Ambil status utama dari KompetensiProgres berdasarkan form_id = form_1_id
+            $statusUtama = \App\Models\KompetensiProgres::where('form_id', $item->form_1_id)
+                ->value('status');
+
+            $item->status_utama = $statusUtama;
+
+            // Ambil progres anak berdasarkan parent_form_id = form_1_id
+            $progres = \App\Models\KompetensiProgres::where('parent_form_id', $item->form_1_id)
+                ->select('id', 'form_id', 'status')
                 ->get()
-                ->map(function ($item) {
-                    // Ambil status utama dari KompetensiProgres berdasarkan form_id = form_1_id
-                    $statusUtama = \App\Models\KompetensiProgres::where('form_id', $item->form_1_id)
-                        ->value('status');
+                ->map(function ($prog) {
+                    // Ambil form_type dari KompetensiTrack
+                    $form_type = \App\Models\KompetensiTrack::where('progres_id', $prog->id)
+                        ->value('form_type');
 
-                    $item->status_utama = $statusUtama;
-
-                    // Ambil progres anak berdasarkan form_parent_id = form_1_id
-                    $progres = \App\Models\KompetensiProgres::where('parent_form_id', $item->form_1_id)
-                        ->select('id', 'form_id', 'status')
-                        ->get()
-                        ->map(function ($prog) {
-                            // Ambil form_type dari KompetensiTrack
-                            $form_type = \App\Models\KompetensiTrack::where('progres_id', $prog->id)
-                                ->value('form_type');
-
-                            $prog->form_type = $form_type;
-                            return $prog;
-                        });
-
-                    $item->progres = $progres;
-                    return $item;
+                    $prog->form_type = $form_type;
+                    return $prog;
                 });
+
+            $item->progres = $progres;
 
             return response()->json([
                 'status' => 'SUCCESS',
                 'message' => 'Data progres berhasil diambil.',
-                'data' => $data,
+                'data' => $item, // langsung object, bukan array
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'ERROR',
                 'message' => 'Gagal mengambil data progres: ' . $e->getMessage(),
-                'data' => [],
+                'data' => null,
             ], 500);
         }
     }
+
 
     public function getTracksByFormId(Request $request)
     {
