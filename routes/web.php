@@ -274,9 +274,9 @@ $router->get('/form6/soal/{pkId}', 'Form6Controller@SoalForm6');
 
 
 // CERTIFICATE
-$router->get('/tes-view', function () {
-    return view('sertifikat', ['nama' => 'Wildan', 'tanggal' => date('d F Y')]);
-});
+// $router->get('/tes-view', function () {
+//     return view('sertifikat', ['nama' => 'Wildan', 'tanggal' => date('d F Y')]);
+// });
 
 //Notifikasi 
 $router->get('/send-notification-to-bidang', action: 'NotificationController@notifikasiPengajuankeBidang');
