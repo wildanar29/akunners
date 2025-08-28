@@ -145,27 +145,32 @@ class ProgressController extends Controller
 
     public function getTracksByFormId(Request $request)
     {
-        $form_id = $request->input('form_id');
+        $form_id       = $request->input('form_id');
+        $user_id       = $request->input('user_id');
+        $parent_form_id = $request->input('parent_form_id');
 
-        if (!$form_id) {
+        // validasi semua parameter wajib
+        if (!$form_id || !$user_id || !$parent_form_id) {
             return response()->json([
-                'status' => 'ERROR',
-                'message' => 'Parameter form_id wajib diisi.',
-                'data' => [],
+                'status'  => 'ERROR',
+                'message' => 'Parameter form_id, user_id, dan parent_form_id wajib diisi.',
+                'data'    => [],
             ], 400);
         }
 
         try {
-            // Ambil progres berdasarkan form_id
+            // Ambil progres berdasarkan form_id, user_id, dan parent_form_id
             $progres = DB::table('kompetensi_progres')
                 ->where('form_id', $form_id)
+                ->where('user_id', $user_id)
+                ->where('parent_form_id', $parent_form_id)
                 ->first();
 
             if (!$progres) {
                 return response()->json([
-                    'status' => 'ERROR',
-                    'message' => 'Data progres tidak ditemukan untuk form_id tersebut.',
-                    'data' => [],
+                    'status'  => 'ERROR',
+                    'message' => 'Data progres tidak ditemukan untuk kombinasi parameter tersebut.',
+                    'data'    => [],
                 ], 404);
             }
 
@@ -176,16 +181,16 @@ class ProgressController extends Controller
                 ->get();
 
             return response()->json([
-                'status' => 'OK',
+                'status'  => 'OK',
                 'message' => 'Data tracks berhasil diambil.',
-                'data' => $tracks,
+                'data'    => $tracks,
             ], 200);
 
         } catch (\Exception $e) {
             return response()->json([
-                'status' => 'ERROR',
+                'status'  => 'ERROR',
                 'message' => 'Terjadi kesalahan saat mengambil data tracks.',
-                'error' => $e->getMessage(),
+                'error'   => $e->getMessage(),
             ], 500);
         }
     }

@@ -258,28 +258,47 @@ class Form9Controller extends BaseController
      */
     private function afterAnswerSaved($form9Id, $subject)
     {
+        \Log::info("afterAnswerSaved dipanggil", [
+            'form9Id' => $form9Id,
+            'subject' => $subject
+        ]);
+
+        // cek apakah formService ada
+        if (!$this->formService) {
+            \Log::error("formService NULL di afterAnswerSaved");
+            return; // stop biar ga error fatal
+        }
+
         // ambil form induk dari form_9
         $form1Id = $this->formService->getParentFormIdByFormId($form9Id);
-        $form1   = $this->formService->getParentDataByFormId($form1Id);
+        \Log::info("Hasil getParentFormIdByFormId", ['form1Id' => $form1Id]);
+
+        $form1 = $this->formService->getParentDataByFormId($form1Id);
+        \Log::info("Hasil getParentDataByFormId", ['form1' => $form1]);
 
         // cek status form_9
         $form9Status = $this->formService
             ->getStatusByParentFormIdAndType($form1Id, 'form_9')
             ->first();
 
-        if ($form9Status === 'Submitted') {
+        \Log::info("Status form_9", ['status' => $form9Status]);
+
+        if ($form9Status === 'Submitted' || $form9Status === 'InAssessment') {
             // update status jadi Approved
             $this->formService->updateForm9(
                 $form9Id,
-                null,
-                null,
-                'form_9',
-                null,
-                null,
-                null,
-                null,
-                'Approved'
+                null,   // pk_id
+                null,   // asesi_id
+                null,   // asesi_name
+                null,   // asesi_date
+                null,   // asesor_id
+                null,   // asesor_name
+                null,   // asesor_date
+                null,   // no_reg
+                'Approved' // status
             );
+
+
 
             $this->formService->updateProgresDanTrack(
                 $form9Id,
@@ -291,14 +310,20 @@ class Form9Controller extends BaseController
 
             // kirim notifikasi ke pihak lawan
             if ($subject === 'asesi') {
-                // Asesi isi → kirim ke Asesor
+                \Log::info("Kirim notifikasi ke Asesor", [
+                    'asesor_id' => $form1->asesor_id ?? null
+                ]);
+
                 $this->formService->kirimNotifikasiKeUser(
                     DaftarUser::find($form1->asesor_id),
                     'Form 9 Approved',
                     'Form 9 telah diisi & disetujui oleh Asesi.'
                 );
             } else {
-                // Asesor isi → kirim ke Asesi
+                \Log::info("Kirim notifikasi ke Asesi", [
+                    'asesi_id' => $form1->asesi_id ?? null
+                ]);
+
                 $this->formService->kirimNotifikasiKeUser(
                     DaftarUser::find($form1->asesi_id),
                     'Form 9 Approved',
@@ -307,6 +332,7 @@ class Form9Controller extends BaseController
             }
         }
     }
+
 
 
 }

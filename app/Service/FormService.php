@@ -324,6 +324,46 @@ class FormService
 		return $form6;
 	}
 
+	public function updateForm9(
+		$form9Id,
+		$pkId = null,
+		$asesiId = null,
+		$asesiName = null,
+		$asesiDate = null,
+		$asesorId = null,
+		$asesorName = null,
+		$asesorDate = null,
+		$noReg = null,
+		$status = null
+	) {
+		DB::beginTransaction();
+		try {
+			$form9 = Form9::findOrFail($form9Id);
+
+			$form9->update([
+				'pk_id'       => $pkId       ?? $form9->pk_id,
+				'asesi_id'    => $asesiId    ?? $form9->asesi_id,
+				'asesi_name'  => $asesiName  ?? $form9->asesi_name,
+				'asesi_date'  => $asesiDate  ?? $form9->asesi_date,
+				'asesor_id'   => $asesorId   ?? $form9->asesor_id,
+				'asesor_name' => $asesorName ?? $form9->asesor_name,
+				'asesor_date' => $asesorDate ?? $form9->asesor_date,
+				'no_reg'      => $noReg      ?? $form9->no_reg,
+				'status'      => $status     ?? $form9->status,
+				'updated_at'  => Carbon::now(),
+			]);
+
+			DB::commit();
+			return $form9;
+
+		} catch (\Exception $e) {
+			DB::rollBack();
+			Log::error("Gagal mengupdate Form 9: " . $e->getMessage());
+			throw $e;
+		}
+	}
+
+
 	public function updateForm10(
 		$form10Id,
 		$pkId = null,
