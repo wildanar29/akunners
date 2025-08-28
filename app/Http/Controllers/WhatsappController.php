@@ -30,7 +30,7 @@ class WhatsappController extends Controller
     public function sendOtp(Request $request)
     {
         // Ambil NIK dari request
-        $nik = $request->input('nik');
+        $nik = $request->input('nib');
     
         // Validasi untuk memastikan NIK ada
         if (!$nik) {
