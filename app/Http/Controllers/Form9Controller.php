@@ -160,9 +160,8 @@ class Form9Controller extends BaseController
 
     public function saveOrUpdateAnswers(Request $request, $form9Id)
     {
-        // Validasi manual menggunakan Validator
         $validator = Validator::make($request->all(), [
-            'subject' => 'required|string|in:asesor,asesi', // filter subject
+            'subject' => 'required|string|in:asesor,asesi',
             'answers' => 'required|array',
             'answers.*.question_id' => 'required|integer|exists:form9_questions,question_id',
             'answers.*.answer_text' => 'nullable|string',
@@ -180,49 +179,14 @@ class Form9Controller extends BaseController
         }
 
         $data = $validator->validated();
-        $subject = $data['subject']; // subject dari request (asesor / asesi)
+        $subject = $data['subject'];
 
         try {
-            foreach ($data['answers'] as $q) {
-                // Ambil pertanyaan untuk cek subject
-                $question = \App\Models\Form9Question::find($q['question_id']);
-                if (!$question || $question->subject !== $subject) {
-                    // Skip jika subject tidak sesuai
-                    continue;
-                }
+            // Simpan jawaban sesuai subject
+            $this->processAnswersBySubject($form9Id, $data['answers'], $subject);
 
-                // Jawaban untuk pertanyaan utama (tanpa sub question)
-                if (!isset($q['sub_questions']) || empty($q['sub_questions'])) {
-                    Form9Answer::updateOrCreate(
-                        [
-                            'form_9_id' => $form9Id,
-                            'question_id' => $q['question_id'],
-                            'sub_question_id' => null,
-                        ],
-                        [
-                            'answer_text' => $q['answer_text'] ?? null,
-                            'user_id' => auth()->id() ?? null, // sesuaikan jika pakai auth
-                        ]
-                    );
-                }
-
-                // Jawaban untuk sub question
-                if (isset($q['sub_questions']) && !empty($q['sub_questions'])) {
-                    foreach ($q['sub_questions'] as $sq) {
-                        Form9Answer::updateOrCreate(
-                            [
-                                'form_9_id' => $form9Id,
-                                'question_id' => $q['question_id'],
-                                'sub_question_id' => $sq['sub_question_id'],
-                            ],
-                            [
-                                'answer_text' => $sq['answer_text'] ?? null,
-                                'user_id' => auth()->id() ?? null,
-                            ]
-                        );
-                    }
-                }
-            }
+            // Setelah berhasil simpan, update status & kirim notifikasi
+            $this->afterAnswerSaved($form9Id, $subject);
 
             return response()->json([
                 'success' => true,
@@ -230,7 +194,7 @@ class Form9Controller extends BaseController
             ], 200);
 
         } catch (\Exception $e) {
-            \Log::error('Error simpan jawaban Form 9: '.$e->getMessage());
+            \Log::error('Error simpan jawaban Form 9: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan saat menyimpan jawaban',
@@ -238,5 +202,106 @@ class Form9Controller extends BaseController
             ], 500);
         }
     }
+
+    /**
+     * Proses jawaban sesuai subject (asesor / asesi)
+     */
+    private function processAnswersBySubject($form9Id, array $answers, $subject)
+    {
+        foreach ($answers as $q) {
+            $question = \App\Models\Form9Question::find($q['question_id']);
+            if (!$question || $question->subject !== $subject) {
+                continue;
+            }
+
+            // Jawaban utama
+            if (!isset($q['sub_questions']) || empty($q['sub_questions'])) {
+                Form9Answer::updateOrCreate(
+                    [
+                        'form_9_id' => $form9Id,
+                        'question_id' => $q['question_id'],
+                        'sub_question_id' => null,
+                    ],
+                    [
+                        'answer_text' => $q['answer_text'] ?? null,
+                        'user_id' => auth()->id() ?? null,
+                    ]
+                );
+            }
+
+            // Jawaban sub-question
+            if (isset($q['sub_questions']) && !empty($q['sub_questions'])) {
+                foreach ($q['sub_questions'] as $sq) {
+                    Form9Answer::updateOrCreate(
+                        [
+                            'form_9_id' => $form9Id,
+                            'question_id' => $q['question_id'],
+                            'sub_question_id' => $sq['sub_question_id'],
+                        ],
+                        [
+                            'answer_text' => $sq['answer_text'] ?? null,
+                            'user_id' => auth()->id() ?? null,
+                        ]
+                    );
+                }
+            }
+        }
+    }
+
+    /**
+     * Setelah jawaban tersimpan → update status form & kirim notifikasi ke pihak lawan
+     */
+    private function afterAnswerSaved($form9Id, $subject)
+    {
+        // ambil form induk dari form_9
+        $form1Id = $this->formService->getParentFormIdByFormId($form9Id);
+        $form1   = $this->formService->getParentDataByFormId($form1Id);
+
+        // cek status form_9
+        $form9Status = $this->formService
+            ->getStatusByParentFormIdAndType($form1Id, 'form_9')
+            ->first();
+
+        if ($form9Status === 'Submitted') {
+            // update status jadi Approved
+            $this->formService->updateForm9(
+                $form9Id,
+                null,
+                null,
+                'form_9',
+                null,
+                null,
+                null,
+                null,
+                'Approved'
+            );
+
+            $this->formService->updateProgresDanTrack(
+                $form9Id,
+                'form_9',
+                'Approved',
+                Auth::id(),
+                "Form 9 telah di-approve oleh {$subject}"
+            );
+
+            // kirim notifikasi ke pihak lawan
+            if ($subject === 'asesi') {
+                // Asesi isi → kirim ke Asesor
+                $this->formService->kirimNotifikasiKeUser(
+                    DaftarUser::find($form1->asesor_id),
+                    'Form 9 Approved',
+                    'Form 9 telah diisi & disetujui oleh Asesi.'
+                );
+            } else {
+                // Asesor isi → kirim ke Asesi
+                $this->formService->kirimNotifikasiKeUser(
+                    DaftarUser::find($form1->asesi_id),
+                    'Form 9 Approved',
+                    'Form 9 telah diisi & disetujui oleh Asesor.'
+                );
+            }
+        }
+    }
+
 
 }
