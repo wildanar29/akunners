@@ -162,6 +162,20 @@ class BidangController extends Controller
 				'nama' => $userAsesor->nama,
 			]);
 
+			// Pastikan asesor bukan asesi yang bersangkutan
+			if ($userAsesor->user_id == $bidang->asesi_id) {
+				Log::warning('Asesor sama dengan Asesi, penugasan ditolak', [
+					'form_1_id' => $bidang->form_1_id,
+					'user_id' => $userAsesor->user_id,
+				]);
+
+				return response()->json([
+					'status' => 'Error',
+					'message' => 'Asesor tidak boleh sama dengan Asesi.',
+					'status_code' => 400,
+				], 400);
+			}
+
 			$bidang->asesor_id = $userAsesor->user_id;
 			$bidang->asesor_name = $userAsesor->nama;
 			$bidang->asesor_date = Carbon::now();
