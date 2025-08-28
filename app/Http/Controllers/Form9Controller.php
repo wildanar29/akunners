@@ -45,6 +45,11 @@ class Form9Controller extends BaseController
 
 	protected $formService;
 
+    public function __construct(FormService $formService)
+    {
+        $this->formService = $formService;
+    }
+
     public function getQuestionsBySubject(Request $request)
     {
         try {
