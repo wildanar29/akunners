@@ -150,7 +150,7 @@ class MailController extends Controller
                 'message' => 'Incorrect OTP.',
                 'errorMessages' => [],
                 'data' => []
-            ], 401);
+            ], 400);
         }
 
         if (Carbon::now('UTC')->gt($otpRecord->expires_at)) {
@@ -160,7 +160,7 @@ class MailController extends Controller
                 'message' => 'OTP code has expired.',
                 'errorMessages' => [],
                 'data' => []
-            ], 402);
+            ], 400);
         }
 
         // Tandai OTP sebagai telah divalidasi
