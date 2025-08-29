@@ -40,7 +40,7 @@ $app->configure('session');
 $app->configure('database');
 $app->alias('redis', \Illuminate\Support\Facades\Redis::class);
 $app->register(Laravel\Tinker\TinkerServiceProvider::class);
-// $app->register(Barryvdh\DomPDF\ServiceProvider::class);
+$app->register(Barryvdh\DomPDF\ServiceProvider::class);
 
 
 
