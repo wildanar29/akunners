@@ -111,9 +111,9 @@ class ProgressController extends Controller
             if (!$item) {
                 return response()->json([
                     'status' => 'ERROR',
-                    'message' => 'Data tidak ditemukan.',
+                    'message' => 'Data tidak tersedia.',
                     'data' => null,
-                ], 404);
+                ], 200);
             }
 
             // Ambil status utama
