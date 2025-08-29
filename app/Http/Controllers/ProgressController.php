@@ -80,15 +80,16 @@ class ProgressController extends Controller
         }
     }
 
-    public function getProgresByAsesi(Request $request, $asesi_id)
+    public function getProgresByAsesi(Request $request)
     {
         try {
-            $pk_id = $request->input('pk_id');
+            $asesi_id = $request->query('asesi_id'); 
+            $pk_id    = $request->query('pk_id'); 
 
-            if (!$pk_id) {
+            if (!$asesi_id || !$pk_id) {
                 return response()->json([
                     'status' => 'ERROR',
-                    'message' => 'Parameter pk_id wajib diisi.',
+                    'message' => 'Parameter asesi_id dan pk_id wajib diisi.',
                     'data' => null,
                 ], 400);
             }
@@ -115,18 +116,17 @@ class ProgressController extends Controller
                 ], 404);
             }
 
-            // Ambil status utama dari KompetensiProgres berdasarkan form_id = form_1_id
+            // Ambil status utama
             $statusUtama = \App\Models\KompetensiProgres::where('form_id', $item->form_1_id)
                 ->value('status');
 
             $item->status_utama = $statusUtama;
 
-            // Ambil progres anak berdasarkan parent_form_id = form_1_id
+            // Ambil progres anak
             $progres = \App\Models\KompetensiProgres::where('parent_form_id', $item->form_1_id)
                 ->select('id', 'form_id', 'status')
                 ->get()
                 ->map(function ($prog) {
-                    // Ambil form_type dari KompetensiTrack
                     $form_type = \App\Models\KompetensiTrack::where('progres_id', $prog->id)
                         ->value('form_type');
 
@@ -139,7 +139,7 @@ class ProgressController extends Controller
             return response()->json([
                 'status' => 'SUCCESS',
                 'message' => 'Data progres berhasil diambil.',
-                'data' => $item, // langsung object, bukan array
+                'data' => $item,
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -149,6 +149,7 @@ class ProgressController extends Controller
             ], 500);
         }
     }
+
 
 
     public function getTracksByFormId(Request $request)

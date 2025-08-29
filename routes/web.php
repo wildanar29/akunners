@@ -1,5 +1,6 @@
 <?php
-
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Storage;
 
 /** @var \Laravel\Lumen\Routing\Router $router */
 
@@ -25,7 +26,7 @@ $router->get('/get-elemen-pk/{pk_id}', 'MasterController@getElemenAsesmen');
 
 // PROGRES TRACKING
 $router->get('/progress/asesi/{asesorId}', 'AsesiPermohonanController@getAsesiProgressByAsesor');
-$router->get('/progress/assessment/{asesi_id}', 'ProgressController@getProgresByAsesi');
+$router->get('/progress/assessment', 'ProgressController@getProgresByAsesi');
 // FORM 1 ATAU FORM PENGAJUAN
 $router->get('/progress/{userId}', 'AsesiPermohonanController@getUserFormProgress');
 $router->post('/get-form1-byasesor', 'AsesiPermohonanController@getForm1ByAsesor');
@@ -274,9 +275,26 @@ $router->get('/form6/soal/{pkId}', 'Form6Controller@SoalForm6');
 
 
 // CERTIFICATE
-// $router->get('/tes-view', function () {
-//     return view('sertifikat', ['nama' => 'Wildan', 'tanggal' => date('d F Y')]);
-// });
+
+$router->get('/tes-view', function () {
+    return view('sertifikat', ['nama' => 'Wildan', 'tanggal' => date('d F Y')]);
+});
+Route::get('/generate-sertifikat', function () {
+    $data = [
+        'nama' => 'Wildan AR',
+        'tanggal_mulai' => '01 September 2024',
+        'tanggal_selesai' => '03 September 2024',
+        'status' => 'Kompeten'
+    ];
+
+    $pdf = Pdf::loadView('sertifikat.keperawatan', $data);
+
+    // Simpan ke folder storage/app/public/sertifikat/
+    $path = 'sertifikat/sertifikat_keperawatan.pdf';
+    Storage::disk('public')->put($path, $pdf->output());
+
+    return "Sertifikat berhasil disimpan di: storage/app/public/{$path}";
+});
 
 //Notifikasi 
 $router->get('/send-notification-to-bidang', action: 'NotificationController@notifikasiPengajuankeBidang');
