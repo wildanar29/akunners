@@ -249,6 +249,7 @@ class AsesiPermohonanController extends Controller
 
    public function getUserFormProgress($userId)
 	{
+		Log::info("Memulai pengambilan data progres untuk user_id: $userId");
 		try {
 			// Ambil data pk_progress dan join ke masing-masing form yang sudah tersedia
 			$progress = DB::table('pk_progress')
