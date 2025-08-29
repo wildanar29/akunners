@@ -110,7 +110,7 @@ class ProgressController extends Controller
 
             if (!$item) {
                 return response()->json([
-                    'status' => 'ERROR',
+                    'status' => 'SUCCESS',
                     'message' => 'Data tidak tersedia.',
                     'data' => null,
                 ], 200);
