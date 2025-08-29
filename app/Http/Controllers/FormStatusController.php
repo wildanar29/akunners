@@ -83,8 +83,9 @@ class FormStatusController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'No progress found for this user ID.',
-                    'status_code' => 404
-                ], 404);
+                    'status_code' => 200,
+                    'data' => null
+                ], 200);
             }
 
             // Ambil data status berdasarkan progress_id
@@ -95,8 +96,9 @@ class FormStatusController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'No status found for this user ID.',
-                    'status_code' => 404
-                ], 404);
+                    'status_code' => 200,
+                    'data' => null
+                ], 200);
             }
 
             // Struktur response JSON hanya form_x_status
