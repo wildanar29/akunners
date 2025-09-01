@@ -509,7 +509,12 @@ class BidangController extends Controller
 
 		// Tambahkan foto dari DaftarUser berdasarkan user_id
 		$form1Data = $form1Data->map(function ($item) {
-			$user = DaftarUser::find($item->user_id);
+			$user = DaftarUser::find($item->asesi_id);
+
+			Log::info('Mencari foto untuk user_id: ' . ($item->asesi_id ?? 'null'), [
+				'user_found' => $user ? true : false,
+				'foto' => $user ? $user->foto : 'null'
+			]);
 
 			$item->foto = $user && $user->foto
 				? url('storage/foto_nurse/' . basename($user->foto))
