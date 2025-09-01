@@ -482,12 +482,16 @@ class BidangController extends Controller
 		$status = $request->query('status'); // Ambil dari query string
 
 		$allowedStatus = [
-			'Waiting',
-			'ApprovedBy_Asesor',
-			'ApprovedBy_Bidang',
-			'Cancel',
+			'Submitted',
+			'Assigned',
 			'Process',
-			'Completed'
+			'Approved',
+			'Process',
+			'Completed',
+			'Rejected',
+			'InAssessment',
+			'Verified',
+			'Certified',
 		];
 
 		if ($status && !in_array($status, $allowedStatus)) {
