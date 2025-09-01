@@ -407,7 +407,7 @@ class AsesiPermohonanController extends Controller
 
 		// Map foto berdasarkan user_id
 		$formList = $formList->map(function ($item) {
-			$user = DaftarUser::find($item->user_id);
+			$user = DaftarUser::find($item->asesi_id);
 
 			$item->foto = $user && $user->foto
 				? url('storage/foto_nurse/' . basename($user->foto))
