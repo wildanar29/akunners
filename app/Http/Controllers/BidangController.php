@@ -406,7 +406,7 @@ class BidangController extends Controller
     }  
 
 
-  /**
+/**
  * @OA\Post(
  *     path="/get-form1",
  *     summary="Ambil semua data Form1 (opsional filter status)",
@@ -417,8 +417,9 @@ class BidangController extends Controller
  *             @OA\Property(
  *                 property="status",
  *                 type="string",
- *                 example="Waiting",
- *                 description="Opsional filter berdasarkan status: Waiting, ApprovedBy_Asesor, ApprovedBy_Bidang, Cancel, Completed"
+ *                 enum={"Submitted", "Assigned", "Process", "Approved", "Completed", "InAssessment", "Verified", "Certified", "Rejected", ""},
+ *                 example="Submitted",
+ *                 description="Opsional filter berdasarkan status yang valid"
  *             )
  *         )
  *     ),
@@ -440,7 +441,7 @@ class BidangController extends Controller
  *                     @OA\Property(property="asesor_name", type="string", example="Dalia Novitasari"),
  *                     @OA\Property(property="asesor_date", type="string", format="date-time"),
  *                     @OA\Property(property="no_reg", type="string", example="ASK.123456"),
- *                     @OA\Property(property="status", type="string", example="Cancel"),
+ *                     @OA\Property(property="status", type="string", example="Submitted"),
  *                     @OA\Property(property="ijazah_id", type="integer", example=38),
  *                     @OA\Property(property="spk_id", type="integer", nullable=true, example=null),
  *                     @OA\Property(property="sip_id", type="integer", example=17),
