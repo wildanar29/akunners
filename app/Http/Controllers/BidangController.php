@@ -585,18 +585,21 @@ class BidangController extends Controller
 		try {
 			$form1Data = BidangModel::find($form_1_id);
 
-			$userData = null;
-			if ($form1Data && $form1Data->user_id) {
-				// pastikan eager load roles jika belum
-				$userData = DaftarUser::with('roles')->where('user_id', $form1Data->user_id)->first();
+			if (!$form1Data) {
+				return response()->json([
+					'status' => 404,
+					'message' => 'Form 1 tidak ditemukan.',
+					'data' => null
+				], 404);
 			}
 
-			$form1Array = $form1Data ? $form1Data->toArray() : [];
-			$userArray = [];
+			// Ambil user terkait
+			$user = $form1Data->asesi_id ? DaftarUser::with('roles')->find($form1Data->asesi_id) : null;
 
-			if ($userData) {
-				// Ambil semua history jabatan
-				$historyJabatan = HistoryJabatan::where('user_id', $userData->user_id)->get();
+			$userData = [];
+			if ($user) {
+				// Ambil history jabatan
+				$historyJabatan = HistoryJabatan::where('user_id', $user->user_id)->get();
 				$jabatanData = $historyJabatan->map(function ($history) {
 					$working_unit = DB::table('working_unit')->where('working_unit_id', $history->working_unit_id)->first();
 					$jabatan = DB::table('jabatan')->where('jabatan_id', $history->jabatan_id)->first();
@@ -611,95 +614,77 @@ class BidangController extends Controller
 					];
 				});
 
-				// Ambil dokumen berdasarkan ID di form1Data
-				$ijazahFile = DB::table('users_ijazah_file')->where('ijazah_id', $form1Data->ijazah_id)->first();
-				$ujikomFile = DB::table('users_ujikom_file')->where('ujikom_id', $form1Data->ujikom_id)->first();
-				$strFile = DB::table('users_str_file')->where('str_id', $form1Data->str_id)->first();
-				$sipFile = DB::table('users_sip_file')->where('sip_id', $form1Data->sip_id)->first();
-				$spkFile = DB::table('users_spk_file')->where('spk_id', $form1Data->spk_id)->first();
+				// Dokumen user
+				$ijazah = $user->ijazah ? ['url' => url('storage/' . $user->ijazah->path_file)] : null;
+				$ujikom = $user->ujikom ? [
+					'url' => url('storage/' . $user->ujikom->path_file),
+					'nomor' => $user->ujikom->nomor_kompetensi ?? null,
+					'masa_berlaku' => $user->ujikom->masa_berlaku_kompetensi ?? null
+				] : null;
+				$str = $user->str ? [
+					'url' => url('storage/' . $user->str->path_file),
+					'nomor' => $user->str->nomor_str ?? null,
+					'masa_berlaku' => $user->str->masa_berlaku_str ?? null
+				] : null;
+				$sip = $user->sip ? [
+					'url' => url('storage/' . $user->sip->path_file),
+					'nomor' => $user->sip->nomor_sip ?? null,
+					'masa_berlaku' => $user->sip->masa_berlaku_sip ?? null
+				] : null;
+				$spk = $user->spk ? [
+					'url' => url('storage/' . $user->spk->path_file),
+					'nomor' => $user->spk->nomor_spk ?? null,
+					'masa_berlaku' => $user->spk->masa_berlaku_spk ?? null
+				] : null;
 
-				$ijazah = [
-					'url' => $ijazahFile ? url('storage/' . $ijazahFile->path_file) : null
-				];
-
-				$ujikom = [
-					'url' => $ujikomFile ? url('storage/' . $ujikomFile->path_file) : null,
-					'nomor' => $ujikomFile->nomor_kompetensi ?? null,
-					'masa_berlaku' => $ujikomFile->masa_berlaku_kompetensi ?? null
-				];
-
-				$str = [
-					'url' => $strFile ? url('storage/' . $strFile->path_file) : null,
-					'nomor' => $strFile->nomor_str ?? null,
-					'masa_berlaku' => $strFile->masa_berlaku_str ?? null
-				];
-
-				$sip = [
-					'url' => $sipFile ? url('storage/' . $sipFile->path_file) : null,
-					'nomor' => $sipFile->nomor_sip ?? null,
-					'masa_berlaku' => $sipFile->masa_berlaku_sip ?? null
-				];
-
-				$spk = [
-					'url' => $spkFile ? url('storage/' . $spkFile->path_file) : null,
-					'nomor' => $spkFile->nomor_spk ?? null,
-					'masa_berlaku' => $spkFile->masa_berlaku_spk ?? null
-				];
-
-				// Ambil sertifikat pendukung
-				$sertifikat = [];
-				$sertifikatData = DB::table('users_sertifikat_pendukung')
-									->where('user_id', $form1Data->user_id)
-									->first();
-
-				if ($sertifikatData) {
-					$sertifikat = [
-						'url' => url('storage/' . $sertifikatData->path_file),
-						'nomor' => $sertifikatData->nomor_sertifikat ?? null,
-						'masa_berlaku' => $sertifikatData->masa_berlaku_sertifikat ?? null
+				// Sertifikat
+				$sertifikat = $user->sertifikat->map(function ($item) {
+					return [
+						'url' => url('storage/' . $item->path_file),
+						'type' => $item->type_sertifikat,
+						'sertifikat_id' => $item->sertifikat_id,
+						'nomor' => $item->nomor_sertifikat ?? null,
+						'masa_berlaku' => $item->masa_berlaku_sertifikat ?? null
 					];
-				}
+				});
 
-				// Susun user array
-				$userArray = [
-					'nama' => $userData->nama,
-					'email' => $userData->email,
-					'no_telp' => $userData->no_telp,
-					'tempat_lahir' => $userData->tempat_lahir,
-					'tanggal_lahir' => $userData->tanggal_lahir,
-					'kewarganegaraan' => $userData->kewarganegaraan,
-					'jenis_kelamin' => $userData->jenis_kelamin,
-					'pendidikan' => $userData->pendidikan,
-					'tahun_lulus' => $userData->tahun_lulus,
-					'provinsi' => $userData->provinsi,
-					'kota' => $userData->kota,
-					'alamat' => $userData->alamat,
-					'kode_pos' => $userData->kode_pos,
-					'roles' => $userData->roles->map(function ($role) {
-						return [
-							'role_id' => $role->role_id,
-							'role_name' => $role->role_name
-						];
-					}),
+				// Susun data user
+				$userData = [
+					'nama' => $user->nama,
+					'email' => $user->email,
+					'no_telp' => $user->no_telp,
+					'tempat_lahir' => $user->tempat_lahir,
+					'tanggal_lahir' => $user->tanggal_lahir,
+					'kewarganegaraan' => $user->kewarganegaraan,
+					'jenis_kelamin' => $user->jenis_kelamin,
+					'pendidikan' => $user->pendidikan,
+					'tahun_lulus' => $user->tahun_lulus,
+					'provinsi' => $user->provinsi,
+					'kota' => $user->kota,
+					'alamat' => $user->alamat,
+					'kode_pos' => $user->kode_pos,
+					'role_id' => $user->current_role_id,
+					'role_name' => $user->roles->first()->role_name ?? null,
 					'jabatan_history' => $jabatanData,
-					'foto' => $userData->foto ? url('storage/foto_nurse/' . basename($userData->foto)) : null,
+					'foto' => $user->foto ? url('storage/foto_nurse/' . basename($user->foto)) : null,
 					'ijazah' => $ijazah,
 					'ujikom' => $ujikom,
 					'str' => $str,
 					'sip' => $sip,
 					'spk' => $spk,
-					'sertifikat' => $sertifikat,
+					'sertifikat' => $sertifikat
 				];
 			}
 
-			// Gabungkan data form1Data dan userData
-			$mergedData = array_merge($form1Array, $userArray);
+			// Gabungkan data form + user
+			$mergedData = array_merge($form1Data->toArray(), $userData);
 
 			return response()->json([
 				'status' => 200,
-				'message' => 'Data berhasil ditemukan.',
+				'message' => 'Data Form 1 berhasil ditemukan.',
 				'data' => $mergedData
 			], 200);
+
 		} catch (\Exception $e) {
 			return response()->json([
 				'status' => 500,
@@ -708,6 +693,7 @@ class BidangController extends Controller
 			], 500);
 		}
 	}
+
 
 
 
