@@ -116,21 +116,44 @@ class ProgressController extends Controller
                 ], 200);
             }
 
-            // Ambil status utama
-            $statusUtama = \App\Models\KompetensiProgres::where('form_id', $item->form_1_id)
-                ->value('status');
+            // Ambil progres utama (status + tracks)
+            $progresUtama = \App\Models\KompetensiProgres::where('form_id', $item->form_1_id)
+                ->select('id', 'form_id', 'status', 'user_id')
+                ->first();
 
-            $item->status_utama = $statusUtama;
+            if ($progresUtama) {
+                $item->status_utama = $progresUtama->status;
 
-            // Ambil progres anak
+                // Ambil tracks untuk form utama
+                $tracksUtama = \DB::table('kompetensi_tracks')
+                    ->where('progres_id', $progresUtama->id)
+                    ->orderBy('activity_time', 'asc')
+                    ->get();
+
+                $item->tracks_utama = $tracksUtama;
+            } else {
+                $item->status_utama = null;
+                $item->tracks_utama = [];
+            }
+
+            // Ambil progres anak + tracks
             $progres = \App\Models\KompetensiProgres::where('parent_form_id', $item->form_1_id)
-                ->select('id', 'form_id', 'status')
+                ->select('id', 'form_id', 'status', 'user_id', 'parent_form_id')
                 ->get()
                 ->map(function ($prog) {
+                    // Ambil form_type
                     $form_type = \App\Models\KompetensiTrack::where('progres_id', $prog->id)
                         ->value('form_type');
-
                     $prog->form_type = $form_type;
+
+                    // Ambil tracks untuk progres ini
+                    $tracks = \DB::table('kompetensi_tracks')
+                        ->where('progres_id', $prog->id)
+                        ->orderBy('activity_time', 'asc')
+                        ->get();
+
+                    $prog->tracks = $tracks;
+
                     return $prog;
                 });
 
@@ -149,6 +172,8 @@ class ProgressController extends Controller
             ], 500);
         }
     }
+
+
 
 
 
