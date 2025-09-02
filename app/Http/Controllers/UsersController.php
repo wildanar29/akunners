@@ -246,6 +246,65 @@ class UsersController extends Controller
 		}
 	}
 
+	public function GantiPassword(Request $request)
+	{
+		try {
+			// Validasi input
+			$validator = Validator::make($request->all(), [
+				'old_password' => 'required',
+				'new_password' => 'required|min:6',
+				'confirm_password' => 'required|same:new_password',
+			]);
+
+			if ($validator->fails()) {
+				return response()->json([
+					'status' => 400,
+					'message' => 'Data validation failed. Please check your input.',
+					'errors' => $validator->errors(),
+					'solution' => 'Ensure old password, new password, and confirm password are filled correctly.'
+				], 400);
+			}
+
+			// Ambil user dari JWT
+			$user = auth()->user();
+
+			if (!$user) {
+				return response()->json([
+					'status' => 401,
+					'message' => 'Unauthorized.',
+					'solution' => 'Please login again to continue.'
+				], 401);
+			}
+
+			// Cek apakah old_password sesuai dengan password di database
+			if (!Hash::check($request->old_password, $user->password)) {
+				return response()->json([
+					'status' => 401,
+					'message' => 'Old password is incorrect.',
+					'solution' => 'Please enter your current valid password.'
+				], 401);
+			}
+
+			// Update password dengan hash baru
+			$user->password = Hash::make($request->new_password);
+			$user->save();
+
+			return response()->json([
+				'status' => 200,
+				'message' => 'Password berhasil diupdate.',
+				// 'solution' => 'Use your new password to login next time.'
+			], 200);
+
+		} catch (\Exception $e) {
+			return response()->json([
+				'status' => 500,
+				'message' => 'An error occurred on the server.',
+				'details' => $e->getMessage(),
+				'solution' => 'Please contact the system administrator for further assistance.'
+			], 500);
+		}
+	}
+
 	public function LoginAkunNurse(Request $request)
 	{
 		try {
