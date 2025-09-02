@@ -52,7 +52,7 @@
             right: 1%;
             bottom: 1%;
             border: 3px solid #c5a880;
-            z-index: 0;
+            z-index: 2;
         }
 
         /* Simplified Ornaments for a cleaner look */
@@ -126,7 +126,14 @@
             font-size: 3vw; /* Slightly larger */
             font-weight: bold;
             letter-spacing: 0.2vw;
-            color: #006400;
+        }
+
+        .status.green {
+            color: #006400; /* hijau */
+        }
+
+        .status.red {
+            color: #e60000; /* merah */
         }
 
         .gelar {
@@ -170,14 +177,132 @@
             color: #333;
             margin-top: 0.4vw;
         }
+
+        .logo {
+            position: absolute;
+            top: 20px;   /* jarak dari atas */
+            left: 20px;  /* jarak dari kiri */
+            width: 100px; /* ukuran logo */
+            height: auto;
+            z-index: 2;  /* supaya di atas background */
+        }
+
+        .nomor-surat {
+            position: absolute;
+            top: 30px;
+            right: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+            z-index: 2;
+        }
+
+        /* Container for the lines on the left side */
+        .left-lines {
+            position: absolute;
+            top: 0;
+            left: 10px; /* distance from the left edge */
+            height: 100%;
+            display: flex;
+            flex-direction: row; /* arrange side-by-side */
+            gap: 10px; /* space between lines */
+        }
+
+        /* Container for the lines on the right side */
+        .yellow-lines {
+            position: absolute;
+            top: 0;
+            right: 50px; /* distance from the right edge */
+            height: 100%;
+            display: flex;
+            z-index: 0;
+            flex-direction: row; /* arrange side-by-side */
+            gap: 10px; /* space between lines */
+        }
+
+        .blue-lines {
+            position: absolute;
+            top: 0;
+            right: 80px; /* distance from the right edge */
+            height: 100%;
+            display: flex;
+            z-index: 0;
+            flex-direction: row; /* arrange side-by-side */
+            gap: 10px; /* space between lines */
+        }
+
+        .red-lines {
+            position: absolute;
+            top: 0;
+            right: 120px; /* distance from the right edge */
+            height: 100%;
+            display: flex;
+            z-index: 0;
+            flex-direction: row; /* arrange side-by-side */
+            gap: 10px; /* space between lines */
+        }
+
+        /* General styling for the vertical lines */
+        .line {
+            width: 20px;
+            height: 100%;
+        }
+
+        .status.red {
+            color: #e60000; /* merah */
+        }
+        .status.green {
+            color: #006400; /* hijau */
+        }
+
+        /* Colors for the lines */
+        .line.yellow {
+            background: #B09B5C; /* yellow */
+            z-index: 0;          /* paling belakang */
+            position: relative;
+            opacity: 0.3; /* makin kecil makin transparan (0–1) */
+        }
+
+        .line.red {
+            background: #BA2822; /* red */
+            z-index: 0;          /* paling belakang */
+            position: relative;
+            opacity: 0.3; /* makin kecil makin transparan (0–1) */
+        }
+
+        .line.blue {
+            background: #153584; /* biru */
+            z-index: 0;          /* paling belakang */
+            position: relative;  /* wajib biar z-index berfungsi */
+            opacity: 0.3; /* makin kecil makin transparan (0–1) */
+        }
+
+
     </style>
 </head>
 <body>
     <div class="ornament top-left"></div>
     <div class="ornament bottom-right"></div>
     
+    <img src="{{ public_path('logo.png') }}" alt="Logo RS Immanuel" class="logo">
+    <div class="nomor-surat">No: {{ $nomor_surat ?? '-' }}</div>
+
+    <div class="blue-lines">
+        <div class="line blue"></div>
+
+    </div>
+    
+    <div class="yellow-lines">
+        <div class="line yellow"></div>
+    </div>
+
+    <div class="red-lines">
+        <div class="line red"></div>
+    </div>
+    
+    
     <div class="main-content">
-        <h1>SERTIFIKAT KOMPETENSI KEPERAWATAN</h1>
+        <h1>SERTIFIKAT<br>KOMPETENSI KEPERAWATAN</h1>
         <h2>Diberikan Kepada :</h2>
     
         <div class="nama">{{ $nama }}</div>
@@ -189,12 +314,12 @@
             pada Tanggal <strong>{{ $tanggal_mulai ?? '-' }}</strong> s/d <strong>{{ $tanggal_selesai ?? '-' }}</strong> dan dinyatakan:
         </p>
     
-        <div class="status">
+        <div class="status {{ ($status ?? 'KOMPETEN') === 'BELUM KOMPETEN' ? 'red' : 'green' }}">
             {{ strtoupper($status ?? 'KOMPETEN') }}
         </div>
-    
+            
         <p class="gelar">
-            Sebagai <strong>Perawat Klinis 1 (Satu)</strong> di Area Keperawatan <strong>Rumah Sakit Immanuel</strong>
+            Sebagai <strong>{{ $gelar ?? '-' }}</strong> di Area Keperawatan <strong>Rumah Sakit Immanuel</strong>
         </p>
     </div>
 
