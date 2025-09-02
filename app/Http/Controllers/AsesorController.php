@@ -96,7 +96,7 @@ class AsesorController extends Controller
 				], 403);
 			}
 
-			// Update form_1
+			Log::debug('Update status form_1 ke Approved', ['form_1_id' => $form_1_id]);
 			$form->status = 'Approved';
 			$form->updated_at = Carbon::now();
 			$form->save();
@@ -107,6 +107,7 @@ class AsesorController extends Controller
 			]);
 
 			// Update atau create progres
+			Log::debug('Cek progres form_1', ['form_id' => $form->form_1_id]);
 			$progres = KompetensiProgres::where('form_id', $form->form_1_id)->first();
 
 			if ($progres) {
@@ -130,6 +131,7 @@ class AsesorController extends Controller
 			}
 
 			// Tambahkan track
+			Log::debug('Menambahkan track untuk form_1', ['form_id' => $form->form_1_id]);
 			KompetensiTrack::create([
 				'progres_id' => $progres->id,
 				'form_type' => 'form_1',
@@ -139,15 +141,24 @@ class AsesorController extends Controller
 			]);
 
 			// Inisialisasi jawaban form_2
-			
+			Log::debug('Memulai initJawabanForm2', ['form_id' => $form->form_1_id]);
 			$this->initJawabanForm2($user, $form);
+			Log::debug('Selesai initJawabanForm2');
+
+			Log::debug('Memulai buatForm2DariForm1', ['form_id' => $form->form_1_id]);
 			$form2 = $this->buatForm2DariForm1($form);
+			Log::debug('Selesai buatForm2DariForm1', ['form_2_id' => $form2->form_2_id ?? null]);
 
 			$progresForm2 = KompetensiProgres::create([
 				'form_id' => $form2->form_2_id,
 				'parent_form_id' => $form->form_1_id,
 				'user_id' => $user->user_id,
 				'status' => 'InAssessment',
+			]);
+
+			Log::info('Progres form_2 dibuat', [
+				'form_2_id' => $form2->form_2_id ?? null,
+				'progres_id' => $progresForm2->id,
 			]);
 
 			KompetensiTrack::create([
@@ -158,6 +169,7 @@ class AsesorController extends Controller
 				'description' => 'Form 2 dimulai untuk asesmen oleh Asesor.',
 			]);
 
+			Log::debug('Mengirim notifikasi approval ke pengaju');
 			$this->kirimNotifikasiApprovalKePengaju($formDebug);
 
 			DB::commit();
@@ -173,6 +185,7 @@ class AsesorController extends Controller
 				'form_1_id' => $form_1_id,
 				'user_id' => $user->user_id ?? null,
 				'error_message' => $e->getMessage(),
+				'error_trace' => $e->getTraceAsString(),
 			]);
 
 			return response()->json([
@@ -184,27 +197,59 @@ class AsesorController extends Controller
 	}
 
 
+
 	private function buatForm2DariForm1($form)
 	{
-		$form2 = new PenilaianForm2Model();
-		$form2->user_jawab_form_2_id = $form->asesi_id;
-		$form2->penilaian_asesi = 0;
-		$form2->asesi_date = null;
-		$form2->asesor_date = null;
-		$form2->no_reg = null;
-		$form2->asesi_name = $form->asesi_name;
-		$form2->asesor_name = null;
-		$form2->status = null;
-		$form2->created_at = Carbon::now();
-		$form2->updated_at = Carbon::now();
-		$form2->save();
-
-		Log::info('Form_2 berhasil dibuat saat approval', [
-			'form_1_id' => $form->form_1_id,
-			'form_2_id' => $form2->form_2_id,
+		Log::debug('Mulai proses buatForm2DariForm1', [
+			'form_1_id' => $form->form_1_id ?? null,
+			'asesi_id' => $form->asesi_id ?? null,
+			'asesi_name' => $form->asesi_name ?? null,
 		]);
 
-		return $form2;
+		try {
+			$form2 = new PenilaianForm2Model();
+
+			// Catat nilai yang akan dimasukkan sebelum disave
+			Log::debug('Data yang akan disimpan ke form_2', [
+				'user_jawab_form_2_id' => $form->asesi_id,
+				'penilaian_asesi' => 0,
+				'asesi_date' => null,
+				'asesor_date' => null,
+				'no_reg' => null,
+				'asesi_name' => $form->asesi_name,
+				'asesor_name' => null,
+				'status' => null,
+				'created_at' => Carbon::now(),
+				'updated_at' => Carbon::now(),
+			]);
+
+			$form2->user_jawab_form_2_id = $form->asesi_id;
+			$form2->penilaian_asesi = 0;
+			$form2->asesi_date = null;
+			$form2->asesor_date = null;
+			$form2->no_reg = null;
+			$form2->asesi_name = $form->asesi_name;
+			$form2->asesor_name = null;
+			$form2->status = null;
+			$form2->created_at = Carbon::now();
+			$form2->updated_at = Carbon::now();
+			$form2->save();
+
+			Log::info('Form_2 berhasil dibuat saat approval', [
+				'form_1_id' => $form->form_1_id,
+				'form_2_id' => $form2->form_2_id,
+				'user_jawab_form_2_id' => $form2->user_jawab_form_2_id,
+			]);
+
+			return $form2;
+		} catch (\Exception $e) {
+			Log::error('Gagal membuat Form_2', [
+				'form_1_id' => $form->form_1_id ?? null,
+				'error_message' => $e->getMessage(),
+				'trace' => $e->getTraceAsString(),
+			]);
+			throw $e;
+		}
 	}
 
 	private function kirimNotifikasiApprovalKePengaju($formData)
@@ -260,29 +305,237 @@ class AsesorController extends Controller
 		}
 	}
 
-	private function initJawabanForm2($user, $form1)
+	private function kirimNotifikasiRejectKePengaju($formData)
 	{
-		$existingCount = JawabanForm2Model::where('user_jawab_form_2_id', $user->user_id)->count();
-		if ($existingCount === 0) {
-			$soalList = SoalForm2Model::where('pk_id', $form1->pk_id)->get();
+		if (!$formData || empty($formData->asesi_id)) {
+			Log::warning('Gagal kirim notifikasi reject: user_id pengaju kosong');
+			return;
+		}
 
-			$jawabanToInit = [];
-			foreach ($soalList as $soal) {
-				$jawabanToInit[] = [
-					'user_jawab_form_2_id' => $user->user_id,
-					'no_id' => $soal->no_id,
-					'k' => null,
-					'bk' => null,
-					'created_at' => Carbon::now(),
-					'updated_at' => Carbon::now(),
-				];
-			}
+		$pengaju = DaftarUser::where('user_id', $formData->asesi_id)->first();
 
-			if (!empty($jawabanToInit)) {
-				JawabanForm2Model::insert($jawabanToInit);
-			}
+		if (!$pengaju) {
+			Log::warning('User pengaju tidak ditemukan untuk reject', ['user_id' => $formData->asesi_id]);
+			return;
+		}
+
+		if (empty($pengaju->device_token)) {
+			Log::warning("User pengaju tidak memiliki device_token", ['user_id' => $pengaju->user_id]);
+			return;
+		}
+
+		try {
+			$title = 'Pengajuan Ditolak';
+			$message = "Pengajuan Asesmen Anda ditolak oleh asesor. Silakan periksa kembali persyaratan dan lakukan pengajuan ulang.";
+
+			// Kirim notifikasi ke OneSignal
+			$this->oneSignalService->sendNotification(
+				[$pengaju->device_token],
+				$title,
+				$message
+			);
+
+			Log::info('Notifikasi penolakan berhasil dikirim ke pengaju', [
+				'user_id' => $pengaju->user_id,
+				'nama' => $pengaju->nama ?? null,
+			]);
+
+			// Simpan ke tabel notification
+			Notification::create([
+				'user_id' => $pengaju->user_id,
+				'title' => $title,
+				'description' => $message,
+				'is_read' => 0,
+				'created_at' => Carbon::now(),
+				'updated_at' => Carbon::now(),
+			]);
+
+		} catch (\Exception $e) {
+			Log::error('Gagal kirim notifikasi penolakan ke pengaju', [
+				'user_id' => $pengaju->user_id,
+				'error' => $e->getMessage(),
+			]);
 		}
 	}
+
+	public function rejectForm1ById($form_1_id)
+	{
+		$form_1_id = (int) $form_1_id;
+		$user = auth()->user();
+
+		Log::info('Memulai proses rejectForm1ById', [
+			'form_1_id' => $form_1_id,
+			'user_id' => $user->user_id ?? null,
+		]);
+
+		DB::beginTransaction();
+
+		try {
+			$formDebug = BidangModel::find($form_1_id);
+
+			if ($formDebug) {
+				Log::debug('Data form_1 ditemukan untuk reject', [
+					'form_1_id' => $form_1_id,
+					'status' => $formDebug->status ?? null,
+					'asesor_id' => $formDebug->asesor_id ?? null,
+					'user_id_pengaju' => $formDebug->asesi_id ?? null,
+					'current_user_id' => $user->user_id ?? null,
+				]);
+			}
+
+			$form = BidangModel::where('form_1_id', $form_1_id)
+				->where('status', 'Assigned')
+				->where('asesor_id', $user->user_id)
+				->first();
+
+			if (!$form) {
+				Log::warning('Form tidak ditemukan atau bukan asesor yang sesuai saat reject', [
+					'form_1_id' => $form_1_id,
+					'user_id' => $user->user_id,
+				]);
+
+				DB::rollBack();
+
+				return response()->json([
+					'status' => 403,
+					'message' => 'Data tidak ditemukan atau Anda bukan asesor yang ditugaskan.'
+				], 403);
+			}
+
+			// Update form_1 menjadi Canceled
+			$form->status = 'Canceled';
+			$form->updated_at = Carbon::now();
+			$form->save();
+
+			Log::info('Form berhasil ditolak', [
+				'form_1_id' => $form_1_id,
+				'user_id' => $user->user_id,
+			]);
+
+			// Update atau create progres
+			$progres = KompetensiProgres::where('form_id', $form->form_1_id)->first();
+
+			if ($progres) {
+				$progres->status = 'Canceled';
+				$progres->save();
+
+				Log::info('Status kompetensi_progres diperbarui menjadi Canceled', [
+					'form_id' => $form->form_1_id,
+					'progres_id' => $progres->id,
+				]);
+			} else {
+				$progres = KompetensiProgres::create([
+					'form_id' => $form->form_1_id,
+					'status' => 'Canceled',
+				]);
+
+				Log::info('Data kompetensi_progres baru dibuat dengan status Canceled', [
+					'form_id' => $form->form_1_id,
+					'progres_id' => $progres->id,
+				]);
+			}
+
+			// Tambahkan track Canceled
+			KompetensiTrack::create([
+				'progres_id' => $progres->id,
+				'form_type' => 'form_1',
+				'activity' => 'Canceled',
+				'activity_time' => Carbon::now(),
+				'description' => 'Form 1 ditolak oleh Asesor.',
+			]);
+
+			// Kirim notifikasi penolakan
+			$this->kirimNotifikasiRejectKePengaju($formDebug);
+
+			DB::commit();
+
+			return response()->json([
+				'status' => 200,
+				'message' => 'Status berhasil diperbarui menjadi Canceled dan notifikasi dikirim.'
+			]);
+		} catch (\Exception $e) {
+			DB::rollBack();
+
+			Log::error('Terjadi error saat rejectForm1ById', [
+				'form_1_id' => $form_1_id,
+				'user_id' => $user->user_id ?? null,
+				'error_message' => $e->getMessage(),
+			]);
+
+			return response()->json([
+				'status' => 500,
+				'message' => 'Terjadi kesalahan saat memproses data.',
+				'error' => $e->getMessage(),
+			], 500);
+		}
+	}
+
+
+	private function initJawabanForm2($user, $form1)
+	{
+		Log::debug('Mulai initJawabanForm2', [
+			'form_1_id' => $form1->form_1_id ?? null,
+			'pk_id' => $form1->pk_id ?? null,
+			'asesi_id' => $form1->asesi_id ?? null,
+			'current_user_id' => $user->user_id ?? null,
+		]);
+
+		try {
+			$existingCount = JawabanForm2Model::where('user_jawab_form_2_id', $form1->asesi_id)->count();
+
+			Log::debug('Cek existing jawaban_form_2', [
+				'user_jawab_form_2_id' => $user->user_id,
+				'existingCount' => $existingCount,
+			]);
+
+			if ($existingCount === 0) {
+				$soalList = SoalForm2Model::where('pk_id', $form1->pk_id)->get();
+
+				Log::info('Soal ditemukan untuk inisialisasi jawaban_form_2', [
+					'pk_id' => $form1->pk_id,
+					'jumlah_soal' => $soalList->count(),
+				]);
+
+				$jawabanToInit = [];
+				foreach ($soalList as $soal) {
+					$jawabanToInit[] = [
+						'user_jawab_form_2_id' => $form1->asesi_id,
+						'no_id' => $soal->no_id,
+						'k' => null,
+						'bk' => null,
+						'created_at' => Carbon::now(),
+						'updated_at' => Carbon::now(),
+					];
+				}
+
+				if (!empty($jawabanToInit)) {
+					JawabanForm2Model::insert($jawabanToInit);
+
+					Log::info('Jawaban form_2 berhasil diinisialisasi', [
+						'user_jawab_form_2_id' => $form1->asesi_id,
+						'jumlah_jawaban' => count($jawabanToInit),
+					]);
+				} else {
+					Log::warning('Tidak ada soal untuk diinisialisasi pada jawaban_form_2', [
+						'pk_id' => $form1->pk_id,
+					]);
+				}
+			} else {
+				Log::info('Jawaban form_2 sudah ada, skip inisialisasi', [
+					'user_jawab_form_2_id' => $form1->asesi_id,
+				]);
+			}
+		} catch (\Exception $e) {
+			Log::error('Gagal inisialisasi jawaban_form_2', [
+				'user_jawab_form_2_id' => $form1->asesi_id ?? null,
+				'form_1_id' => $form1->form_1_id ?? null,
+				'error_message' => $e->getMessage(),
+				'trace' => $e->getTraceAsString(),
+			]);
+			throw $e;
+		}
+	}
+
 
 	/**
 	 * @OA\Post(
