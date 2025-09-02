@@ -282,7 +282,7 @@ class UsersController extends Controller
 					'status' => 401,
 					'message' => 'Old password is incorrect.',
 					'solution' => 'Please enter your current valid password.'
-				], 401);
+				], 400);
 			}
 
 			// Update password dengan hash baru
