@@ -60,6 +60,7 @@ $router->put('/form3/update/{form3_id}', 'Form3Controller@UpdateAsesorForm3');
 // AUTH CONTROLLER 
 $router->post('/register-akun', 'UsersController@RegisterAkunNurse');
 $router->post('/login-akun', 'UsersController@LoginAkunNurse');
+$router->post('/change-password', 'UsersController@GantiPassword');
 $router->post('/update-profile/{nik}', 'UsersController@UpdateAkunNurse');
 $router->get('/get-profile/{nik}', 'UsersController@GetAkunNurseByNIK');
 $router->get('/check-profile/{nik}', 'UsersController@CheckDataCompleteness');
@@ -176,6 +177,7 @@ $router->get('/get-form1-by-id-date', 'BidangController@getForm1ByDate');
 // Asesor Controller
 $router->get('/form1/asesor/{asesorName}', 'AsesorController@getForm1ByAsesorName');
 $router->put('/form1/approve/{form_1_id}', 'AsesorController@approveForm1ById');
+$router->put('/form1/reject/{form_1_id}', 'AsesorController@rejectForm1ById');
 // baru
 $router->post('/jawaban-form2/update/asesor', 'AsesorController@updateJawabanForm2ByNoId');
 // akhir baru
@@ -275,26 +277,10 @@ $router->get('/form6/soal/{pkId}', 'Form6Controller@SoalForm6');
 
 
 // CERTIFICATE
-
-$router->get('/tes-view', function () {
-    return view('sertifikat', ['nama' => 'Wildan', 'tanggal' => date('d F Y')]);
-});
-Route::get('/generate-sertifikat', function () {
-    $data = [
-        'nama' => 'Wildan AR',
-        'tanggal_mulai' => '01 September 2024',
-        'tanggal_selesai' => '03 September 2024',
-        'status' => 'Kompeten'
-    ];
-
-    $pdf = Pdf::loadView('sertifikat.keperawatan', $data);
-
-    // Simpan ke folder storage/app/public/sertifikat/
-    $path = 'sertifikat/sertifikat_keperawatan.pdf';
-    Storage::disk('public')->put($path, $pdf->output());
-
-    return "Sertifikat berhasil disimpan di: storage/app/public/{$path}";
-});
+$router->post('/generate-sertifikat', 'CertificateController@generate');
+$router->get('/sertifikat/view/{form_1_id}', 'CertificateController@viewSertifikatByFormId');
+$router->get('/sertifikat/data/{user_id}', 'CertificateController@getSertifikatByUserId');
+$router->get('/sertifikat/list', 'CertificateController@getListSertifikat');
 
 //Notifikasi 
 $router->get('/send-notification-to-bidang', action: 'NotificationController@notifikasiPengajuankeBidang');
