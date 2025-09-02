@@ -163,20 +163,21 @@ class CertificateController extends Controller
             ], 404);
         }
 
-        // Buat struktur data dengan preview_url
+        // Buat struktur data dengan preview_url pakai endpoint API
         $data = $sertifikatList->map(function ($sertifikat) {
             return [
-                'id'            => $sertifikat->id,
-                'form_1_id'     => $sertifikat->form_1_id,
-                'pk_id'         => $sertifikat->pk_id,
-                'nomor_urut'    => $sertifikat->nomor_urut,
-                'nomor_surat'   => $sertifikat->nomor_surat,
-                'nama'          => $sertifikat->nama,
-                'gelar'         => $sertifikat->gelar,
-                'status'        => $sertifikat->status,
-                'tanggal_mulai' => $sertifikat->tanggal_mulai,
+                'id'              => $sertifikat->id,
+                'form_1_id'       => $sertifikat->form_1_id,
+                'pk_id'           => $sertifikat->pk_id,
+                'nomor_urut'      => $sertifikat->nomor_urut,
+                'nomor_surat'     => $sertifikat->nomor_surat,
+                'nama'            => $sertifikat->nama,
+                'gelar'           => $sertifikat->gelar,
+                'status'          => $sertifikat->status,
+                'tanggal_mulai'   => $sertifikat->tanggal_mulai,
                 'tanggal_selesai' => $sertifikat->tanggal_selesai,
-                'preview_url'   => url("storage/{$sertifikat->file_path}"),
+                // preview lewat API, bukan langsung ke storage
+                'preview_url'     => url("sertifikat/view/{$sertifikat->form_1_id}"),
             ];
         });
 
@@ -185,6 +186,7 @@ class CertificateController extends Controller
             'data'    => $data,
         ]);
     }
+
 
     public function getListSertifikat(Request $request)
     {
