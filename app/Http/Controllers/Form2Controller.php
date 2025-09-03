@@ -6,6 +6,7 @@ use App\Models\ElemenKompetensiForm2Model;
 use App\Models\JawabanForm2Model;
 use App\Models\SoalForm2Model;
 use App\Models\Form3Model;
+use App\Models\Form2;
 use App\Models\DaftarUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -42,9 +43,10 @@ class Form2Controller extends Controller
     {
         // Validasi request
         $validator = Validator::make($request->all(), [
-            'pk_id' => 'required|integer',
+            'pk_id'     => 'required|integer',
+            'asesi_id'  => 'required|integer',
             'no_elemen' => 'nullable|integer',
-            'no_id' => 'nullable|integer',
+            'no_id'     => 'nullable|integer',
         ]);
 
         if ($validator->fails()) {
@@ -56,10 +58,26 @@ class Form2Controller extends Controller
         }
 
         $pk_id     = $request->input('pk_id');
+        $asesi_id  = $request->input('asesi_id');
         $no_elemen = $request->input('no_elemen');
         $no_id     = $request->input('no_id');
 
-        Log::debug('getSoals() called with:', compact('pk_id', 'no_elemen', 'no_id'));
+        Log::debug('getSoals() called with:', compact('pk_id', 'asesi_id', 'no_elemen', 'no_id'));
+
+        // Cari form_2_id berdasarkan asesi_id dan pk_id
+        $form2 = Form2::where('user_jawab_form_2_id', $asesi_id)
+            // ->where('pk_id', $pk_id) // uncomment kalau memang ada kolom pk_id di form_2
+            ->first();
+
+        if (!$form2) {
+            return response()->json([
+                'status'  => 'ERROR',
+                'message' => 'Form 2 tidak ditemukan untuk asesi_id ' . $asesi_id . ' dan pk_id ' . $pk_id,
+                'data'    => null
+            ], 404);
+        }
+
+        $form_2_id = $form2->form_2_id;
 
         // Query langsung antar tabel
         $query = DB::table('soal_form_2 as s')
@@ -95,6 +113,12 @@ class Form2Controller extends Controller
 
         $result = $query->get();
 
+        // Tambahkan form_2_id ke dalam setiap item data
+        $result = $result->map(function ($row) use ($form_2_id) {
+            $row->form_2_id = $form_2_id;
+            return $row;
+        });
+
         Log::debug('Total hasil akhir:', ['count' => $result->count()]);
 
         return response()->json([
@@ -103,6 +127,8 @@ class Form2Controller extends Controller
             'data'    => $result
         ]);
     }
+
+
 
      public function getForm2Data(Request $request)
      {
