@@ -88,21 +88,20 @@ class FormStatusController extends Controller
     {
         try {
             $asesi_id = $request->query('asesi_id');
-            $pk_id    = $request->query('pk_id');
 
-            if (!$asesi_id || !$pk_id) {
+            if (!$asesi_id) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Parameter asesi_id dan pk_id wajib diisi.',
+                    'message' => 'Parameter asesi_id wajib diisi.',
                     'status_code' => 400,
                     'data' => null,
                 ], 400);
             }
 
-            // Ambil data bidang
-            $item = BidangModel::where('pk_id', $pk_id)
-                ->where('asesi_id', $asesi_id)
+            // Ambil semua data bidang berdasarkan asesi_id
+            $items = BidangModel::where('asesi_id', $asesi_id)
                 ->select([
+                    'pk_id',
                     'form_1_id',
                     'asesi_name',
                     'asesi_id',
@@ -111,9 +110,9 @@ class FormStatusController extends Controller
                     'asesor_name',
                     'asesor_date',
                 ])
-                ->first();
+                ->get();
 
-            if (!$item) {
+            if ($items->isEmpty()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Data tidak tersedia.',
@@ -122,27 +121,42 @@ class FormStatusController extends Controller
                 ], 200);
             }
 
-            // Ambil semua progres terkait form_1_id (tidak dibedakan induk/anak)
-            $allProgres = \App\Models\KompetensiProgres::where('form_id', $item->form_1_id)
-                ->orWhere('parent_form_id', $item->form_1_id)
-                ->select('id', 'status')
-                ->get();
+            $result = [];
 
-            $status = [];
-            foreach ($allProgres as $prog) {
-                // Ambil form_type dari KompetensiTrack
-                $form_type = \App\Models\KompetensiTrack::where('progres_id', $prog->id)
-                    ->value('form_type');
+            foreach ($items as $item) {
+                // Ambil semua progres terkait form_1_id (tidak dibedakan induk/anak)
+                $allProgres = \App\Models\KompetensiProgres::where('form_id', $item->form_1_id)
+                    ->orWhere('parent_form_id', $item->form_1_id)
+                    ->select('id', 'status')
+                    ->get();
 
-                if ($form_type) {
-                    $status[$form_type] = $prog->status;
+                $status = [];
+                foreach ($allProgres as $prog) {
+                    // Ambil form_type dari KompetensiTrack
+                    $form_type = \App\Models\KompetensiTrack::where('progres_id', $prog->id)
+                        ->value('form_type');
+
+                    if ($form_type) {
+                        $status[$form_type] = $prog->status;
+                    }
                 }
+
+                // Kelompokkan hasil berdasarkan pk_id
+                $result[$item->pk_id] = [
+                    'asesi_id'    => $item->asesi_id,
+                    'asesi_name'  => $item->asesi_name,
+                    'asesi_date'  => $item->asesi_date,
+                    'asesor_id'   => $item->asesor_id,
+                    'asesor_name' => $item->asesor_name,
+                    'asesor_date' => $item->asesor_date,
+                    'status'      => $status,
+                ];
             }
 
             return response()->json([
                 'success' => true,
                 'message' => 'Status data retrieved successfully.',
-                'data' => $status,
+                'data'    => $result,
                 'status_code' => 200,
             ], 200);
 
