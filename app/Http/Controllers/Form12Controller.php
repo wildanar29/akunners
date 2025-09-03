@@ -51,12 +51,108 @@ class Form12Controller extends BaseController
         $this->formService = $formService;
     }
 
+    // public function getByPkId(Request $request)
+    // {
+    //     // ✅ Validasi request
+    //     $validator = Validator::make($request->all(), [
+    //         'pk_id'     => 'required|integer|min:1',
+    //         'asesi_id'  => 'required|integer|min:1', // tambahkan validasi asesi_id
+    //     ]);
+
+    //     if ($validator->fails()) {
+    //         return response()->json([
+    //             'status' => 'error',
+    //             'errors' => $validator->errors(),
+    //         ], 422);
+    //     }
+
+    //     $pkId     = $request->input('pk_id');
+    //     $asesiId  = $request->input('asesi_id');
+
+    //     // ✅ Query ambil data nested dengan filter asesi_id
+    //     $data = ElemenForm3::with([
+    //         'kukForm3' => function ($q) use ($asesiId) {
+    //             $q->orderBy('no_kuk', 'asc')
+    //             ->with([
+    //                 'iukForm3' => function ($q2) use ($asesiId) {
+    //                     $q2->orderBy('no_iuk', 'asc')
+    //                         ->with([
+    //                             'soalForm7' => function ($q3) use ($asesiId) {
+    //                                 $q3->select('id', 'iuk_form3_id')
+    //                                     ->with([
+    //                                         'jawabanForm7' => function ($q4) use ($asesiId) {
+    //                                             $q4->select('id', 'soal_form7_id', 'keputusan', 'asesi_id')
+    //                                                 ->where('asesi_id', $asesiId);
+    //                                         }
+    //                                     ]);
+    //                             }
+    //                         ]);
+    //                 }
+    //             ]);
+    //         }
+    //     ])
+    //     ->where('pk_id', $pkId)
+    //     // ⬇️ Tambahkan ini supaya hanya ambil Elemen yang punya jawaban sesuai asesi
+    //     ->whereHas('kukForm3.iukForm3.soalForm7.jawabanForm7', function ($q) use ($asesiId) {
+    //         $q->where('asesi_id', $asesiId);
+    //     })
+    //     ->orderBy('no_elemen_form_3', 'asc')
+    //     ->get();
+
+    //     if ($data->isEmpty()) {
+    //         return response()->json([
+    //             'status'  => 'not_found',
+    //             'message' => "Data tidak ditemukan untuk pk_id: $pkId dan asesi_id: $asesiId",
+    //         ], 404);
+    //     }
+
+    //     // ✅ Hitung nilai final per level
+    //     $data->transform(function ($elemen) {
+    //         $elemen->kukForm3->transform(function ($kuk) {
+    //             $kuk->iukForm3->transform(function ($iuk) {
+    //                 $totalSoal = $iuk->soalForm7->count();
+    //                 $jumlahK   = 0;
+
+    //                 foreach ($iuk->soalForm7 as $soal) {
+    //                     foreach ($soal->jawabanForm7 as $jawaban) {
+    //                         if ($jawaban->keputusan === 'K') {
+    //                             $jumlahK++;
+    //                         }
+    //                     }
+    //                 }
+
+    //                 $iuk->final = ($totalSoal > 0 && ($jumlahK / $totalSoal) >= 0.5) ? 'K' : 'BK';
+    //                 return $iuk;
+    //             });
+
+    //             // Hitung nilai KUK dari seluruh IUK
+    //             $totalIuk = $kuk->iukForm3->count();
+    //             $jumlahK  = $kuk->iukForm3->where('final', 'K')->count();
+
+    //             $kuk->final = ($totalIuk > 0 && ($jumlahK / $totalIuk) >= 0.5) ? 'K' : 'BK';
+    //             return $kuk;
+    //         });
+
+    //         // Hitung nilai Elemen dari seluruh KUK
+    //         $totalKuk = $elemen->kukForm3->count();
+    //         $jumlahK  = $elemen->kukForm3->where('final', 'K')->count();
+
+    //         $elemen->final = ($totalKuk > 0 && ($jumlahK / $totalKuk) >= 0.5) ? 'K' : 'BK';
+    //         return $elemen;
+    //     });
+
+    //     return response()->json([
+    //         'status' => 'success',
+    //         'data'   => $data,
+    //     ]);
+    // }
+
     public function getByPkId(Request $request)
     {
         // ✅ Validasi request
         $validator = Validator::make($request->all(), [
             'pk_id'     => 'required|integer|min:1',
-            'asesi_id'  => 'required|integer|min:1', // tambahkan validasi asesi_id
+            'asesi_id'  => 'required|integer|min:1',
         ]);
 
         if ($validator->fails()) {
@@ -69,34 +165,23 @@ class Form12Controller extends BaseController
         $pkId     = $request->input('pk_id');
         $asesiId  = $request->input('asesi_id');
 
+        // Tentukan ekspresi casting sesuai driver
+        $driver = DB::getDriverName();
+        $orderExpr = $driver === 'mysql'
+            ? 'CAST(no_elemen_form_3 AS UNSIGNED)'
+            : 'CAST(no_elemen_form_3 AS INTEGER)';
+
         // ✅ Query ambil data nested dengan filter asesi_id
         $data = ElemenForm3::with([
-            'kukForm3' => function ($q) use ($asesiId) {
-                $q->orderBy('no_kuk', 'asc')
-                ->with([
-                    'iukForm3' => function ($q2) use ($asesiId) {
-                        $q2->orderBy('no_iuk', 'asc')
-                            ->with([
-                                'soalForm7' => function ($q3) use ($asesiId) {
-                                    $q3->select('id', 'iuk_form3_id')
-                                        ->with([
-                                            'jawabanForm7' => function ($q4) use ($asesiId) {
-                                                $q4->select('id', 'soal_form7_id', 'keputusan', 'asesi_id')
-                                                    ->where('asesi_id', $asesiId);
-                                            }
-                                        ]);
-                                }
-                            ]);
-                    }
-                ]);
+            'kukForm3.iukForm3.soalForm7.jawabanForm7' => function ($q) use ($asesiId) {
+                $q->where('asesi_id', $asesiId);
             }
         ])
         ->where('pk_id', $pkId)
-        // ⬇️ Tambahkan ini supaya hanya ambil Elemen yang punya jawaban sesuai asesi
         ->whereHas('kukForm3.iukForm3.soalForm7.jawabanForm7', function ($q) use ($asesiId) {
             $q->where('asesi_id', $asesiId);
         })
-        ->orderBy('no_elemen_form_3', 'asc')
+        ->orderByRaw("$orderExpr ASC")   // ⬅️ numeric sorting
         ->get();
 
         if ($data->isEmpty()) {
@@ -106,46 +191,52 @@ class Form12Controller extends BaseController
             ], 404);
         }
 
-        // ✅ Hitung nilai final per level
-        $data->transform(function ($elemen) {
-            $elemen->kukForm3->transform(function ($kuk) {
-                $kuk->iukForm3->transform(function ($iuk) {
+        // ✅ Hitung nilai final hanya di level Elemen
+        $elemenFinal = $data->map(function ($elemen) {
+            $jumlahKuk = $elemen->kukForm3->count();
+            $jumlahK   = 0;
+
+            foreach ($elemen->kukForm3 as $kuk) {
+                $totalIuk = $kuk->iukForm3->count();
+                $jumlahKIuk = 0;
+
+                foreach ($kuk->iukForm3 as $iuk) {
                     $totalSoal = $iuk->soalForm7->count();
-                    $jumlahK   = 0;
+                    $jumlahKSoal = 0;
 
                     foreach ($iuk->soalForm7 as $soal) {
                         foreach ($soal->jawabanForm7 as $jawaban) {
                             if ($jawaban->keputusan === 'K') {
-                                $jumlahK++;
+                                $jumlahKSoal++;
                             }
                         }
                     }
 
-                    $iuk->final = ($totalSoal > 0 && ($jumlahK / $totalSoal) >= 0.5) ? 'K' : 'BK';
-                    return $iuk;
-                });
+                    $iukFinal = ($totalSoal > 0 && ($jumlahKSoal / $totalSoal) >= 0.5) ? 'K' : 'BK';
+                    if ($iukFinal === 'K') $jumlahKIuk++;
+                }
 
-                // Hitung nilai KUK dari seluruh IUK
-                $totalIuk = $kuk->iukForm3->count();
-                $jumlahK  = $kuk->iukForm3->where('final', 'K')->count();
+                $kukFinal = ($totalIuk > 0 && ($jumlahKIuk / $totalIuk) >= 0.5) ? 'K' : 'BK';
+                if ($kukFinal === 'K') $jumlahK++;
+            }
 
-                $kuk->final = ($totalIuk > 0 && ($jumlahK / $totalIuk) >= 0.5) ? 'K' : 'BK';
-                return $kuk;
-            });
+            $elemenFinal = ($jumlahKuk > 0 && ($jumlahK / $jumlahKuk) >= 0.5) ? 'K' : 'BK';
 
-            // Hitung nilai Elemen dari seluruh KUK
-            $totalKuk = $elemen->kukForm3->count();
-            $jumlahK  = $elemen->kukForm3->where('final', 'K')->count();
-
-            $elemen->final = ($totalKuk > 0 && ($jumlahK / $totalKuk) >= 0.5) ? 'K' : 'BK';
-            return $elemen;
+            return [
+                'id'               => $elemen->id,
+                'no_elemen_form_3' => $elemen->no_elemen_form_3,
+                'nama_elemen'      => $elemen->isi_elemen, // sesuai kode kamu
+                'final'            => $elemenFinal,
+            ];
         });
 
         return response()->json([
             'status' => 'success',
-            'data'   => $data,
+            'data'   => $elemenFinal,
         ]);
     }
+
+
 
 
     public function ApproveForm12ByAsesi(Request $request, $form12Id)

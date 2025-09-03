@@ -7,9 +7,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 use App\Models\KompetensiPk;
+use App\Models\BidangModel;
 use App\Models\Form6;
 use App\Models\SertifikatPk;
+use App\Models\TranskripNilaiPk;
+use App\Models\ElemenForm3;
 use App\Service\FormService;
 use Carbon\Carbon;
 
@@ -247,6 +251,167 @@ class CertificateController extends Controller
                 'status'  => 500,
                 'message' => 'Terjadi kesalahan saat mengambil data Form 6',
                 'error'   => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+    public function getTranskripNilai(Request $request)
+    {
+        // ✅ Validasi
+        $validator = Validator::make($request->all(), [
+            'pk_id'    => 'required|integer|min:1',
+            'asesi_id' => 'required|integer|min:1',
+            'form_1_id'=> 'required|integer|min:1',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $pkId    = $request->input('pk_id');
+        $asesiId = $request->input('asesi_id');
+        $form1Id = $request->input('form_1_id');
+
+        // Cek apakah sudah ada transkrip
+        $existing = TranskripNilaiPk::where('pk_id', $pkId)
+            ->where('asesi_id', $asesiId)
+            ->first();
+
+        if ($existing) {
+            return response()->json([
+                'message' => 'Transkrip nilai sudah dibuat sebelumnya',
+                'data'    => $existing,
+            ], 400);
+        }
+
+        // Tentukan ekspresi casting sesuai driver DB
+        $driver = DB::getDriverName();
+        $orderExpr = $driver === 'mysql'
+            ? 'CAST(no_elemen_form_3 AS UNSIGNED)'
+            : 'CAST(no_elemen_form_3 AS INTEGER)';
+
+        // ✅ Query ambil data nested
+        $data = ElemenForm3::with([
+            'kukForm3.iukForm3.soalForm7.jawabanForm7' => function ($q) use ($asesiId) {
+                $q->where('asesi_id', $asesiId);
+            }
+        ])
+        ->where('pk_id', $pkId)
+        ->whereHas('kukForm3.iukForm3.soalForm7.jawabanForm7', function ($q) use ($asesiId) {
+            $q->where('asesi_id', $asesiId);
+        })
+        ->orderByRaw("$orderExpr ASC")
+        ->get();
+
+        if ($data->isEmpty()) {
+            return response()->json([
+                'status'  => 'not_found',
+                'message' => "Data tidak ditemukan untuk pk_id: $pkId dan asesi_id: $asesiId",
+            ], 404);
+        }
+
+        // ✅ Hitung nilai final hanya di level Elemen
+        $elemenFinal = $data->map(function ($elemen) {
+            $jumlahKuk = $elemen->kukForm3->count();
+            $jumlahK   = 0;
+
+            foreach ($elemen->kukForm3 as $kuk) {
+                $totalIuk = $kuk->iukForm3->count();
+                $jumlahKIuk = 0;
+
+                foreach ($kuk->iukForm3 as $iuk) {
+                    $totalSoal = $iuk->soalForm7->count();
+                    $jumlahKSoal = 0;
+
+                    foreach ($iuk->soalForm7 as $soal) {
+                        foreach ($soal->jawabanForm7 as $jawaban) {
+                            if ($jawaban->keputusan === 'K') {
+                                $jumlahKSoal++;
+                            }
+                        }
+                    }
+
+                    $iukFinal = ($totalSoal > 0 && ($jumlahKSoal / $totalSoal) >= 0.5) ? 'K' : 'BK';
+                    if ($iukFinal === 'K') $jumlahKIuk++;
+                }
+
+                $kukFinal = ($totalIuk > 0 && ($jumlahKIuk / $totalIuk) >= 0.5) ? 'K' : 'BK';
+                if ($kukFinal === 'K') $jumlahK++;
+            }
+
+            $elemenFinal = ($jumlahKuk > 0 && ($jumlahK / $jumlahKuk) >= 0.5) ? 'K' : 'BK';
+
+            return [
+                'no_elemen_form_3' => $elemen->no_elemen_form_3,
+                'nama_elemen'      => $elemen->isi_elemen,
+                'final'            => $elemenFinal,
+            ];
+        });
+
+        // Ambil info tambahan
+        $form1 = BidangModel::find($form1Id);
+        $asesiName = $form1 ? strtoupper($form1->asesi_name) : '-';
+        $kompetensi = KompetensiPk::find($pkId);
+        // Generate nomor dokumen
+        [$nomorUrut, $nomorDokumen] = TranskripNilaiPk::generateNomorDokumen();
+
+        // Buat nama file aman
+        $safeNama  = preg_replace('/[^A-Za-z0-9\-]/', '_', $asesiName);
+        $safeNomor = preg_replace('/[^A-Za-z0-9\-]/', '_', $nomorDokumen);
+        $fileName  = "transkrip_{$safeNama}_{$safeNomor}.pdf";
+        $path = 'transkrip/' . $fileName;
+
+        // ✅ Pastikan data dilempar sebagai array
+        $pdf = Pdf::loadView('transkrip.nilai', [
+            'nama'        => $asesiName,
+            'gelar'       => $kompetensi->nama_level ?? '-',
+            'data'        => $elemenFinal->toArray(),
+            'nomor'       => $nomorDokumen,
+            'asesor_name' => $form1->asesor_name ?? '-', // ✅ kirim ke view
+        ]);
+
+
+        DB::beginTransaction();
+        try {
+            // Simpan file PDF
+            Storage::disk('public')->put($path, $pdf->output());
+
+            // Simpan metadata
+            $transkrip = TranskripNilaiPk::create([
+                'asesi_id'        => $asesiId,
+                'form_1_id'       => $form1->form_1_id,
+                'pk_id'           => $pkId,
+                'nomor_urut'      => $nomorUrut,
+                'nomor_dokumen'   => $nomorDokumen,
+                'nama'            => $asesiName,
+                'gelar'           => $kompetensi->nama_level ?? '-',
+                'status'          => 'Selesai',
+                'tanggal_mulai'   => $form1 ? $form1->updated_at : Carbon::now(),
+                'tanggal_selesai' => Carbon::now(),
+                'file_path'       => $path,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'message'      => 'Transkrip nilai berhasil disimpan',
+                'preview_url'  => url("storage/{$path}"),
+                'data'         => $transkrip,
+                'nomor_dokumen'=> $nomorDokumen,
+                'asesor_name' => $form1->asesor_name ?? '-', // tambah ini
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            if (Storage::disk('public')->exists($path)) {
+                Storage::disk('public')->delete($path);
+            }
+            return response()->json([
+                'message' => 'Gagal menyimpan transkrip nilai',
+                'error'   => $e->getMessage(),
             ], 500);
         }
     }

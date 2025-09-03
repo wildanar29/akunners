@@ -5,20 +5,28 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\PkStatusModel;
 use App\Models\PkProgressModel;
+use App\Models\BidangModel;
 
     /**
      * @OA\Get(
-     *     path="/get-indikator-status/{user_id}",
-     *     summary="List Form Status untuk membuka Indikator Pk",
-     *     description="Pencarian Berdasarkan user_id",
-     *     operationId="getFormStatusByUser",
+     *     path="/get-indikator-status",
+     *     summary="Ambil semua status form berdasarkan asesi dan pk",
+     *     description="Mengembalikan status semua form yang terkait dengan asesi_id dan pk_id.",
+     *     operationId="getFormStatusByAsesi",
      *     tags={"Form Status"},
      *     @OA\Parameter(
-     *         name="user_id",
-     *         in="path",
+     *         name="asesi_id",
+     *         in="query",
      *         required=true,
-     *         description="ID of the user",
-     *         @OA\Schema(type="integer")
+     *         description="ID Asesi",
+     *         @OA\Schema(type="integer", example=123)
+     *     ),
+     *     @OA\Parameter(
+     *         name="pk_id",
+     *         in="query",
+     *         required=true,
+     *         description="ID PK",
+     *         @OA\Schema(type="integer", example=456)
      *     ),
      *     @OA\Response(
      *         response=200,
@@ -28,32 +36,34 @@ use App\Models\PkProgressModel;
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Status data retrieved successfully."),
      *             @OA\Property(
-     *                 property="status",
+     *                 property="data",
      *                 type="object",
-     *                 @OA\Property(property="form_1_status", type="string", nullable=true, example="Completed"),
-     *                 @OA\Property(property="form_2_status", type="string", nullable=true, example="Open"),
-     *                 @OA\Property(property="form_3_status", type="string", nullable=true, example="null"),
-     *                 @OA\Property(property="form_4_status", type="string", nullable=true, example="null"),
-     *                 @OA\Property(property="form_5_status", type="string", nullable=true, example=null),
-     *                 @OA\Property(property="form_6_status", type="string", nullable=true, example=null),
-     *                 @OA\Property(property="form_7_status", type="string", nullable=true, example="null"),
-     *                 @OA\Property(property="form_8_status", type="string", nullable=true, example="null"),
-     *                 @OA\Property(property="form_9_status", type="string", nullable=true, example="null"),
-     *                 @OA\Property(property="form_10_status", type="string", nullable=true, example="null"),
-     *                 @OA\Property(property="form_11_status", type="string", nullable=true, example="null"),
-     *                 @OA\Property(property="form_12_status", type="string", nullable=true, example="null")
+     *                 additionalProperties=@OA\Schema(type="string", example="Completed"),
+     *                 description="Key adalah form_type, value adalah status"
      *             ),
      *             @OA\Property(property="status_code", type="integer", example=200)
      *         )
      *     ),
      *     @OA\Response(
-     *         response=404,
-     *         description="No progress or status found for this user ID",
+     *         response=400,
+     *         description="Parameter asesi_id dan pk_id wajib diisi",
      *         @OA\JsonContent(
      *             type="object",
      *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(property="message", type="string", example="No progress found for this user ID."),
-     *             @OA\Property(property="status_code", type="integer", example=404)
+     *             @OA\Property(property="message", type="string", example="Parameter asesi_id dan pk_id wajib diisi."),
+     *             @OA\Property(property="status_code", type="integer", example=400),
+     *             @OA\Property(property="data", type="string", example=null)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Data tidak tersedia",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Data tidak tersedia."),
+     *             @OA\Property(property="status_code", type="integer", example=200),
+     *             @OA\Property(property="data", type="string", example=null)
      *         )
      *     ),
      *     @OA\Response(
@@ -64,70 +74,90 @@ use App\Models\PkProgressModel;
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An error occurred while retrieving data."),
      *             @OA\Property(property="error", type="string", example="SQL error or exception message"),
-     *             @OA\Property(property="status_code", type="integer", example=500)
+     *             @OA\Property(property="status_code", type="integer", example=500),
+     *             @OA\Property(property="data", type="string", example=null)
      *         )
      *     )
      * )
      */
 
+
 class FormStatusController extends Controller
 {
-    public function getFormStatusByUser($user_id)
+    public function getFormStatusByAsesi(Request $request)
     {
         try {
-            // Ambil progress_id berdasarkan user_id
-            $progress = PkProgressModel::where('user_id', $user_id)->first();
+            $asesi_id = $request->query('asesi_id');
+            $pk_id    = $request->query('pk_id');
 
-            // Jika progress_id tidak ditemukan
-            if (!$progress) {
+            if (!$asesi_id || !$pk_id) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'No progress found for this user ID.',
+                    'message' => 'Parameter asesi_id dan pk_id wajib diisi.',
+                    'status_code' => 400,
+                    'data' => null,
+                ], 400);
+            }
+
+            // Ambil data bidang
+            $item = BidangModel::where('pk_id', $pk_id)
+                ->where('asesi_id', $asesi_id)
+                ->select([
+                    'form_1_id',
+                    'asesi_name',
+                    'asesi_id',
+                    'asesi_date',
+                    'asesor_id',
+                    'asesor_name',
+                    'asesor_date',
+                ])
+                ->first();
+
+            if (!$item) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Data tidak tersedia.',
                     'status_code' => 200,
-                    'data' => null
+                    'data' => null,
                 ], 200);
             }
 
-            // Ambil data status berdasarkan progress_id
-            $statusData = PkStatusModel::where('progress_id', $progress->progress_id)->first();
+            // Ambil semua progres terkait form_1_id (tidak dibedakan induk/anak)
+            $allProgres = \App\Models\KompetensiProgres::where('form_id', $item->form_1_id)
+                ->orWhere('parent_form_id', $item->form_1_id)
+                ->select('id', 'status')
+                ->get();
 
-            // Jika status tidak ditemukan
-            if (!$statusData) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No status found for this user ID.',
-                    'status_code' => 200,
-                    'data' => null
-                ], 200);
+            $status = [];
+            foreach ($allProgres as $prog) {
+                // Ambil form_type dari KompetensiTrack
+                $form_type = \App\Models\KompetensiTrack::where('progres_id', $prog->id)
+                    ->value('form_type');
+
+                if ($form_type) {
+                    $status[$form_type] = $prog->status;
+                }
             }
 
-            // Struktur response JSON hanya form_x_status
             return response()->json([
                 'success' => true,
                 'message' => 'Status data retrieved successfully.',
-                'status' => [
-                    'form_1_status' => $statusData->form_1_status ?? null,
-                    'form_2_status' => $statusData->form_2_status ?? null,
-                    'form_3_status' => $statusData->form_3_status ?? null,
-                    'form_4_status' => $statusData->form_4_status ?? null,
-                    'form_5_status' => $statusData->form_5_status ?? null,
-                    'form_6_status' => $statusData->form_6_status ?? null,
-                    'form_7_status' => $statusData->form_7_status ?? null,
-                    'form_8_status' => $statusData->form_8_status ?? null,
-                    'form_9_status' => $statusData->form_9_status ?? null,
-                    'form_10_status' => $statusData->form_10_status ?? null,
-                    'form_11_status' => $statusData->form_11_status ?? null,
-                    'form_12_status' => $statusData->form_12_status ?? null,
-                ],
+                'data' => $status,
                 'status_code' => 200,
             ], 200);
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while retrieving data.',
                 'error' => $e->getMessage(),
-                'status_code' => 500
+                'status_code' => 500,
+                'data' => null,
             ], 500);
         }
     }
+
+
+    
+
 }

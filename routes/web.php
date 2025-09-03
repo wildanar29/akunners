@@ -94,7 +94,7 @@ $router->get('/get-list-working-units', 'GetWorkingUnitController@index'); // Am
 $router->get('/get-list-jabatan', 'JabatanController@getAllJabatan'); // Ambil semua data
 
 //Ambil data Jabatan
-$router->get('/get-indikator-status/{user_id}', 'FormStatusController@getFormStatusByUser'); // Ambil semua data
+$router->get('/get-indikator-status', 'FormStatusController@getFormStatusByAsesi'); // Ambil semua data
 
 
 //Ijazah Controller
@@ -281,7 +281,7 @@ $router->post('/generate-sertifikat', 'CertificateController@generate');
 $router->get('/sertifikat/view/{form_1_id}', 'CertificateController@viewSertifikatByFormId');
 $router->get('/sertifikat/data/{user_id}', 'CertificateController@getSertifikatByUserId');
 $router->get('/sertifikat/list', 'CertificateController@getListSertifikat');
-
+$router->post('/sertifikat/transkrip-nilai', 'CertificateController@getTranskripNilai');
 //Notifikasi 
 $router->get('/send-notification-to-bidang', action: 'NotificationController@notifikasiPengajuankeBidang');
 });// buat Authentikasi
