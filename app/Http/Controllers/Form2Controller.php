@@ -64,22 +64,20 @@ class Form2Controller extends Controller
 
         Log::debug('getSoals() called with:', compact('pk_id', 'asesi_id', 'no_elemen', 'no_id'));
 
-        // Cari form_2_id berdasarkan asesi_id dan pk_id
-        $form2 = Form2::where('user_jawab_form_2_id', $asesi_id)
-            // ->where('pk_id', $pk_id) // uncomment kalau memang ada kolom pk_id di form_2
-            ->first();
+        // Cari form_2_id berdasarkan asesi_id
+        $form2 = Form2::where('user_jawab_form_2_id', $asesi_id)->first();
 
         if (!$form2) {
             return response()->json([
                 'status'  => 'ERROR',
-                'message' => 'Form 2 tidak ditemukan untuk asesi_id ' . $asesi_id . ' dan pk_id ' . $pk_id,
+                'message' => "Form 2 tidak ditemukan untuk asesi_id {$asesi_id} dan pk_id {$pk_id}",
                 'data'    => null
             ], 404);
         }
 
         $form_2_id = $form2->form_2_id;
 
-        // Query langsung antar tabel
+        // Query join tabel
         $query = DB::table('soal_form_2 as s')
             ->join('komponen_form_2 as k', function ($join) {
                 $join->on('s.komponen_id', '=', 'k.komponen_id')
@@ -111,22 +109,20 @@ class Form2Controller extends Controller
             $query->where('s.no_id', $no_id);
         }
 
-        $result = $query->get();
+        $questions = $query->get();
 
-        // Tambahkan form_2_id ke dalam setiap item data
-        $result = $result->map(function ($row) use ($form_2_id) {
-            $row->form_2_id = $form_2_id;
-            return $row;
-        });
-
-        Log::debug('Total hasil akhir:', ['count' => $result->count()]);
+        Log::debug('Total hasil akhir:', ['count' => $questions->count()]);
 
         return response()->json([
             'status'  => 'SUCCESS',
-            'message' => 'Data taken from database for PK ' . $pk_id,
-            'data'    => $result
+            'message' => "Data taken from database for PK {$pk_id}",
+            'data'    => [
+                'form_2_id' => $form_2_id,
+                'questions' => $questions
+            ]
         ]);
     }
+
 
 
 
