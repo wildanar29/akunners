@@ -7,11 +7,11 @@ use App\Models\PkStatusModel;
 use App\Models\PkProgressModel;
 use App\Models\BidangModel;
 
-    /**
+        /**
      * @OA\Get(
      *     path="/get-indikator-status",
-     *     summary="Ambil semua status form berdasarkan asesi dan pk",
-     *     description="Mengembalikan status semua form yang terkait dengan asesi_id dan pk_id.",
+     *     summary="Ambil semua status form berdasarkan asesi",
+     *     description="Mengembalikan status semua form yang terkait dengan asesi_id.",
      *     operationId="getFormStatusByAsesi",
      *     tags={"Form Status"},
      *     @OA\Parameter(
@@ -20,13 +20,6 @@ use App\Models\BidangModel;
      *         required=true,
      *         description="ID Asesi",
      *         @OA\Schema(type="integer", example=123)
-     *     ),
-     *     @OA\Parameter(
-     *         name="pk_id",
-     *         in="query",
-     *         required=true,
-     *         description="ID PK",
-     *         @OA\Schema(type="integer", example=456)
      *     ),
      *     @OA\Response(
      *         response=200,
@@ -38,19 +31,32 @@ use App\Models\BidangModel;
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
-     *                 additionalProperties=@OA\Schema(type="string", example="Completed"),
-     *                 description="Key adalah form_type, value adalah status"
+     *                 additionalProperties=@OA\Schema(
+     *                     type="object",
+     *                     @OA\Property(property="asesi_id", type="integer", example=123),
+     *                     @OA\Property(property="asesi_name", type="string", example="John Doe"),
+     *                     @OA\Property(property="asesi_date", type="string", format="date-time", example="2025-09-03 10:00:00"),
+     *                     @OA\Property(property="asesor_id", type="integer", example=45),
+     *                     @OA\Property(property="asesor_name", type="string", example="Jane Smith"),
+     *                     @OA\Property(property="asesor_date", type="string", format="date-time", example="2025-09-03 11:00:00"),
+     *                     @OA\Property(
+     *                         property="status",
+     *                         type="object",
+     *                         additionalProperties=@OA\Schema(type="string", example="Completed"),
+     *                         description="Key adalah form_type, value adalah status"
+     *                     )
+     *                 )
      *             ),
      *             @OA\Property(property="status_code", type="integer", example=200)
      *         )
      *     ),
      *     @OA\Response(
      *         response=400,
-     *         description="Parameter asesi_id dan pk_id wajib diisi",
+     *         description="Parameter asesi_id wajib diisi",
      *         @OA\JsonContent(
      *             type="object",
      *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(property="message", type="string", example="Parameter asesi_id dan pk_id wajib diisi."),
+     *             @OA\Property(property="message", type="string", example="Parameter asesi_id wajib diisi."),
      *             @OA\Property(property="status_code", type="integer", example=400),
      *             @OA\Property(property="data", type="string", example=null)
      *         )
