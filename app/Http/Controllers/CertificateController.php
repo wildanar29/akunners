@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 use App\Models\KompetensiPk;
 use App\Models\BidangModel;
 use App\Models\Form6;
@@ -108,6 +109,13 @@ class CertificateController extends Controller
                 'file_path'       => $path,
             ]);
 
+            $userAsesi = $this->formService->findUser($form1->asesi_id);
+
+             if ($form1->status === 'Approved') {
+                $updateForm1 = $this->formService->updateForm1($form1->form_1_id, 'Completed');
+                $updateProgres = $this->formService->updateProgresDanTrack($form1->form_1_id, 'form_1', 'Completed', Auth::id(), 'Sertifikat sudah dibuat dan dikirim ke Asesi');
+                $this->formService->KirimNotifikasiKeUser($userAsesi, 'Sertifikat Asesmen', 'Sertifikat sudah dapat diunduh.');
+            }
             DB::commit();
 
             return response()->json([
@@ -128,6 +136,34 @@ class CertificateController extends Controller
                 'error'   => $e->getMessage(),
             ], 500);
         }
+    }
+
+    public function downloadSertifikatByFormId($form_1_id)
+    {
+        // Cari sertifikat berdasarkan form_1_id
+        $sertifikat = SertifikatPk::where('form_1_id', $form_1_id)->first();
+
+        if (!$sertifikat) {
+            return response()->json([
+                'message' => 'Sertifikat untuk form ini tidak ditemukan'
+            ], 404);
+        }
+
+        // Pastikan file ada
+        if (!Storage::disk('public')->exists($sertifikat->file_path)) {
+            return response()->json([
+                'message' => 'File sertifikat tidak ditemukan'
+            ], 404);
+        }
+
+        // Ambil konten file
+        $file = Storage::disk('public')->get($sertifikat->file_path);
+        $mime = Storage::disk('public')->mimeType($sertifikat->file_path);
+
+        // Download file
+        return response($file, 200)
+            ->header('Content-Type', $mime)
+            ->header('Content-Disposition', 'attachment; filename="' . basename($sertifikat->file_path) . '"');
     }
 
 

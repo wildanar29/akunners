@@ -279,6 +279,7 @@ $router->get('/form6/soal/{pkId}', 'Form6Controller@SoalForm6');
 // CERTIFICATE
 $router->post('/generate-sertifikat', 'CertificateController@generate');
 $router->get('/sertifikat/view/{form_1_id}', 'CertificateController@viewSertifikatByFormId');
+$router->get('/sertifikat/download/{form_1_id}', 'CertificateController@downloadSertifikatByFormId');
 $router->get('/sertifikat/data/{user_id}', 'CertificateController@getSertifikatByUserId');
 $router->get('/sertifikat/list', 'CertificateController@getListSertifikat');
 $router->post('/sertifikat/transkrip-nilai', 'CertificateController@getTranskripNilai');
