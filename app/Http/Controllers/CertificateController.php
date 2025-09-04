@@ -79,11 +79,13 @@ class CertificateController extends Controller
             $data['nomor_surat'] = $nomorSurat;
 
             // Buat nama file aman: gabungkan nama + nomor surat
-            $safeNama = preg_replace('/[^A-Za-z0-9\-]/', '_', $data['nama']);
+            $safeNama  = preg_replace('/[^A-Za-z0-9\-]/', '_', $data['nama']);
             $safeNomor = preg_replace('/[^A-Za-z0-9\-]/', '_', $nomorSurat);
-            $fileName = "sertifikat_{$safeNama}_{$safeNomor}.pdf";
+            $fileName  = "sertifikat_{$safeNama}_{$safeNomor}.pdf";
 
-            $path = 'sertifikat/' . $fileName;
+            // Folder berdasarkan tahun berjalan
+            $year = Carbon::now()->year;
+            $path = "sertifikat/{$year}/" . $fileName;
 
             // Generate PDF
             $pdf = Pdf::loadView('sertifikat.keperawatan', $data);
@@ -117,7 +119,7 @@ class CertificateController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
 
-            if (Storage::disk('public')->exists($path)) {
+            if (isset($path) && Storage::disk('public')->exists($path)) {
                 Storage::disk('public')->delete($path);
             }
 
@@ -127,6 +129,7 @@ class CertificateController extends Controller
             ], 500);
         }
     }
+
 
     public function viewSertifikatByFormId($form_1_id)
     {
