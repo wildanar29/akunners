@@ -43,7 +43,7 @@ class Form3Controller extends BaseController
         // Validasi: pk_id wajib
         if (!$pk_id) {
             return response()->json([
-                'status' => 'ERROR',
+                'status' => 'error',
                 'message' => 'Parameter pk_id wajib diisi.',
                 'data' => null
             ], 400);
@@ -162,8 +162,14 @@ class Form3Controller extends BaseController
 
         $html .= '</body></html>';
 
-        return response($html)->header('Content-Type', 'text/html');
+        // Return JSON
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Berhasil menampilkan Form 3B',
+            'data' => $html
+        ]);
     }
+
 
     public function getAllDataFormC(Request $request)
     {
@@ -310,8 +316,14 @@ class Form3Controller extends BaseController
 
         $html .= '</body></html>';
 
-        return response($html)->header('Content-Type', 'text/html');
+        // Kembalikan JSON response
+        return response()->json([
+            'status' => 'OK',
+            'message' => 'Data berhasil diambil.',
+            'data' => $html
+        ]);
     }
+
 
     public function getAllDataFormA(Request $request)
     {
@@ -321,7 +333,11 @@ class Form3Controller extends BaseController
 
         // Validasi: pk_id wajib diisi
         if (!$pk_id) {
-            return response('<h3 style="color:red;">Parameter <strong>pk_id</strong> wajib diisi.</h3>', 400);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Parameter pk_id wajib diisi.',
+                'data' => null
+            ], 400);
         }
 
         $query = TypeForm3_A::with([
@@ -336,7 +352,7 @@ class Form3Controller extends BaseController
             });
         }
 
-        // Filter berdasarkan pk_id (pasti ada karena validasi di atas)
+        // Filter berdasarkan pk_id
         $query->whereHas('iukForm3.kukForm3.elemenForm3', function ($q) use ($pk_id) {
             $q->where('pk_id', $pk_id);
         });
@@ -418,8 +434,15 @@ class Form3Controller extends BaseController
         }
 
         $html .= '</body></html>';
-        return response($html);
+
+        // Return JSON dengan HTML di dalam data
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Berhasil menampilkan Form 3A',
+            'data' => $html
+        ]);
     }
+
 
     public function getAllDataFormD(Request $request)
     {
@@ -429,7 +452,7 @@ class Form3Controller extends BaseController
             return response()->json([
                 'status' => 'ERROR',
                 'message' => 'Parameter pk_id wajib diisi.',
-                'data' => [],
+                'data' => null,
             ], 400);
         }
 
@@ -441,7 +464,7 @@ class Form3Controller extends BaseController
             return response()->json([
                 'status' => 'ERROR',
                 'message' => 'Data tidak ditemukan untuk pk_id: ' . $pk_id,
-                'data' => [],
+                'data' => null,
             ], 404);
         }
 
@@ -496,8 +519,14 @@ class Form3Controller extends BaseController
 
         $html .= '</tbody></table></body></html>';
 
-        return response($html);
+        // Return JSON
+        return response()->json([
+            'status' => 'OK',
+            'message' => 'Data berhasil diambil.',
+            'data' => $html
+        ]);
     }
+
 
     public function Form3Input(Request $request, $user_id)
 	{
