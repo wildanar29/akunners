@@ -91,91 +91,83 @@ use App\Models\BidangModel;
 class FormStatusController extends Controller
 {
     public function getFormStatusByAsesi(Request $request)
-{
-    try {
-        $asesi_id = $request->query('asesi_id');
+    {
+        try {
+            $asesi_id = $request->query('asesi_id');
 
-        if (!$asesi_id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Parameter asesi_id wajib diisi.',
-                'status_code' => 400,
-                'data' => null,
-            ], 400);
-        }
-
-        // Ambil satu data bidang berdasarkan asesi_id
-        $item = BidangModel::where('asesi_id', $asesi_id)
-            ->select([
-                'pk_id',
-                'form_1_id',
-                'asesi_name',
-                'asesi_id',
-                'asesi_date',
-                'asesor_id',
-                'asesor_name',
-                'asesor_date',
-            ])
-            ->first();
-
-        if (!$item) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Data tidak tersedia.',
-                'status_code' => 200,
-                'data' => null,
-            ], 200);
-        }
-
-        // 🔹 Ambil semua daftar form_type dari KompetensiTrack (unik)
-        $defaultForms = \App\Models\KompetensiTrack::distinct()
-            ->pluck('form_type')
-            ->filter() // buang null
-            ->values()
-            ->toArray();
-
-        // 🔹 Inisialisasi semua form dengan null
-        $status = array_fill_keys($defaultForms, null);
-
-        // Ambil semua progres terkait form_1_id
-        $allProgres = \App\Models\KompetensiProgres::where('form_id', $item->form_1_id)
-            ->orWhere('parent_form_id', $item->form_1_id)
-            ->select('id', 'status')
-            ->get();
-
-        foreach ($allProgres as $prog) {
-            // Ambil form_type dari KompetensiTrack
-            $form_type = \App\Models\KompetensiTrack::where('progres_id', $prog->id)
-                ->value('form_type');
-
-            if ($form_type && array_key_exists($form_type, $status)) {
-                $status[$form_type] = $prog->status;
+            if (!$asesi_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Parameter asesi_id wajib diisi.',
+                    'status_code' => 400,
+                    'data' => null,
+                ], 400);
             }
+
+            // Ambil satu data bidang berdasarkan asesi_id
+            $item = BidangModel::where('asesi_id', $asesi_id)
+                ->select([
+                    'pk_id',
+                    'form_1_id',
+                    'asesi_name',
+                    'asesi_id',
+                    'asesi_date',
+                    'asesor_id',
+                    'asesor_name',
+                    'asesor_date',
+                ])
+                ->first();
+
+            if (!$item) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Data tidak tersedia.',
+                    'status_code' => 200,
+                    'data' => null,
+                ], 200);
+            }
+
+            // 🔹 Ambil semua daftar form_type dari KompetensiTrack (unik)
+            $defaultForms = \App\Models\KompetensiTrack::distinct()
+                ->pluck('form_type')
+                ->filter() // buang null
+                ->values()
+                ->toArray();
+
+            // 🔹 Inisialisasi semua form dengan null
+            $status = array_fill_keys($defaultForms, null);
+
+            // Ambil semua progres terkait form_1_id
+            $allProgres = \App\Models\KompetensiProgres::where('form_id', $item->form_1_id)
+                ->orWhere('parent_form_id', $item->form_1_id)
+                ->select('id', 'status')
+                ->get();
+
+            foreach ($allProgres as $prog) {
+                // Ambil form_type dari KompetensiTrack
+                $form_type = \App\Models\KompetensiTrack::where('progres_id', $prog->id)
+                    ->value('form_type');
+
+                if ($form_type && array_key_exists($form_type, $status)) {
+                    $status[$form_type] = $prog->status;
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Status data retrieved successfully.',
+                'data'    => $status,
+                'status_code' => 200,
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while retrieving data.',
+                'error' => $e->getMessage(),
+                'status_code' => 500,
+                'data' => null,
+            ], 500);
         }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Status data retrieved successfully.',
-            'data'    => $status,
-            'status_code' => 200,
-        ], 200);
-
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'An error occurred while retrieving data.',
-            'error' => $e->getMessage(),
-            'status_code' => 500,
-            'data' => null,
-        ], 500);
     }
-}
-
-
-
-
-
-
-    
-
 }

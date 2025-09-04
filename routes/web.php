@@ -27,6 +27,11 @@ $router->get('/get-elemen-pk/{pk_id}', 'MasterController@getElemenAsesmen');
 // PROGRES TRACKING
 $router->get('/progress/asesi/{asesorId}', 'AsesiPermohonanController@getAsesiProgressByAsesor');
 $router->get('/progress/assessment', 'ProgressController@getProgresByAsesi');
+
+// MENU 
+$router->post('/menu', 'MenuController@getMenu');
+$router->post('/submitted-data', 'MenuController@getSubmittedData');
+
 // FORM 1 ATAU FORM PENGAJUAN
 $router->get('/progress/{userId}', 'AsesiPermohonanController@getUserFormProgress');
 $router->post('/get-form1-byasesor', 'AsesiPermohonanController@getForm1ByAsesor');
