@@ -4,7 +4,7 @@ namespace App\Docs;
 /**
  * @OA\Get(
  *     path="/sertifikat/data/{user_id}",
- *     tags={"Sertifikat"},
+ *     tags={"HASIL ASSESSMENT"},
  *     summary="Ambil daftar sertifikat berdasarkan user_id",
  *     description="API ini digunakan untuk mengambil sertifikat yang sudah ada berdasarkan user_id atau asesi",
  *     @OA\Parameter(

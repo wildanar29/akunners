@@ -4,7 +4,7 @@ namespace App\Docs;
 /**
  * @OA\Get(
  *     path="/sertifikat/list",
- *     tags={"Sertifikat"},
+ *     tags={"HASIL ASSESSMENT"},
  *     summary="Ambil list asesi untuk generate sertifikat",
  *     description="API ini digunakan untuk menampilkan list asesi yang menunggu untuk generate sertifikat oleh bidang",
  *     @OA\Parameter(
