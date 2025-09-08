@@ -561,7 +561,8 @@ class Form3Controller extends BaseController
 			'asesor_name'  => $form2->asesor_name,
 			'asesi_date'   => Carbon::now(),
 			'asesor_date'  => Carbon::now(),
-			'status'       => 'Approved'
+			'status'       => 'Approved',
+            'pk_id'        => $form2->pk_id,
 		]);
 
 		// Update pk_progress (form_3_id)
