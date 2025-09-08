@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\PkStatusModel;
 use App\Models\PkProgressModel;
 use App\Models\BidangModel;
+use App\Models\Form3Model;
 
 class MenuController extends Controller
 {
@@ -125,23 +126,19 @@ class MenuController extends Controller
 
             $data = null;
 
-            // 🔹 Jika key adalah form_1 → ambil dari BidangModel
-            if ($key === 'form_1') {
-                $data = \App\Models\BidangModel::where('pk_id', $pk_id)
-                    ->where('asesor_id', $asesor_id)
-                    ->where('status', 'Submitted')
-                    ->get();
-            }
-
-            // 🔹 Jika key adalah form_2 → gunakan fungsi helper
-            else if ($key === 'form_2') {
-                $data = $this->getSubmittedForm2($pk_id, $asesor_id);
+            // 🔹 Ambil data sesuai key (termasuk form_10.xxx)
+            if (in_array($key, [
+                'form_1', 'form_2', 'form_3', 'intv_pra_asesmen',
+                'form_5', 'form_4a', 'form_4b', 'form_4c', 'form_4d',
+                'form_6', 'form_7', 'form_8', 'form_9', 'form_12'
+            ]) || str_starts_with($key, 'form_10')) {
+                $data = $this->getSubmittedForm($key, $pk_id, $asesor_id);
             }
 
             if (!$data || $data->isEmpty()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Tidak ada data dengan status Submitted.',
+                    'message' => 'Tidak ada data yang ditemukan.',
                     'status_code' => 200,
                     'data' => [],
                 ], 200);
@@ -151,7 +148,7 @@ class MenuController extends Controller
                 'success' => true,
                 'message' => 'Data retrieved successfully.',
                 'status_code' => 200,
-                'data' => $data,
+                'data' => $data, // ✅ sudah ada status di tiap item
             ], 200);
 
         } catch (\Exception $e) {
@@ -165,42 +162,200 @@ class MenuController extends Controller
         }
     }
 
-    private function getSubmittedForm2($pk_id, $asesor_id)
+    private function getSubmittedForm($formType, $pk_id, $asesor_id)
     {
-        // Ambil data di Form2 dengan status Submitted
-        $form2 = \App\Models\Form2::where('asesor_id', $asesor_id)
-            ->where('status', 'Submitted')
-            ->get();
+        $formConfig = [
+            'form_1' => [
+                'model' => \App\Models\BidangModel::class,
+                'pk'    => 'form_1_id',
+                'filters' => [
+                    ['pk_id', '=', $pk_id],
+                    ['asesor_id', '=', $asesor_id],
+                ],
+                'status' => 'Submitted',
+            ],
+            'form_2' => [
+                'model' => \App\Models\Form2::class,
+                'pk'    => 'form_2_id',
+                'filters' => [
+                    ['pk_id', '=', $pk_id],
+                    ['no_reg', '=', optional(\App\Models\DataAsesorModel::find($asesor_id))->no_reg],
+                ],
+                'status' => 'Submitted',
+            ],
+            'form_3' => [
+                'model' => \App\Models\Form3Model::class,
+                'pk'    => 'form_3_id',
+                'filters' => [
+                    ['no_reg', '=', optional(\App\Models\DataAsesorModel::find($asesor_id))->no_reg],
+                ],
+                'status' => 'Submitted',
+            ],
+            'intv_pra_asesmen' => [
+                'model' => \App\Models\InterviewModel::class,
+                'pk'    => 'interview_id',
+                'filters' => [
+                    ['pk_id', '=', $pk_id],
+                    ['asesor_id', '=', $asesor_id],
+                ],
+                'status' => 'Submitted',
+            ],
+            'form_5' => [
+                'model' => \App\Models\Form5::class,
+                'pk'    => 'form_5_id',
+                'filters' => [
+                    ['pk_id', '=', $pk_id],
+                    ['asesor_id', '=', $asesor_id],
+                ],
+                'status' => 'Submitted',
+            ],
+            'form_4a' => [
+                'model' => \App\Models\Form4a::class,
+                'pk'    => 'form_4a_id',
+                'filters' => [
+                    ['pk_id', '=', $pk_id],
+                    ['asesor_id', '=', $asesor_id],
+                ],
+                'status' => 'Submitted',
+            ],
+            'form_4b' => [
+                'model' => \App\Models\Form4b::class,
+                'pk'    => 'form_4b_id',
+                'filters' => [
+                    ['pk_id', '=', $pk_id],
+                    ['asesor_id', '=', $asesor_id],
+                ],
+                'status' => 'Submitted',
+            ],
+            'form_4c' => [
+                'model' => \App\Models\Form4c::class,
+                'pk'    => 'form_4c_id',
+                'filters' => [
+                    ['pk_id', '=', $pk_id],
+                    ['asesor_id', '=', $asesor_id],
+                ],
+                'status' => 'Submitted',
+            ],
+            'form_4d' => [
+                'model' => \App\Models\Form4d::class,
+                'pk'    => 'form_4d_id',
+                'filters' => [
+                    ['pk_id', '=', $pk_id],
+                    ['asesor_id', '=', $asesor_id],
+                ],
+                'status' => 'Submitted',
+            ],
+            'form_6' => [
+                'model' => \App\Models\Form4d::class,
+                'pk'    => 'form_6_id',
+                'filters' => [
+                    ['pk_id', '=', $pk_id],
+                    ['asesor_id', '=', $asesor_id],
+                ],
+                'status' => 'Submitted',
+            ],
+            'form_7' => [
+                'model' => \App\Models\Form4d::class,
+                'pk'    => 'form_7_id',
+                'filters' => [
+                    ['pk_id', '=', $pk_id],
+                    ['asesor_id', '=', $asesor_id],
+                ],
+                'status' => 'Submitted',
+            ],
+            'form_8' => [
+                'model' => \App\Models\Form8::class,
+                'pk'    => 'form_8_id',
+                'filters' => [
+                    ['pk_id', '=', $pk_id],
+                    ['asesor_id', '=', $asesor_id],
+                ],
+                'status' => 'Submitted',
+            ],
+            'form_9' => [
+                'model' => \App\Models\Form9::class,
+                'pk'    => 'form_9_id',
+                'filters' => [
+                    ['pk_id', '=', $pk_id],
+                    ['asesor_id', '=', $asesor_id],
+                ],
+                'status' => 'Submitted',
+            ],
+            'form_12' => [
+                'model' => \App\Models\Form12::class,
+                'pk'    => 'form_12_id',
+                'filters' => [
+                    ['pk_id', '=', $pk_id],
+                    ['asesor_id', '=', $asesor_id],
+                ],
+                'status' => 'Submitted',
+            ],
+            // 🔹 Generic config untuk semua form_10.xxx
+            'form_10' => [
+                'model' => \App\Models\Form10::class,
+                'pk'    => 'form_10_id',
+                'filters' => [
+                    ['pk_id', '=', $pk_id],
+                    ['asesor_id', '=', $asesor_id],
+                    // nanti tambah filter form_type dinamis
+                ],
+                'status' => 'Submitted',
+            ],
+        ];
 
-        if ($form2->isEmpty()) {
-            return collect(); // kembalikan collection kosong biar konsisten
-        }
+        // cek apakah ini form_10.xxx
+        $baseType = explode('.', $formType)[0]; // ex: "form_10"
+        $subType  = explode('.', $formType)[1] ?? null;
 
-        // Ambil user_jawab_form_2_id
-        $userJawabIds = $form2->pluck('user_jawab_form_2_id')->toArray();
-
-        if (empty($userJawabIds)) {
+        if (!isset($formConfig[$baseType])) {
+            \Log::warning("getSubmittedForm: Form type [$formType] tidak dikenali.");
             return collect();
         }
 
-        // Ambil no_id dari JawabanForm2Model
-        $noIds = \App\Models\JawabanForm2Model::whereIn('user_jawab_form_2_id', $userJawabIds)
-            ->pluck('no_id')
+        $config = $formConfig[$baseType];
+
+        // kalau ada subtype, tambahkan filter form_type
+        if ($subType) {
+            $config['filters'][] = ['form_type', '=', $formType];
+        }
+
+        // 🔹 Ambil data awal
+        $query = $config['model']::query();
+        foreach ($config['filters'] as $filter) {
+            if ($filter[2] !== null) {
+                $query->where($filter[0], $filter[1], $filter[2]);
+            }
+        }
+
+        $formList = $query->get();
+        if ($formList->isEmpty()) {
+            return collect();
+        }
+
+        // 🔹 Ambil semua form_id
+        $formIds = $formList->pluck($config['pk'])->toArray();
+
+        // 🔹 Ambil status langsung dari KompetensiProgres
+        $progressData = \App\Models\KompetensiProgres::whereIn('form_id', $formIds)
+            ->where('status', $config['status'])
+            ->pluck('status', 'form_id')
             ->toArray();
 
-        if (empty($noIds)) {
+        if (empty($progressData)) {
             return collect();
         }
 
-        // Cek pk_id dari SoalForm2Model
-        $validSoal = \App\Models\SoalForm2Model::whereIn('no_id', $noIds)
-            ->where('pk_id', $pk_id)
-            ->get();
+        // 🔹 Tempelkan status ke data
+        $validData = $formList->filter(function ($item) use ($config, $progressData) {
+            return isset($progressData[$item->{$config['pk']}]);
+        })->map(function ($item) use ($config, $progressData) {
+            $formId = $item->{$config['pk']};
+            $item->status = $progressData[$formId] ?? null;
+            return $item;
+        });
 
-        return $validSoal;
+        return $validData;
     }
-
-
 
 
 }
