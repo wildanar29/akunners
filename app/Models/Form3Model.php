@@ -21,6 +21,7 @@ class Form3Model extends Model
         'asesi_name',
         'asesor_name',
         'status',
+        'pk_id',
     ];
 
 }
