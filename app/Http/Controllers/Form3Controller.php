@@ -707,7 +707,7 @@ class Form3Controller extends BaseController
 
         KompetensiTrack::create([
             'progres_id' => $progres->id,
-            'form_type' => 'form_2',
+            'form_type' => 'form_3',
             'activity' => 'Submitted',
             'activity_time' => Carbon::now(),
             'description' => 'Asesi Menyetujui rencana asesmen.',

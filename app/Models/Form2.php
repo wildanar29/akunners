@@ -22,6 +22,7 @@ class Form2 extends Model
         'asesi_name',
         'asesor_name',
         'status',
+        'pk_id',
     ];
 
     // Timestamps otomatis (created_at & updated_at)

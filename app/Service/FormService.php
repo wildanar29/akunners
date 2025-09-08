@@ -97,6 +97,17 @@ class FormService
             ->first();
     }
 
+	public function getPkIdByForm1Id($form1Id)
+    {
+        $record = BidangModel::find($form1Id);
+
+        if (!$record) {
+            return null; // jika tidak ada data
+        }
+
+        return $record->pk_id;
+    }
+
     public function isFormExist($asesiId, $pkId, $formType)
 	{
 		$form1 = $this->getForm1ByAsesiIdAndPkId($asesiId, $pkId);

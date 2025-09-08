@@ -26,15 +26,18 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB; // Tambahkan DB untuk query manual
 use Carbon\Carbon; // Pastikan untuk mengimpor Carbon  
 use App\Service\OneSignalService;
+use App\Service\FormService;
   
 class AsesorController extends Controller  
 {  
 	protected $oneSignalService;
+	protected $formService;
 
-	public function __construct(OneSignalService $oneSignalService)
-	{
-		$this->oneSignalService = $oneSignalService;
-	}
+	public function __construct(OneSignalService $oneSignalService, FormService $formService)
+    {
+        $this->oneSignalService = $oneSignalService;
+        $this->formService = $formService;
+    }
 
 	public function getForm1ByAsesorName($asesorName)
 	{
@@ -225,6 +228,7 @@ class AsesorController extends Controller
 
 			$form2->user_jawab_form_2_id = $form->asesi_id;
 			$form2->penilaian_asesi = 0;
+			$form2->pk_id = $form->pk_id;
 			$form2->asesi_date = null;
 			$form2->asesor_date = null;
 			$form2->no_reg = null;

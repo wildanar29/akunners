@@ -22,7 +22,8 @@ class PenilaianForm2Model extends Model
         'no_reg',
         'asesi_name',
         'asesor_name',
-        'status'
+        'status',
+        'pk_id',
     ];
 
 }
