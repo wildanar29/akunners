@@ -20,7 +20,8 @@ class Form5 extends Model
         'asesor_name',
         'asesor_date',
         'no_reg',
-        'status'
+        'status',
+        'pk_id',
     ];
 
     protected $casts = [

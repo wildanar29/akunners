@@ -542,7 +542,7 @@ class Form5Controller extends BaseController
 		]);
 
 		// Proses Form5
-		$form5Result = $this->initForm5($user?->user_id, $request->asesor_id);
+		$form5Result = $this->initForm5($user?->user_id, $request->asesor_id, $interview->pk_id ?? null);
 
 		if (!$form5Result || !isset($form5Result['form5'])) {
 			return response()->json([
@@ -583,7 +583,7 @@ class Form5Controller extends BaseController
 		]);
 	}
 
-	private function initForm5(?int $userId, ?int $asesorId)
+	private function initForm5(?int $userId, ?int $asesorId, ?int $pk_id)
 	{
 		$finalAsesorId = $asesorId ?? $userId;
 
@@ -618,6 +618,7 @@ class Form5Controller extends BaseController
 
 		$form5Exist = Form5::where('asesi_id', $userId)
 			->where('status', '!=', 'Cancel')
+			->where('pk_id', $pk_id)
 			->first();
 
 		if ($form5Exist) {
@@ -639,6 +640,7 @@ class Form5Controller extends BaseController
 				'asesor_date'  => Carbon::now()->toDateString(),
 				'no_reg'       => $asesor->no_reg ?? '',
 				'status'       => 'InAssessment',
+				'pk_id'        => $pk_id,
 			]);
 
 			Log::info('Form5 berhasil dibuat.', ['form_5_id' => $form5->form_5_id]);
