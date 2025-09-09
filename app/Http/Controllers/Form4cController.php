@@ -180,7 +180,7 @@ class Form4cController extends BaseController
             $this->formService->kirimNotifikasiKeUser(
                 DaftarUser::find($form1->asesor_id),
                 'Form 4C Submitted',
-                'Form 4C telah di-submit oleh Asesor.'
+                'Form 4C telah di-submit oleh Asesi.'
             );
 
             return response()->json([
@@ -331,13 +331,13 @@ class Form4cController extends BaseController
                     'form_4c',
                     'Approved',
                     Auth::id(),
-                    'Form 4C telah di-approve oleh Asesi'
+                    'Form 4C telah di-approve oleh Asesor'
                 );
 
                 $this->formService->kirimNotifikasiKeUser(
                     DaftarUser::find($form1->asesor_id),
                     'Form 4C sudah di Approved',
-                    'Form 4C telah di-approve oleh Asesi.'
+                    'Form 4C telah di-approve oleh Asesor.'
                 );
             }
 
@@ -345,7 +345,7 @@ class Form4cController extends BaseController
 
             return response()->json([
                 'success' => true,
-                'message' => 'Form 4C berhasil di-approve oleh Asesi',
+                'message' => 'Form 4C berhasil di-approve oleh Asesor',
                 'data'    => []
             ]);
 
