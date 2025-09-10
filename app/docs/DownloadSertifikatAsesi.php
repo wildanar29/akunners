@@ -5,7 +5,7 @@ namespace App\Docs;
 /**
  * @OA\Get(
  *     path="/sertifikat/download/{form_1_id}",
- *     tags={"DOWNLOAD SERTIFIKAT"},
+ *     tags={"HASIL ASSESSMENT"},
  *     summary="Download sertifikat hasil asesmen",
  *     description="API ini digunakan untuk melakukan download sertifikat hasil asesmen berdasarkan form_1_id.",
  *     @OA\Parameter(
@@ -47,4 +47,4 @@ namespace App\Docs;
  * )
  */
 
- class DownloadSertifikat {}
+ class DownloadSertifikatAsesi {}
