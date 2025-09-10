@@ -204,6 +204,46 @@ class Form8Controller extends BaseController
         }
     }
 
+    public function getFormBandingByUser(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'asesor_id' => 'nullable|integer',
+            'asesi_id'  => 'nullable|integer',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors'  => $validator->errors(),
+            ], 422);
+        }
+
+        $query = FormBandingAsesmen::query();
+
+        if ($request->filled('asesor_id')) {
+            $query->where('asesor_id', $request->asesor_id);
+        }
+
+        if ($request->filled('asesi_id')) {
+            $query->where('asesi_id', $request->asesi_id);
+        }
+
+        $data = $query->get();
+
+        if ($data->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data form banding tidak ditemukan',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Data form banding berhasil diambil',
+            'data'    => $data,
+        ], 200);
+    }
+
 
 
 

@@ -258,6 +258,8 @@ $router->post('/form7/{form7Id}/approve-asesi', 'Form7Controller@ApproveForm7ByA
 // FORM 8
 $router->post('/form8/banding/store', 'Form8Controller@storeFormBandingAsesmen');
 $router->post('/form8/banding/{bandingId}/approve', 'Form8Controller@approveFormBandingAsesmen');
+$router->get('/form8', 'Form8Controller@getFormBandingByUser');
+
 
 // FORM 9
 $router->group(['prefix' => 'form9'], function () use ($router) {
