@@ -116,7 +116,7 @@ class MenuController extends Controller
                     'message' => 'Validasi gagal.',
                     'errors'  => $validator->errors(),
                     'status_code' => 422,
-                    'data' => null,
+                    'data' => [],
                 ], 422);
             }
 
@@ -124,7 +124,7 @@ class MenuController extends Controller
             $asesor_id = $request->input('asesor_id');
             $key       = $request->input('key');
 
-            $data = null;
+            $data = collect(); // default sebagai collection kosong
 
             // 🔹 Ambil data sesuai key (termasuk form_10.xxx)
             if (in_array($key, [
@@ -133,6 +133,11 @@ class MenuController extends Controller
                 'form_6', 'form_7', 'form_8', 'form_9', 'form_12'
             ]) || str_starts_with($key, 'form_10')) {
                 $data = $this->getSubmittedForm($key, $pk_id, $asesor_id);
+
+                // Jika hasilnya object tunggal, ubah jadi array object
+                if ($data && !($data instanceof \Illuminate\Support\Collection)) {
+                    $data = collect([$data]);
+                }
             }
 
             if (!$data || $data->isEmpty()) {
@@ -148,7 +153,7 @@ class MenuController extends Controller
                 'success' => true,
                 'message' => 'Data retrieved successfully.',
                 'status_code' => 200,
-                'data' => $data, // ✅ sudah ada status di tiap item
+                'data' => $data->values()->toArray(), // ✅ selalu array of object
             ], 200);
 
         } catch (\Exception $e) {
@@ -157,10 +162,11 @@ class MenuController extends Controller
                 'message' => 'An error occurred while retrieving data.',
                 'error' => $e->getMessage(),
                 'status_code' => 500,
-                'data' => null,
+                'data' => [],
             ], 500);
         }
     }
+
 
     private function getSubmittedForm($formType, $pk_id, $asesor_id)
     {
