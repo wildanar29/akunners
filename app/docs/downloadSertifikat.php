@@ -47,4 +47,4 @@ namespace App\Docs;
  * )
  */
 
- class downloadSertifikat {}
+ class DownloadSertifikat {}
