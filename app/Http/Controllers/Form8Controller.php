@@ -206,43 +206,60 @@ class Form8Controller extends BaseController
 
     public function getFormBandingByUser(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'asesor_id' => 'nullable|integer',
-            'asesi_id'  => 'nullable|integer',
-        ]);
+        try {
+            // ✅ Validasi input
+            $validator = Validator::make($request->all(), [
+                'asesor_id' => 'nullable|integer',
+                'asesi_id'  => 'nullable|integer',
+            ]);
 
-        if ($validator->fails()) {
+            if ($validator->fails()) {
+                return response()->json([
+                    'status'  => 'ERROR',
+                    'message' => 'Validasi gagal',
+                    'errors'  => $validator->errors(),
+                ], 422);
+            }
+
+            // ✅ Query data
+            $query = FormBandingAsesmen::query();
+
+            if ($request->filled('asesor_id')) {
+                $query->where('asesor_id', $request->asesor_id);
+            }
+
+            if ($request->filled('asesi_id')) {
+                $query->where('asesi_id', $request->asesi_id);
+            }
+
+            $data = $query->get();
+
+            if ($data->isEmpty()) {
+                return response()->json([
+                    'status'  => 'SUCCESS',
+                    'message' => 'Data form banding tidak ditemukan',
+                    'data'    => [],
+                ], 200);
+            }
+
             return response()->json([
-                'success' => false,
-                'errors'  => $validator->errors(),
-            ], 422);
-        }
+                'status'  => 'SUCCESS',
+                'message' => 'Data form banding berhasil diambil',
+                'data'    => $data,
+            ], 200);
 
-        $query = FormBandingAsesmen::query();
+        } catch (\Exception $e) {
+            // ✅ Catat error di log
+            \Log::error('Gagal mengambil FormBandingAsesmen: ' . $e->getMessage());
 
-        if ($request->filled('asesor_id')) {
-            $query->where('asesor_id', $request->asesor_id);
-        }
-
-        if ($request->filled('asesi_id')) {
-            $query->where('asesi_id', $request->asesi_id);
-        }
-
-        $data = $query->get();
-
-        if ($data->isEmpty()) {
             return response()->json([
-                'success' => false,
-                'message' => 'Data form banding tidak ditemukan',
-            ], 404);
+                'status'  => 'ERROR',
+                'message' => 'Terjadi kesalahan pada server',
+                'error'   => $e->getMessage(), // kalau mau sembunyikan detail, bisa dihapus
+            ], 500);
         }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Data form banding berhasil diambil',
-            'data'    => $data,
-        ], 200);
     }
+
 
 
 
