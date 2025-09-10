@@ -100,7 +100,7 @@ class AsesorController extends Controller
 			}
 
 			Log::debug('Update status form_1 ke Approved', ['form_1_id' => $form_1_id]);
-			$form->status = 'Approved';
+			$form->status = 'InAssessment';
 			$form->updated_at = Carbon::now();
 			$form->save();
 
