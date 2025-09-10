@@ -6,31 +6,26 @@ namespace App\Docs;
  * @OA\Get(
  *     path="/sertifikat/download/{form_1_id}",
  *     tags={"HASIL ASSESSMENT"},
- *     summary="Download Sertifikat",
- *     description="API ini digunakan untuk mendownload sertifikat yang sudah ada",
- *     operationId="downloadSertifikatByFormId",
+ *     summary="Download sertifikat hasil asesmen",
+ *     description="API ini digunakan untuk melakukan download sertifikat hasil asesmen berdasarkan form_1_id.",
  *     @OA\Parameter(
  *         name="form_1_id",
  *         in="path",
  *         required=true,
- *         description="ID form 1 yang terkait dengan sertifikat",
- *         @OA\Schema(type="integer", example=123)
+ *         description="ID Form 1 untuk mencari sertifikat",
+ *         @OA\Schema(type="integer", example=101)
  *     ),
  *     @OA\Response(
  *         response=200,
- *         description="File sertifikat berhasil diunduh",
- *         @OA\Header(
- *             header="Content-Type",
- *             description="Tipe file sertifikat (contoh: application/pdf)",
- *             @OA\Schema(type="string", example="application/pdf")
- *         ),
+ *         description="Berhasil download file sertifikat",
  *         @OA\Header(
  *             header="Content-Disposition",
- *             description="Header untuk memaksa browser melakukan download",
- *             @OA\Schema(type="string", example="attachment; filename=\"sertifikat_ASESI_123.pdf\"")
+ *             description="Attachment header untuk file sertifikat",
+ *             @OA\Schema(type="string", example="attachment; filename=\"sertifikat.pdf\"")
  *         ),
  *         @OA\MediaType(
- *             mediaType="application/pdf"
+ *             mediaType="application/pdf",
+ *             @OA\Schema(type="string", format="binary")
  *         )
  *     ),
  *     @OA\Response(
@@ -39,6 +34,14 @@ namespace App\Docs;
  *         @OA\JsonContent(
  *             type="object",
  *             @OA\Property(property="message", type="string", example="Sertifikat untuk form ini tidak ditemukan")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=500,
+ *         description="Terjadi kesalahan server",
+ *         @OA\JsonContent(
+ *             type="object",
+ *             @OA\Property(property="message", type="string", example="Terjadi kesalahan pada server")
  *         )
  *     )
  * )
