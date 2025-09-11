@@ -325,6 +325,14 @@ class MenuController extends Controller
             $config['filters'][] = ['form_type', '=', $formType];
         }
 
+        // 🔹 Ambil asesi_id dan asesor_id dari Form 1
+        $form1 = \App\Models\BidangModel::where('pk_id', $pk_id)
+            ->where('asesor_id', $asesor_id)
+            ->first();
+
+        $asesiId  = $form1->asesi_id ?? null;
+        $asesorId = $form1->asesor_id ?? $asesor_id;
+
         // 🔹 Ambil data awal
         $query = $config['model']::query();
         foreach ($config['filters'] as $filter) {
@@ -351,17 +359,20 @@ class MenuController extends Controller
             return collect();
         }
 
-        // 🔹 Tempelkan status ke data
+        // 🔹 Tempelkan status + asesi_id + asesor_id
         $validData = $formList->filter(function ($item) use ($config, $progressData) {
             return isset($progressData[$item->{$config['pk']}]);
-        })->map(function ($item) use ($config, $progressData) {
+        })->map(function ($item) use ($config, $progressData, $asesiId, $asesorId) {
             $formId = $item->{$config['pk']};
-            $item->status = $progressData[$formId] ?? null;
+            $item->status    = $progressData[$formId] ?? null;
+            $item->asesi_id  = $asesiId;
+            $item->asesor_id = $asesorId;
             return $item;
         });
 
         return $validData;
     }
+
 
 
 }
