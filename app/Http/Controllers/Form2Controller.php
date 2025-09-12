@@ -481,8 +481,8 @@ class Form2Controller extends Controller
             ->orderBy('k.komponen_id');
 
         $result = $query->get()->map(function ($item) {
-            $item->jawaban_k  = (bool) $item->jawaban_k;
-            $item->jawaban_bk = (bool) $item->jawaban_bk;
+            $item->jawaban_k  = is_null($item->jawaban_k) ? null : (bool) $item->jawaban_k;
+            $item->jawaban_bk = is_null($item->jawaban_bk) ? null : (bool) $item->jawaban_bk;
             return $item;
         });
 
@@ -491,6 +491,7 @@ class Form2Controller extends Controller
             'message' => 'Data soal dan jawaban berhasil diambil',
             'data'    => $result
         ]);
+
     }
 
 
