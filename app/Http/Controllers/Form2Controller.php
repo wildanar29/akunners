@@ -431,8 +431,8 @@ class Form2Controller extends Controller
 
     public function getSoalDanJawaban(Request $request)
     {
-        // Validasi request
-        $validator = Validator::make($request->all(), [
+        // Ambil parameter dari query string
+        $validator = Validator::make($request->query(), [
             'pk_id' => 'required|integer',
             'user_id' => 'required|integer', // user_id yang menjawab
         ]);
@@ -445,8 +445,8 @@ class Form2Controller extends Controller
             ], 422);
         }
 
-        $pk_id = $request->input('pk_id');
-        $user_id = $request->input('user_id');
+        $pk_id = $request->query('pk_id');
+        $user_id = $request->query('user_id');
 
         Log::debug('getSoalDanJawaban() called with:', compact('pk_id', 'user_id'));
 
@@ -490,6 +490,7 @@ class Form2Controller extends Controller
             'data' => $result
         ]);
     }
+
 
 
 }
