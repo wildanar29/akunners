@@ -480,14 +480,16 @@ class Form2Controller extends Controller
             ->orderBy('e.no_elemen')
             ->orderBy('k.komponen_id');
 
-        $result = $query->get();
-
-        Log::debug('Total soal+jawaban ditemukan:', ['count' => $result->count()]);
+        $result = $query->get()->map(function ($item) {
+            $item->jawaban_k  = (bool) $item->jawaban_k;
+            $item->jawaban_bk = (bool) $item->jawaban_bk;
+            return $item;
+        });
 
         return response()->json([
-            'status' => 'SUCCESS',
+            'status'  => 'SUCCESS',
             'message' => 'Data soal dan jawaban berhasil diambil',
-            'data' => $result
+            'data'    => $result
         ]);
     }
 
