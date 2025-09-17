@@ -57,8 +57,27 @@ class FormService
 	{
 		if (empty($user->device_token)) {
 			Log::warning("User user_id={$user->user_id} tidak memiliki device_token.");
+			// Tetap simpan notifikasi ke database walaupun device_token kosong
+			Notification::create([
+				'user_id'     => $user->user_id,
+				'title'       => $title,
+				'description' => $message,
+				'is_read'     => 0,
+				'created_at'  => Carbon::now(),
+				'updated_at'  => Carbon::now(),
+			]);
 			return;
 		}
+
+		// Simpan notifikasi ke database terlebih dahulu
+		Notification::create([
+			'user_id'     => $user->user_id,
+			'title'       => $title,
+			'description' => $message,
+			'is_read'     => 0,
+			'created_at'  => Carbon::now(),
+			'updated_at'  => Carbon::now(),
+		]);
 
 		try {
 			// Kirim notifikasi ke OneSignal
@@ -68,19 +87,10 @@ class FormService
 				$message
 			);
 
-			// Simpan notifikasi ke database
-			Notification::create([
-				'user_id'     => $user->user_id,
-				'title'       => $title,
-				'description' => $message,
-				'is_read'     => 0,
-				'created_at'  => Carbon::now(),
-				'updated_at'  => Carbon::now(),
-			]);
-
 			Log::info("Notifikasi dikirim ke user user_id={$user->user_id}, nama={$user->nama}");
 
 		} catch (\Exception $e) {
+			// Tetap log error, tapi notifikasi sudah tersimpan
 			Log::error("Gagal mengirim notifikasi ke user.", [
 				'user_id'       => $user->user_id,
 				'error_message' => $e->getMessage(),
@@ -88,6 +98,7 @@ class FormService
 			]);
 		}
 	}
+
 
     public function getForm1ByAsesiIdAndPkId($asesiId, $pkId)
     {
