@@ -312,7 +312,7 @@ class UsersController extends Controller
 			$validator = Validator::make($request->all(), [
 				'nik' => 'required',
 				'password' => 'required',
-				//'player_id' => 'required' // Pastikan frontend mengirim Player ID OneSignal
+				'player_id' => 'sometimes|string|nullable' // Player ID opsional, bisa null
 			]);
 
 			if ($validator->fails()) {
@@ -346,17 +346,15 @@ class UsersController extends Controller
 				], 401);
 			}
 
-			// Ambil nama role berdasarkan role_id
+			// Ambil nama role
 			$role = Role::where('role_id', $user->current_role_id)->first();
-			// Pastikan role_name ada
 			$roleName = $role ? $role->role_name : null;
 
-
-				// Ambil history jabatan terbaru untuk mendapatkan working_unit_id dan jabatan_id
+			// Ambil history jabatan terbaru
 			$latestHistory = DB::table('history_jabatan_user')
-			->where('user_id', $user->user_id)
-			->latest('created_at') // Ambil yang terbaru berdasarkan tanggal
-			->first();
+				->where('user_id', $user->user_id)
+				->latest('created_at')
+				->first();
 
 			$working_unit_id = $latestHistory->working_unit_id ?? null;
 			$jabatan_id = $latestHistory->jabatan_id ?? null;
@@ -377,21 +375,21 @@ class UsersController extends Controller
 				->where('jabatan_id', $jabatan_id)
 				->select('nama_jabatan')
 				->first();
-
 			$nama_jabatan = $jabatan ? $jabatan->nama_jabatan : null;
-			
-				// Generate JWT token  
-			$token = JWTAuth::fromUser($user); 
 
-			// Simpan token ke dalam tabel users  
-			$user->token = $token; // Menyimpan token ke dalam kolom token  
-			$user->save(); // Simpan perubahan ke database  
+			// Generate JWT token
+			$token = JWTAuth::fromUser($user);
 
-				// Simpan Player ID (OneSignal) ke dalam kolom device_token
+			// Simpan token ke database
+			$user->token = $token;
+
+			// Simpan atau perbarui device_token hanya jika ada player_id baru
+			if ($request->filled('player_id')) {
 				$user->device_token = $request->player_id;
-				$user->save();
-	
-			
+			}
+
+			$user->save();
+
 			// Berhasil login
 			return response()->json([
 				'status' => 200,
@@ -399,12 +397,12 @@ class UsersController extends Controller
 				'data' => [
 					'name' => $user->nama,
 					'nik' => $user->nik,
-					'user_id' => $user->user_id, // Return user_id
+					'user_id' => $user->user_id,
 					'current_role' => [
 						'role_id' => $user->current_role_id,
 						'role_name' => $roleName
 					],
-					'role_name' => $roleName, // Add role_name if available
+					'role_name' => $roleName,
 					'working_unit' => $workingUnit ? [
 						'working_unit_id' => $working_unit_id,
 						'working_unit_name' => $workingUnit->working_unit_name,
@@ -415,11 +413,11 @@ class UsersController extends Controller
 						'jabatan_id' => $jabatan_id,
 						'nama_jabatan' => $nama_jabatan
 					],
-
 					'token' => $token,
 				]
 			], 200);
-			} catch (\Exception $e) {
+
+		} catch (\Exception $e) {
 			return response()->json([
 				'status' => 500,
 				'message' => 'An error occurred on the server.',
@@ -427,7 +425,8 @@ class UsersController extends Controller
 				'solution' => 'Please contact the system administrator for further assistance.'
 			], 500);
 		}
-	}  
+	}
+	
 
     public function newPassword(Request $request)
 	{
