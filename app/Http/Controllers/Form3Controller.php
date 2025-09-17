@@ -835,6 +835,7 @@ class Form3Controller extends BaseController
                     'form_type' => 'form_3',
                     'form_id' => $form3->form_3_id,
                     'activity' => 'Completed',
+                    'description' => 'Rencana asesmen telah selesai',
                     'updated_by' => $user->user_id,
                     'updated_at' => Carbon::now()
                 ]);

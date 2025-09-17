@@ -17,6 +17,7 @@ use App\Models\KompetensiTrack;
 use App\Models\KompetensiProgres;
 use App\Models\Notification;
 use App\Models\ElemenForm3;
+use App\Models\Form5;
 use App\Models\Form6;
 use App\Models\Form7;
 use App\Models\Form4a;
@@ -159,10 +160,26 @@ class FormService
 		return $progres?->parent_form_id; // gunakan null-safe operator jika data tidak ditemukan
 	}
 
+	function getParentFormIdByFormIdAndAsesiId($formId, $asesiId)
+	{
+		$progres = KompetensiProgres::where('form_id', $formId)
+					->where('user_id', $asesiId)
+					->first();
+
+		return $progres?->parent_form_id; // pakai null-safe operator biar aman
+	}
+
+
 	function getParentDataByFormId($form1Id)
 	{
 		return BidangModel::find($form1Id);
 	}
+
+	function getForm5DataFromForm5Id($form5Id)
+	{
+		return Form5::find($form5Id);
+	}
+
 
     function createProgresDanTrack($formId, $formType, $status, $userId, $parentFormId = null, $description)
 	{

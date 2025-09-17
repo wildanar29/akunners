@@ -711,10 +711,9 @@ class Form5Controller extends BaseController
 		try {
 			$data = $request->input('jawaban');
 			$form5Id = $data[0]['form_5_id']; // Ambil satu form_5_id dari jawaban
-
 			// Simpan atau update jawaban kegiatan
 			foreach ($data as $item) {
-				Form5KegiatanUser::updateOrCreate(
+				$record = Form5KegiatanUser::updateOrCreate(
 					[
 						'form_5_id'   => $item['form_5_id'],
 						'kegiatan_id' => $item['kegiatan_id']
@@ -725,18 +724,39 @@ class Form5Controller extends BaseController
 						'updated_at'  => Carbon::now()
 					]
 				);
+
+				if ($record->wasRecentlyCreated) {
+					Log::info('Jawaban kegiatan baru disimpan', [
+						'form_5_id'   => $item['form_5_id'],
+						'kegiatan_id' => $item['kegiatan_id'],
+						'is_tercapai' => $item['is_tercapai'],
+						'catatan'     => $item['catatan'] ?? null
+					]);
+				} else {
+					Log::info('Jawaban kegiatan diperbarui', [
+						'form_5_id'   => $item['form_5_id'],
+						'kegiatan_id' => $item['kegiatan_id'],
+						'is_tercapai' => $item['is_tercapai'],
+						'catatan'     => $item['catatan'] ?? null
+					]);
+				}
 			}
+
 
 			// Ambil data Form 5 dan relasi ke KompetensiProgres
 			$form5 = Form5::find($form5Id);
-
+			$asesiId = $form5 ? $form5->asesi_id : null;
+			$parentFormId = $this->formService->getParentFormIdByFormIdAndAsesiId($form5Id, $asesiId);
 			// $progres = KompetensiProgres::where('form_id', $form5->form_5_id)->first();
 			if ($form5) {
 				Log::info('masuk ke update status Form5', ['form_5_id' => $form5Id]);
 
 				// Ambil data progres dulu
-				$progres = KompetensiProgres::where('form_id', $form5Id)->first();
+				$progres = KompetensiProgres::where('form_id', $form5Id)
+					->where('parent_form_id', $parentFormId)
+					->first();
 
+				Log::info($progres ? 'Progres ditemukan' : 'Progres tidak ditemukan', ['form_5_id' => $form5Id]);
 				if ($progres) {
 					// Update status
 					$progres->update([
