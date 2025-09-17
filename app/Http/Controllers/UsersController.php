@@ -312,7 +312,7 @@ class UsersController extends Controller
 			$validator = Validator::make($request->all(), [
 				'nik' => 'required',
 				'password' => 'required',
-				'player_id' => 'sometimes|string|nullable' // Player ID opsional, bisa null
+				'device_token' => 'sometimes|string|nullable' // Player ID opsional, bisa null
 			]);
 
 			if ($validator->fails()) {
@@ -383,9 +383,9 @@ class UsersController extends Controller
 			// Simpan token ke database
 			$user->token = $token;
 
-			// Simpan atau perbarui device_token hanya jika ada player_id baru
-			if ($request->filled('player_id')) {
-				$user->device_token = $request->player_id;
+			// Simpan atau perbarui device_token hanya jika ada device_token baru
+			if ($request->filled('device_token')) {
+				$user->device_token = $request->device_token;
 			}
 
 			$user->save();
