@@ -888,10 +888,24 @@ class Form5Controller extends BaseController
 				], 400);
 			}
 
-			$query = KompetensiProgres::where('form_id', $formId);
-			if ($pk_id) {
-				$query->where('pk_id', $pk_id);
-			}
+			$form5   = Form5::find($formId);
+			$asesiId = $form5 ? $form5->asesi_id : null;
+			$parentFormId = $this->formService->getParentFormIdByFormIdAndAsesiId($formId, $asesiId);
+
+			$query = KompetensiProgres::where('form_id', $formId)
+				->when($asesiId, function ($q) use ($asesiId) {
+					$q->where('user_id', $asesiId);
+				})
+				->when($parentFormId, function ($q) use ($parentFormId) {
+					$q->where('parent_form_id', $parentFormId);
+				}, function ($q) {
+					$q->whereNull('parent_form_id');
+				});
+
+
+			// if ($pk_id) {
+			// 	$query->where('pk_id', $pk_id);
+			// }
 
 			$progres = $query->first();
 			if (!$progres) {
