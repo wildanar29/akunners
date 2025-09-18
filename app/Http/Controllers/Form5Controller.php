@@ -916,7 +916,7 @@ class Form5Controller extends BaseController
 				], 404);
 			}
 
-			$progres->status = 'Approved';
+			$progres->status = 'Completed';
 			$progres->updated_at = Carbon::now();
 			$progres->save();
 
@@ -930,7 +930,7 @@ class Form5Controller extends BaseController
 				KompetensiTrack::create([
 					'progres_id' => $progres->id,
 					'form_type' => 'form_5',
-					'activity' => 'Approved',
+					'activity' => 'Completed',
 					'activity_time' => Carbon::now(),
 					'description' => 'Form 5 telah disetujui oleh asesi.',
 				]);
