@@ -846,13 +846,17 @@ class Form5Controller extends BaseController
 				$langkah->kegiatans->transform(function ($kegiatan) use ($jawabanUser) {
 					$jawaban = $jawabanUser->get($kegiatan->id);
 
-					$kegiatan->is_tercapai = $jawaban->is_tercapai ?? null;
+					$kegiatan->is_tercapai = is_null($jawaban?->is_tercapai)
+						? null
+						: (bool) $jawaban->is_tercapai;
+
 					$kegiatan->catatan = $jawaban->catatan ?? null;
 
 					return $kegiatan;
 				});
 				return $langkah;
 			});
+
 
 			return response()->json([
 				'status' => 200,
