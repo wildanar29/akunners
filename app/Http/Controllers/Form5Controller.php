@@ -891,7 +891,7 @@ class Form5Controller extends BaseController
 			$form5   = Form5::find($formId);
 			$asesiId = $form5 ? $form5->asesi_id : null;
 			$parentFormId = $this->formService->getParentFormIdByFormIdAndAsesiId($formId, $asesiId);
-
+			Log::info("approveKompetensiProgres: Mencari progres untuk form_id={$formId}, asesi_id={$asesiId}, parent_form_id={$parentFormId}");
 			$query = KompetensiProgres::where('form_id', $formId)
 				->when($asesiId, function ($q) use ($asesiId) {
 					$q->where('user_id', $asesiId);
@@ -941,6 +941,7 @@ class Form5Controller extends BaseController
 			// NOTIFIKASI
 			try {
 				$form5 = Form5::find($formId);
+				Log::info("Mencari asesor untuk form_5_id={$formId}");
 				$asesor_id = $form5->asesor_id ?? null;
 				if ($asesor_id) {
 					Log::info("Kirim notifikasi ke asesor user_id={$asesor_id} untuk form_5 id={$formId}");
@@ -956,11 +957,11 @@ class Form5Controller extends BaseController
 			}
 
 			try {
-				$form1Id = $this->formService->getParentFormIdByFormId($formId);
-				$form1Data = $this->formService->getParentDataByFormId($form1Id);
-
+				// $form1Id = $this->formService->getParentFormIdByFormId($formId);
+				$form1Data = $this->formService->getParentDataByFormId($parentFormId);
+				Log::info("Mencari data Form1 untuk form_1_id={$parentFormId}");
 				if (!$form1Data) {
-					Log::warning("Data Form1 tidak ditemukan dengan form_1_id={$form1Id}");
+					Log::warning("Data Form1 tidak ditemukan dengan form_1_id={$parentFormId}");
 				} else {
 
 					// ===== FORM 4A =====

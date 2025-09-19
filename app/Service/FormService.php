@@ -150,6 +150,8 @@ class FormService
 			return false;
 		});
 
+		
+
 		return $filtered->isNotEmpty();
 	}
 
@@ -475,6 +477,7 @@ class FormService
 			return isset($item['form_type']) && $item['form_type'] === $formType;
 		});
 
+		Log::debug('Filtered progres', ['filtered' => $filtered]);
 		return $filtered->isNotEmpty();
 	}
 
