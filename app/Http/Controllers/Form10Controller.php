@@ -80,81 +80,6 @@ class Form10Controller extends BaseController
         }
     }
 
-    // public function getSoalList($form10Id)
-    // {
-    //     try {
-    //         $form10 = Form10::find($form10Id);
-
-    //         if (!$form10) {
-    //             return response()->json([
-    //                 'success' => false,
-    //                 'message' => 'Data Form 10 tidak ditemukan.'
-    //             ], 404);
-    //         }
-
-    //         $pkId = $form10->pk_id;
-    //         $daftarTilikId = $form10->daftar_tilik_id;
-    //         $asesiId = $form10->asesi_id;
-    //         $asesorId = $form10->asesor_id;
-
-    //         // Cek apakah jawaban sudah diinisialisasi
-    //         $exists = JawabanDaftarTilik::where('form_10_id', $form10Id)
-    //             ->where('daftar_tilik_id', $daftarTilikId)
-    //             ->where('asesi_id', $asesiId)
-    //             ->exists();
-
-    //         // Jika belum, inisialisasi dari kegiatan_daftar_tilik
-    //         if (!$exists) {
-    //             $kegiatanList = KegiatanDaftarTilik::where('pk_id', $pkId)
-    //                 ->where('daftar_tilik_id', $daftarTilikId)
-    //                 ->where(function ($query) {
-    //                     $query->where('isTitle', 0)
-    //                         ->orWhereNull('isTitle');
-    //                 })
-    //                 ->get();
-
-    //             $insertData = [];
-    //             foreach ($kegiatanList as $kegiatan) {
-    //                 $insertData[] = [
-    //                     'form_10_id' => $form10Id,
-    //                     'daftar_tilik_id' => $daftarTilikId,
-    //                     'kegiatan_daftar_tilik_id' => $kegiatan->id,
-    //                     'asesi_id' => $asesiId,
-    //                     'asesor_id' => $asesorId,
-    //                     'dilakukan' => 0,
-    //                     'catatan' => null,
-    //                     'created_at' => now(),
-    //                     'updated_at' => now(),
-    //                 ];
-    //             }
-
-    //             if (!empty($insertData)) {
-    //                 JawabanDaftarTilik::insert($insertData);
-    //             }
-    //         }
-
-    //         // Ambil hanya struktur soal (tanpa jawaban)
-    //         $soal = KegiatanDaftarTilik::with('children')
-    //             ->whereNull('parent_id')
-    //             ->where('pk_id', $pkId)
-    //             ->where('daftar_tilik_id', $daftarTilikId)
-    //             ->orderBy('urutan')
-    //             ->get();
-
-    //         return response()->json([
-    //             'success' => true,
-    //             'data' => $soal,
-    //         ], 200);
-
-    //     } catch (\Exception $e) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Gagal mengambil list soal.',
-    //             'error' => $e->getMessage(),
-    //         ], 500);
-    //     }
-    // }
-
     public function getSoalList($form10Id)
     {
         try {
@@ -208,13 +133,13 @@ class Form10Controller extends BaseController
                 }
             }
 
-            // Ambil seluruh kegiatan (tanpa nested children)
-            $soal = KegiatanDaftarTilik::where('pk_id', $pkId)
+            // Ambil hanya struktur soal (tanpa jawaban)
+            $soal = KegiatanDaftarTilik::with('children')
+                ->whereNull('parent_id')
+                ->where('pk_id', $pkId)
                 ->where('daftar_tilik_id', $daftarTilikId)
-                ->orderBy('parent_id')
                 ->orderBy('urutan')
                 ->get();
-
 
             return response()->json([
                 'success' => true,
@@ -229,6 +154,81 @@ class Form10Controller extends BaseController
             ], 500);
         }
     }
+
+    // public function getSoalList($form10Id)
+    // {
+    //     try {
+    //         $form10 = Form10::find($form10Id);
+
+    //         if (!$form10) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'message' => 'Data Form 10 tidak ditemukan.'
+    //             ], 404);
+    //         }
+
+    //         $pkId = $form10->pk_id;
+    //         $daftarTilikId = $form10->daftar_tilik_id;
+    //         $asesiId = $form10->asesi_id;
+    //         $asesorId = $form10->asesor_id;
+
+    //         // Cek apakah jawaban sudah diinisialisasi
+    //         $exists = JawabanDaftarTilik::where('form_10_id', $form10Id)
+    //             ->where('daftar_tilik_id', $daftarTilikId)
+    //             ->where('asesi_id', $asesiId)
+    //             ->exists();
+
+    //         // Jika belum, inisialisasi dari kegiatan_daftar_tilik
+    //         if (!$exists) {
+    //             $kegiatanList = KegiatanDaftarTilik::where('pk_id', $pkId)
+    //                 ->where('daftar_tilik_id', $daftarTilikId)
+    //                 ->where(function ($query) {
+    //                     $query->where('isTitle', 0)
+    //                         ->orWhereNull('isTitle');
+    //                 })
+    //                 ->get();
+
+    //             $insertData = [];
+    //             foreach ($kegiatanList as $kegiatan) {
+    //                 $insertData[] = [
+    //                     'form_10_id' => $form10Id,
+    //                     'daftar_tilik_id' => $daftarTilikId,
+    //                     'kegiatan_daftar_tilik_id' => $kegiatan->id,
+    //                     'asesi_id' => $asesiId,
+    //                     'asesor_id' => $asesorId,
+    //                     'dilakukan' => 0,
+    //                     'catatan' => null,
+    //                     'created_at' => now(),
+    //                     'updated_at' => now(),
+    //                 ];
+    //             }
+
+    //             if (!empty($insertData)) {
+    //                 JawabanDaftarTilik::insert($insertData);
+    //             }
+    //         }
+
+    //         // Ambil seluruh kegiatan (tanpa nested children)
+    //         $soal = KegiatanDaftarTilik::where('pk_id', $pkId)
+    //             ->where('daftar_tilik_id', $daftarTilikId)
+    //             ->orderBy('parent_id')
+    //             ->orderBy('urutan')
+    //             ->get();
+
+
+    //         return response()->json([
+    //             'success' => true,
+    //             'data' => $soal,
+    //         ], 200);
+
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Gagal mengambil list soal.',
+    //             'error' => $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
 
 
     public function getForm10WithAnswersById($form10Id)

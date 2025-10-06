@@ -34,17 +34,17 @@ class KegiatanDaftarTilik extends Model
     }
 
     // Relasi self-referential untuk child kegiatan
-    // public function children()
-    // {
-    //     return $this->hasMany(KegiatanDaftarTilik::class, 'parent_id')
-    //                 ->with('children'); // rekursif tapi tanpa jawaban
-    // }
-
     public function children()
     {
         return $this->hasMany(KegiatanDaftarTilik::class, 'parent_id')
                     ->with('children'); // rekursif tapi tanpa jawaban
     }
+
+    // public function children()
+    // {
+    //     return $this->hasMany(KegiatanDaftarTilik::class, 'parent_id')
+    //                 ->with('children'); // rekursif tapi tanpa jawaban
+    // }
 
     // Relasi ke daftar_tilik
     public function daftarTilik()
