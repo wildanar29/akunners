@@ -22,6 +22,11 @@ class KegiatanDaftarTilik extends Model
         'dilakukan',
     ];
 
+    protected $casts = [
+        'isTitle' => 'boolean',
+    ];
+
+
     // Relasi self-referential untuk parent kegiatan
     public function parent()
     {

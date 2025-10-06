@@ -80,7 +80,7 @@ class Form10Controller extends BaseController
         }
     }
 
-   public function getSoalList($form10Id)
+    public function getSoalList($form10Id)
     {
         try {
             $form10 = Form10::find($form10Id);
