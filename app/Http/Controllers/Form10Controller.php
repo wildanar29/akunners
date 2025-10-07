@@ -123,8 +123,8 @@ class Form10Controller extends BaseController
                         'asesor_id' => $asesorId,
                         'dilakukan' => 0,
                         'catatan' => null,
-                        'created_at' => now(),
-                        'updated_at' => now(),
+                        'created_at' => Carbon::now(),
+                        'updated_at' => Carbon::now(),
                     ];
                 }
 
