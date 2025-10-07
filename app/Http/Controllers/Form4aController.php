@@ -40,88 +40,92 @@ class Form4aController extends BaseController
     }
 
     public function getSoalForm4a(Request $request)
-{
-    $validator = Validator::make($request->all(), [
-        'pk_id' => 'required|integer',
-        'group_no' => 'required|string',
-    ]);
+    {
+        $validator = Validator::make($request->all(), [
+            'pk_id' => 'required|integer',
+            'group_no' => 'required|string',
+        ]);
 
-    if ($validator->fails()) {
-        return response()->json([
-            'status' => false,
-            'message' => 'Validasi gagal',
-            'errors' => $validator->errors(),
-        ], 422);
-    }
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
 
-    $pkId = $request->input('pk_id');
-    $groupNo = $request->input('group_no');
+        $pkId = $request->input('pk_id');
+        $groupNo = $request->input('group_no');
 
-    $elemenList = ElemenForm3::with(['kukForm3' => function ($query) use ($pkId, $groupNo) {
-        $query->where('pk_id', $pkId)
-            ->whereHas('iukForm3', function ($q) use ($groupNo) {
-                $q->whereRaw('FIND_IN_SET(?, group_no)', [$groupNo]);
-            })
-            ->with(['iukForm3' => function ($q) use ($groupNo) {
-                $q->whereRaw('FIND_IN_SET(?, group_no)', [$groupNo])
-                    ->with('poinForm4');
-            }]);
-    }])
-    ->where('pk_id', $pkId)
-    ->orderByRaw('CAST(no_elemen_form_3 AS UNSIGNED)')
-    ->get()
-    ->filter(fn($elemen) => $elemen->kukForm3->isNotEmpty())
-    ->values()
-    ->map(function ($elemen) {
-        $elemen->kuk_form3 = $elemen->kukForm3->map(function ($kuk) {
-            unset($kuk->kuk_name, $kuk->pk_id);
+        $elemenList = ElemenForm3::with(['kukForm3' => function ($query) use ($pkId, $groupNo) {
+            $query->where('pk_id', $pkId)
+                ->whereHas('iukForm3', function ($q) use ($groupNo) {
+                    $q->whereRaw('FIND_IN_SET(?, group_no)', [$groupNo]);
+                })
+                ->with(['iukForm3' => function ($q) use ($groupNo) {
+                    $q->whereRaw('FIND_IN_SET(?, group_no)', [$groupNo])
+                        ->with('poinForm4');
+                }]);
+        }])
+        ->where('pk_id', $pkId)
+        ->orderByRaw('CAST(no_elemen_form_3 AS UNSIGNED)')
+        ->get()
+        ->filter(fn($elemen) => $elemen->kukForm3->isNotEmpty())
+        ->values()
+        ->map(function ($elemen) {
+            // 🔹 Bersihkan isi_elemen dari karakter tab, newline, dan spasi berlebih
+            $elemen->isi_elemen = preg_replace('/\s+/', ' ', trim(str_replace(["\t", "\n", "\r"], ' ', $elemen->isi_elemen)));
 
-            $kuk->iuk_form3 = $kuk->iukForm3->map(function ($iuk) {
-                $poinGrouped = $iuk->poinForm4->groupBy('parent_id');
+            $elemen->kuk_form3 = $elemen->kukForm3->map(function ($kuk) {
+                unset($kuk->kuk_name, $kuk->pk_id);
 
-                $buildTree = function ($parentId) use (&$buildTree, $poinGrouped) {
-                    return ($poinGrouped[$parentId] ?? collect())->map(function ($poin) use (&$buildTree) {
-                        // 🔹 Bersihkan teks dari karakter tab, newline, dan spasi berlebih
-                        $cleanIsi = preg_replace('/\s+/', ' ', trim(str_replace(["\t", "\n", "\r"], ' ', $poin->isi_poin)));
+                $kuk->iuk_form3 = $kuk->iukForm3->map(function ($iuk) {
+                    $poinGrouped = $iuk->poinForm4->groupBy('parent_id');
 
-                        return [
-                            'id' => $poin->id,
-                            'isi_poin' => $cleanIsi,
-                            'urutan' => $poin->urutan,
-                            'parent_id' => $poin->parent_id,
-                            'children' => $buildTree($poin->id),
-                        ];
-                    })->values();
-                };
+                    $buildTree = function ($parentId) use (&$buildTree, $poinGrouped) {
+                        return ($poinGrouped[$parentId] ?? collect())->map(function ($poin) use (&$buildTree) {
+                            // 🔹 Bersihkan teks isi_poin dari tab/newline/spasi berlebih
+                            $cleanIsi = preg_replace('/\s+/', ' ', trim(str_replace(["\t", "\n", "\r"], ' ', $poin->isi_poin)));
 
-                return [
-                    'iuk_form3_id' => $iuk->iuk_form3_id,
-                    'no_iuk' => $iuk->no_iuk,
-                    'group_no' => $iuk->group_no,
-                    'poin_form4' => $buildTree(null),
-                ];
+                            return [
+                                'id' => $poin->id,
+                                'isi_poin' => $cleanIsi,
+                                'urutan' => $poin->urutan,
+                                'parent_id' => $poin->parent_id,
+                                'children' => $buildTree($poin->id),
+                            ];
+                        })->values();
+                    };
+
+                    return [
+                        'iuk_form3_id' => $iuk->iuk_form3_id,
+                        'no_iuk' => $iuk->no_iuk,
+                        'group_no' => $iuk->group_no,
+                        'poin_form4' => $buildTree(null),
+                    ];
+                });
+
+                unset($kuk->iukForm3);
+                return $kuk;
             });
 
-            unset($kuk->iukForm3);
-            return $kuk;
+            unset($elemen->kukForm3);
+            return $elemen;
         });
 
-        unset($elemen->kukForm3);
-        return $elemen;
-    });
+        // 🔹 Bersihkan spasi berlebih di seluruh struktur JSON (jaga agar clean)
+        $cleanedData = json_decode(
+            preg_replace('/\s+/', ' ', json_encode($elemenList, JSON_UNESCAPED_UNICODE)),
+            true
+        );
 
-    // 🔹 (Opsional) bersihkan spasi berlebih di seluruh teks di level atas juga
-    $cleanedData = json_decode(
-        preg_replace('/\s+/', ' ', json_encode($elemenList, JSON_UNESCAPED_UNICODE)),
-        true
-    );
+        return response()->json([
+            'status' => true,
+            'message' => 'Data elemen berhasil diambil',
+            'data' => $cleanedData,
+        ]);
+    }
 
-    return response()->json([
-        'status' => true,
-        'message' => 'Data elemen berhasil diambil',
-        'data' => $cleanedData,
-    ]);
-}
 
     public function simpanJawabanForm4a(Request $request)
     {
