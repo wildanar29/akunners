@@ -123,6 +123,7 @@ class ProgressController extends Controller
 
             if ($progresUtama) {
                 $item->status_utama = $progresUtama->status;
+                $item->pk_id = $pk_id; // tambahkan pk_id agar konsisten
 
                 // Ambil tracks untuk form utama
                 $tracksUtama = \DB::table('kompetensi_tracks')
@@ -134,13 +135,17 @@ class ProgressController extends Controller
             } else {
                 $item->status_utama = null;
                 $item->tracks_utama = [];
+                $item->pk_id = $pk_id;
             }
 
             // Ambil progres anak + tracks
             $progres = \App\Models\KompetensiProgres::where('parent_form_id', $item->form_1_id)
                 ->select('id', 'form_id', 'status', 'user_id', 'parent_form_id')
                 ->get()
-                ->map(function ($prog) {
+                ->map(function ($prog) use ($pk_id) {
+                    // Tambahkan pk_id
+                    $prog->pk_id = $pk_id;
+
                     // Ambil form_type
                     $form_type = \App\Models\KompetensiTrack::where('progres_id', $prog->id)
                         ->value('form_type');
@@ -172,6 +177,7 @@ class ProgressController extends Controller
             ], 500);
         }
     }
+
 
 
 
