@@ -131,7 +131,7 @@ class Form4aController extends BaseController
     {
         $validator = Validator::make($request->all(), [
             'form_1_id' => 'required|integer',
-            'user_id' => 'required|integer',
+            'asesi_id' => 'required|integer',
             'jawaban' => 'required|array|min:1',
             'jawaban.*.iuk_form3_id' => 'required|integer|exists:iuk_form3,iuk_form3_id',
             'jawaban.*.pencapaian' => 'required|boolean',
@@ -148,7 +148,7 @@ class Form4aController extends BaseController
         }
 
         $form1Id = $request->input('form_1_id');
-        $userId = $request->input('user_id');
+        $userId = $request->input('asesi_id');
         $jawabanData = $request->input('jawaban');
 
         DB::beginTransaction();
