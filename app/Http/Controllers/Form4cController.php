@@ -102,7 +102,7 @@ class Form4cController extends BaseController
         // Validasi data
         $validator = Validator::make($request->all(), [
             'form_1_id' => 'required|integer|exists:form_1,form_1_id',
-            'user_id' => 'required|integer|exists:users,user_id',
+            'asesi_id' => 'required|integer|exists:users,user_id',
             'jawaban' => 'required|array',
             'jawaban.*.pertanyaan_form4c_id' => 'required|integer|exists:pertanyaan_form4c,id',
             'jawaban.*.question_choice_id' => 'required|integer|exists:question_choice,id',
@@ -124,7 +124,7 @@ class Form4cController extends BaseController
 
             foreach ($request->jawaban as $item) {
                 $exists = JawabanForm4c::where('form_1_id', $request->form_1_id)
-                    ->where('user_id', $request->user_id)
+                    ->where('user_id', $request->asesi_id)
                     ->where('pertanyaan_form4c_id', $item['pertanyaan_form4c_id'])
                     ->exists();
 
@@ -143,7 +143,7 @@ class Form4cController extends BaseController
                 // Simpan
                 JawabanForm4c::create([
                     'form_1_id' => $request->form_1_id,
-                    'user_id' => $request->user_id,
+                    'user_id' => $request->asesi_id,
                     'pertanyaan_form4c_id' => $item['pertanyaan_form4c_id'],
                     'question_choice_id' => $item['question_choice_id'],
                     'catatan' => $item['catatan'] ?? null,
@@ -170,7 +170,7 @@ class Form4cController extends BaseController
                 $form_4c_id,
                 'form_4c',
                 'Submitted',
-                $request->user_id,
+                $request->asesi_id,
                 'Form 4C telah di isi oleh Asesi'
             );
 

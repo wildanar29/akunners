@@ -86,7 +86,7 @@ class Form4dController extends BaseController
         // Validasi request
         $validator = Validator::make($request->all(), [
             'form_1_id' => 'required|integer',
-            'user_id' => 'required|integer',
+            'asesi_id' => 'required|integer',
             'jawaban' => 'required|array',
             'jawaban.*.pertanyaan_form4d_id' => 'required|integer|exists:pertanyaan_form4d,id',
             'jawaban.*.pencapaian' => 'required|boolean',
@@ -106,7 +106,7 @@ class Form4dController extends BaseController
                 JawabanForm4d::updateOrCreate(
                     [
                         'form_1_id' => $request->form_1_id,
-                        'user_id' => $request->user_id,
+                        'user_id' => $request->asesi_id,
                         'pertanyaan_form4d_id' => $item['pertanyaan_form4d_id'],
                     ],
                     [
@@ -121,7 +121,7 @@ class Form4dController extends BaseController
                 $form_4d_id,
                 'form_4d',
                 'Submitted',
-                $request->user_id,
+                $request->asesi_id,
                 'Form 4D telah di isi oleh Asesor'
             );
 

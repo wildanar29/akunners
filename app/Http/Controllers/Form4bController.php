@@ -132,7 +132,7 @@ class Form4bController extends BaseController
     {
         $validator = Validator::make($request->all(), [
             'form_1_id' => 'required|integer',
-            'user_id' => 'required|integer',
+            'asesi_id' => 'required|integer',
             'jawaban' => 'required|array',
             'jawaban.*.iuk_form3_id' => 'required|integer',
             'jawaban.*.jawaban_asesi' => 'nullable|string',
@@ -155,7 +155,7 @@ class Form4bController extends BaseController
             foreach ($request->jawaban as $data) {
                 // Cek apakah jawaban sudah ada
                 $existing = JawabanForm4b::where('form_1_id', $request->form_1_id)
-                    ->where('user_id', $request->user_id)
+                    ->where('user_id', $request->asesi_id)
                     ->where('iuk_form3_id', $data['iuk_form3_id'])
                     ->first();
 
@@ -170,7 +170,7 @@ class Form4bController extends BaseController
                 // Jika belum ada, simpan
                 JawabanForm4b::create([
                     'form_1_id' => $request->form_1_id,
-                    'user_id' => $request->user_id,
+                    'user_id' => $request->asesi_id,
                     'iuk_form3_id' => $data['iuk_form3_id'],
                     'jawaban_asesi' => $data['jawaban_asesi'] ?? null,
                     'pencapaian' => $data['pencapaian'],
@@ -185,7 +185,7 @@ class Form4bController extends BaseController
                 $form_4b_id,
                 'Form_4b',
                 'Submitted',
-                $request->user_id,
+                $request->asesi_id,
                 'Form 4B telah di isi oleh Asesor'
             );
 
