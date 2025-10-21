@@ -275,12 +275,9 @@ class Form10Controller extends BaseController
                     // Ambil satu jawaban pertama jika ada
                     $jawaban = $kegiatan->jawaban->first();
 
-                    // Jika isTitle = true → kosongkan jawaban
+                    // Jika isTitle = true → buat jawaban = null
                     $jawabanData = $kegiatan->isTitle
-                        ? [
-                            'dilakukan' => null,
-                            'catatan'   => null,
-                        ]
+                        ? null
                         : [
                             'dilakukan' => (bool) ($jawaban->dilakukan ?? false),
                             'catatan'   => $jawaban->catatan ?? null,
@@ -325,6 +322,7 @@ class Form10Controller extends BaseController
             ], 500);
         }
     }
+
 
 
 
