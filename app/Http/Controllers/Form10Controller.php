@@ -233,85 +233,91 @@ class Form10Controller extends BaseController
 
     
     public function getForm10WithAnswersById($form10Id)
-    {
-        try {
-            $form10 = Form10::with([
-                'daftarTilik.kegiatanDaftarTilik' => function ($q) use ($form10Id) {
-                    $q->whereNull('parent_id')
-                    ->orderBy('urutan')
-                    ->with([
-                        // Jawaban untuk parent DI-FILTER
-                        'jawaban' => function ($jq) use ($form10Id) {
-                            $jq->where('form_10_id', $form10Id);
-                        },
-                        // Children + jawaban children DI-FILTER
-                        'children' => function ($cq) use ($form10Id) {
-                            $cq->orderBy('urutan')
-                                ->with(['jawaban' => function ($cjq) use ($form10Id) {
-                                    $cjq->where('form_10_id', $form10Id);
-                                }]);
-                        },
-                    ]);
-                },
-            ])->find($form10Id);
+{
+    try {
+        $form10 = Form10::with([
+            'daftarTilik.kegiatanDaftarTilik' => function ($q) use ($form10Id) {
+                $q->whereNull('parent_id')
+                  ->orderBy('urutan')
+                  ->with([
+                      // Jawaban untuk parent DI-FILTER
+                      'jawaban' => function ($jq) use ($form10Id) {
+                          $jq->where('form_10_id', $form10Id);
+                      },
+                      // Children + jawaban children DI-FILTER
+                      'children' => function ($cq) use ($form10Id) {
+                          $cq->orderBy('urutan')
+                             ->with([
+                                 'jawaban' => function ($cjq) use ($form10Id) {
+                                     $cjq->where('form_10_id', $form10Id);
+                                 }
+                             ]);
+                      },
+                  ]);
+            },
+        ])->find($form10Id);
 
-            if (!$form10) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Data Form 10 tidak ditemukan',
-                    'data'    => null
-                ], 404);
-            }
-
-            $data = [
-                'form_10_id' => $form10->form_10_id,
-                'pk_id'      => $form10->pk_id,
-                'asesi_id'   => $form10->asesi_id,
-                'asesor_id'  => $form10->asesor_id,
-                'soal'       => $form10->daftarTilik->kegiatanDaftarTilik->map(function ($kegiatan) {
-                    return [
-                        'id'       => $kegiatan->id,
-                        'kegiatan' => $kegiatan->kegiatan,
-                        'isTitle'  => (bool) $kegiatan->isTitle,
-                        'jawaban'  => $kegiatan->jawaban->map(function ($jawab) {
-                            return [
-                                'dilakukan' => (bool) ($jawab->dilakukan ?? false),
-                                'catatan'   => $jawab->catatan,
-                            ];
-                        }),
-                        'children' => $kegiatan->children->map(function ($child) {
-                            return [
-                                'id'       => $child->id,
-                                'kegiatan' => $child->kegiatan,
-                                'isTitle'  => (bool) $child->isTitle,
-                                'jawaban'  => $child->jawaban->map(function ($jawab) {
-                                    return [
-                                        'dilakukan' => (bool) ($jawab->dilakukan ?? false),
-                                        'catatan'   => $jawab->catatan,
-                                    ];
-                                }),
-                            ];
-                        }),
-                    ];
-                }),
-            ];
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Data Form 10 berhasil diambil',
-                'data'    => $data
-            ], 200);
-
-        } catch (\Exception $e) {
-            \Log::error('Gagal mengambil Form 10: ' . $e->getMessage());
+        if (!$form10) {
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan saat mengambil data Form 10',
-                'error'   => $e->getMessage(),
+                'message' => 'Data Form 10 tidak ditemukan',
                 'data'    => null
-            ], 500);
+            ], 404);
         }
+
+        // Format data respons
+        $data = [
+            'form_10_id' => $form10->form_10_id,
+            'pk_id'      => $form10->pk_id,
+            'asesi_id'   => $form10->asesi_id,
+            'asesor_id'  => $form10->asesor_id,
+            'soal'       => $form10->daftarTilik->kegiatanDaftarTilik->map(function ($kegiatan) {
+                // Ambil satu jawaban pertama jika ada
+                $jawaban = $kegiatan->jawaban->first();
+                
+                return [
+                    'id'       => $kegiatan->id,
+                    'kegiatan' => $kegiatan->kegiatan,
+                    'isTitle'  => (bool) $kegiatan->isTitle,
+                    'jawaban'  => [
+                        'dilakukan' => (bool) ($jawaban->dilakukan ?? false),
+                        'catatan'   => $jawaban->catatan ?? null,
+                    ],
+                    'children' => $kegiatan->children->map(function ($child) {
+                        // Ambil satu jawaban pertama jika ada
+                        $childJawaban = $child->jawaban->first();
+
+                        return [
+                            'id'       => $child->id,
+                            'kegiatan' => $child->kegiatan,
+                            'isTitle'  => (bool) $child->isTitle,
+                            'jawaban'  => [
+                                'dilakukan' => (bool) ($childJawaban->dilakukan ?? false),
+                                'catatan'   => $childJawaban->catatan ?? null,
+                            ],
+                        ];
+                    }),
+                ];
+            }),
+        ];
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Data Form 10 berhasil diambil',
+            'data'    => $data
+        ], 200);
+
+    } catch (\Exception $e) {
+        \Log::error('Gagal mengambil Form 10: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Terjadi kesalahan saat mengambil data Form 10',
+            'error'   => $e->getMessage(),
+            'data'    => null
+        ], 500);
     }
+}
+
 
 
     public function submitSoalList(Request $request, $form10Id)
