@@ -235,15 +235,24 @@ class Form10Controller extends BaseController
     public function getForm10WithAnswersById($form10Id)
     {
         try {
-            // Cari Form10 beserta relasi yang dibutuhkan
             $form10 = Form10::with([
-                'daftarTilik.kegiatanDaftarTilik' => function ($q) {
-                    $q->whereNull('parent_id')->orderBy('urutan');
+                'daftarTilik.kegiatanDaftarTilik' => function ($q) use ($form10Id) {
+                    $q->whereNull('parent_id')
+                    ->orderBy('urutan')
+                    ->with([
+                        // Jawaban untuk parent DI-FILTER
+                        'jawaban' => function ($jq) use ($form10Id) {
+                            $jq->where('form_10_id', $form10Id);
+                        },
+                        // Children + jawaban children DI-FILTER
+                        'children' => function ($cq) use ($form10Id) {
+                            $cq->orderBy('urutan')
+                                ->with(['jawaban' => function ($cjq) use ($form10Id) {
+                                    $cjq->where('form_10_id', $form10Id);
+                                }]);
+                        },
+                    ]);
                 },
-                'daftarTilik.kegiatanDaftarTilik.children',
-                'daftarTilik.kegiatanDaftarTilik.jawaban' => function ($q) use ($form10Id) {
-                    $q->where('form_10_id', $form10Id);
-                }
             ])->find($form10Id);
 
             if (!$form10) {
@@ -254,7 +263,6 @@ class Form10Controller extends BaseController
                 ], 404);
             }
 
-            // Format data respons
             $data = [
                 'form_10_id' => $form10->form_10_id,
                 'pk_id'      => $form10->pk_id,
@@ -262,30 +270,30 @@ class Form10Controller extends BaseController
                 'asesor_id'  => $form10->asesor_id,
                 'soal'       => $form10->daftarTilik->kegiatanDaftarTilik->map(function ($kegiatan) {
                     return [
-                        'id'         => $kegiatan->id,
-                        'kegiatan'   => $kegiatan->kegiatan,
-                        'isTitle'   => (bool) $kegiatan->isTitle,
-                        'jawaban'    => $kegiatan->jawaban->map(function ($jawab) {
+                        'id'       => $kegiatan->id,
+                        'kegiatan' => $kegiatan->kegiatan,
+                        'isTitle'  => (bool) $kegiatan->isTitle,
+                        'jawaban'  => $kegiatan->jawaban->map(function ($jawab) {
                             return [
-                                'dilakukan' => $jawab->dilakukan,
-                                'catatan'   => $jawab->catatan
+                                'dilakukan' => (bool) ($jawab->dilakukan ?? false),
+                                'catatan'   => $jawab->catatan,
                             ];
                         }),
-                        'children'   => $kegiatan->children->map(function ($child) {
+                        'children' => $kegiatan->children->map(function ($child) {
                             return [
                                 'id'       => $child->id,
                                 'kegiatan' => $child->kegiatan,
-                                'isTitle'   => (bool) $child->isTitle,
+                                'isTitle'  => (bool) $child->isTitle,
                                 'jawaban'  => $child->jawaban->map(function ($jawab) {
                                     return [
-                                        'dilakukan' => $jawab->dilakukan,
-                                        'catatan'   => $jawab->catatan
+                                        'dilakukan' => (bool) ($jawab->dilakukan ?? false),
+                                        'catatan'   => $jawab->catatan,
                                     ];
                                 }),
                             ];
-                        })
+                        }),
                     ];
-                })
+                }),
             ];
 
             return response()->json([
@@ -304,6 +312,7 @@ class Form10Controller extends BaseController
             ], 500);
         }
     }
+
 
     public function submitSoalList(Request $request, $form10Id)
     {
