@@ -30,15 +30,15 @@ class KegiatanDaftarTilik extends Model
     // Relasi self-referential untuk parent kegiatan
     public function parent()
     {
-        return $this->belongsTo(KegiatanDaftarTilik::class, 'parent_id');
+        return $this->belongsTo(KegiatanDaftarTilik::class, 'parent_id', 'id');
     }
 
-    // Relasi self-referential untuk child kegiatan
     public function children()
     {
-        return $this->hasMany(KegiatanDaftarTilik::class, 'parent_id')
-                    ->with('children'); // rekursif tapi tanpa jawaban
+        return $this->hasMany(KegiatanDaftarTilik::class, 'parent_id', 'id')
+                    ->orderBy('urutan'); // cukup ini
     }
+
 
     // public function children()
     // {

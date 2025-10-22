@@ -238,22 +238,18 @@ class Form10Controller extends BaseController
             $form10 = Form10::with([
                 'daftarTilik.kegiatanDaftarTilik' => function ($q) use ($form10Id) {
                     $q->whereNull('parent_id')
-                    ->orderBy('urutan')
-                    ->with([
-                        // Jawaban untuk parent DI-FILTER
-                        'jawaban' => function ($jq) use ($form10Id) {
-                            $jq->where('form_10_id', $form10Id);
-                        },
-                        // Children + jawaban children DI-FILTER
-                        'children' => function ($cq) use ($form10Id) {
-                            $cq->orderBy('urutan')
-                                ->with([
-                                    'jawaban' => function ($cjq) use ($form10Id) {
-                                        $cjq->where('form_10_id', $form10Id);
-                                    }
-                                ]);
-                        },
-                    ]);
+                        ->orderBy('urutan')
+                        ->with([
+                            'jawaban' => function ($jq) use ($form10Id) {
+                                $jq->where('form_10_id', $form10Id);
+                            },
+                            'children.children.jawaban' => function ($jq) use ($form10Id) {
+                                $jq->where('form_10_id', $form10Id);
+                            },
+                            'children.children.children.jawaban' => function ($jq) use ($form10Id) {
+                                $jq->where('form_10_id', $form10Id);
+                            },
+                        ]);
                 },
             ])->find($form10Id);
 
@@ -265,45 +261,34 @@ class Form10Controller extends BaseController
                 ], 404);
             }
 
-            // Format data respons
+            // 🧩 Fungsi rekursif untuk format kegiatan beserta anak-anaknya
+            $formatKegiatan = function ($kegiatan) use (&$formatKegiatan) {
+                $jawaban = $kegiatan->jawaban->first();
+
+                $jawabanData = $kegiatan->isTitle
+                    ? null
+                    : [
+                        'dilakukan' => (bool) ($jawaban->dilakukan ?? false),
+                        'catatan'   => $jawaban->catatan ?? null,
+                    ];
+
+                return [
+                    'id'       => $kegiatan->id,
+                    'kegiatan' => $kegiatan->kegiatan,
+                    'isTitle'  => (bool) $kegiatan->isTitle,
+                    'jawaban'  => $jawabanData,
+                    // 🔁 Rekursif: panggil lagi untuk setiap child
+                    'children' => $kegiatan->children->map(fn($child) => $formatKegiatan($child))->values(),
+                ];
+            };
+
+            // Gunakan fungsi rekursif untuk memetakan semua kegiatan
             $data = [
                 'form_10_id' => $form10->form_10_id,
                 'pk_id'      => $form10->pk_id,
                 'asesi_id'   => $form10->asesi_id,
                 'asesor_id'  => $form10->asesor_id,
-                'soal'       => $form10->daftarTilik->kegiatanDaftarTilik->map(function ($kegiatan) {
-                    // Ambil satu jawaban pertama jika ada
-                    $jawaban = $kegiatan->jawaban->first();
-
-                    // Jika isTitle = true → buat jawaban = null
-                    $jawabanData = $kegiatan->isTitle
-                        ? null
-                        : [
-                            'dilakukan' => (bool) ($jawaban->dilakukan ?? false),
-                            'catatan'   => $jawaban->catatan ?? null,
-                        ];
-
-                    return [
-                        'id'       => $kegiatan->id,
-                        'kegiatan' => $kegiatan->kegiatan,
-                        'isTitle'  => (bool) $kegiatan->isTitle,
-                        'jawaban'  => $jawabanData,
-                        'children' => $kegiatan->children->map(function ($child) {
-                            // Ambil satu jawaban pertama jika ada
-                            $childJawaban = $child->jawaban->first();
-
-                            return [
-                                'id'       => $child->id,
-                                'kegiatan' => $child->kegiatan,
-                                'isTitle'  => (bool) $child->isTitle,
-                                'jawaban'  => [
-                                    'dilakukan' => (bool) ($childJawaban->dilakukan ?? false),
-                                    'catatan'   => $childJawaban->catatan ?? null,
-                                ],
-                            ];
-                        }),
-                    ];
-                }),
+                'soal'       => $form10->daftarTilik->kegiatanDaftarTilik->map(fn($kegiatan) => $formatKegiatan($kegiatan)),
             ];
 
             return response()->json([
@@ -322,6 +307,7 @@ class Form10Controller extends BaseController
             ], 500);
         }
     }
+
 
 
 
