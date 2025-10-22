@@ -273,6 +273,15 @@ class Form10Controller extends BaseController
                             'children.children.children.jawaban' => function ($jq) use ($form10Id) {
                                 $jq->where('form_10_id', $form10Id);
                             },
+                            'children' => function ($cq) {
+                                $cq->orderBy('urutan'); // pastikan urutan anak juga teratur
+                            },
+                            'children.children' => function ($cq) {
+                                $cq->orderBy('urutan');
+                            },
+                            'children.children.children' => function ($cq) {
+                                $cq->orderBy('urutan');
+                            },
                         ]);
                 },
             ])->find($form10Id);
@@ -299,6 +308,7 @@ class Form10Controller extends BaseController
                 return [
                     'id'       => $kegiatan->id,
                     'kegiatan' => $kegiatan->kegiatan,
+                    'urutan'   => $kegiatan->urutan, // 🆕 tambahkan urutan di sini
                     'isTitle'  => (bool) $kegiatan->isTitle,
                     'jawaban'  => $jawabanData,
                     // 🔁 Rekursif: panggil lagi untuk setiap child
@@ -312,7 +322,9 @@ class Form10Controller extends BaseController
                 'pk_id'      => $form10->pk_id,
                 'asesi_id'   => $form10->asesi_id,
                 'asesor_id'  => $form10->asesor_id,
-                'soal'       => $form10->daftarTilik->kegiatanDaftarTilik->map(fn($kegiatan) => $formatKegiatan($kegiatan)),
+                'soal'       => $form10->daftarTilik->kegiatanDaftarTilik
+                                    ->map(fn($kegiatan) => $formatKegiatan($kegiatan))
+                                    ->values(),
             ];
 
             return response()->json([
@@ -331,6 +343,7 @@ class Form10Controller extends BaseController
             ], 500);
         }
     }
+
 
 
 
