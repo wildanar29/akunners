@@ -133,13 +133,36 @@ class Form10Controller extends BaseController
                 }
             }
 
-            // Ambil hanya struktur soal (tanpa jawaban)
-            $soal = KegiatanDaftarTilik::with('children')
-                ->whereNull('parent_id')
-                ->where('pk_id', $pkId)
+            // Ambil semua kegiatan terlebih dahulu
+            $kegiatanAll = KegiatanDaftarTilik::where('pk_id', $pkId)
                 ->where('daftar_tilik_id', $daftarTilikId)
                 ->orderBy('urutan')
                 ->get();
+
+            // Fungsi rekursif untuk membangun tree
+            $buildTree = function ($parentId) use (&$buildTree, $kegiatanAll) {
+                return $kegiatanAll
+                    ->where('parent_id', $parentId)
+                    ->map(function ($item) use (&$buildTree) {
+                        return [
+                            'id' => $item->id,
+                            'pk_id' => $item->pk_id,
+                            'daftar_tilik_id' => $item->daftar_tilik_id,
+                            'parent_id' => $item->parent_id,
+                            'kegiatan' => $item->kegiatan,
+                            'urutan' => $item->urutan,
+                            'isTitle' => $item->isTitle,
+                            'created_at' => $item->created_at,
+                            'updated_at' => $item->updated_at,
+                            // panggil rekursif di sini:
+                            'children' => $buildTree($item->id)
+                        ];
+                    })
+                    ->values();
+            };
+
+            // Bangun tree mulai dari root (parent_id = null)
+            $soal = $buildTree(null);
 
             return response()->json([
                 'success' => true,
@@ -154,6 +177,7 @@ class Form10Controller extends BaseController
             ], 500);
         }
     }
+
 
     // public function getSoalList($form10Id)
     // {
