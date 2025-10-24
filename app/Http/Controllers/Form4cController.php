@@ -246,7 +246,7 @@ class Form4cController extends BaseController
                 'iuk_form3_id' => $iuk->iuk_form3_id,
                 'no_iuk' => $iuk->no_iuk,
                 'iuk_desc' => $iuk->iuk_name, // ← tambahkan ini
-                'group_no' => $iuk->group_no,
+                // 'group_no' => $iuk->group_no,
                 'pertanyaan_form4c' => $iuk->pertanyaanForm4c->map(function ($pertanyaan) use ($jawabanMap) {
                     $jawaban = $jawabanMap->get($pertanyaan->id);
 
