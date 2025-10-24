@@ -231,7 +231,8 @@ class Form4cController extends BaseController
                 }
             ])
             ->where('pk_id', $request->pk_id)
-            ->get(['iuk_form3_id', 'no_iuk', 'group_no']);
+            // tambahkan iuk_name ke daftar kolom yang diambil
+            ->get(['iuk_form3_id', 'no_iuk', 'group_no', 'iuk_name']);
 
         // Ambil jawaban dari user
         $jawabanMap = \App\Models\JawabanForm4c::where('form_1_id', $form1Id)
@@ -244,6 +245,7 @@ class Form4cController extends BaseController
             return [
                 'iuk_form3_id' => $iuk->iuk_form3_id,
                 'no_iuk' => $iuk->no_iuk,
+                'iuk_desc' => $iuk->iuk_name, // ← tambahkan ini
                 'group_no' => $iuk->group_no,
                 'pertanyaan_form4c' => $iuk->pertanyaanForm4c->map(function ($pertanyaan) use ($jawabanMap) {
                     $jawaban = $jawabanMap->get($pertanyaan->id);
@@ -283,6 +285,7 @@ class Form4cController extends BaseController
             'data' => $data,
         ]);
     }
+
 
     public function ApproveForm4cByAsesi(Request $request, $form4cId)
     {
