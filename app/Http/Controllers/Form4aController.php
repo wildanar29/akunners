@@ -335,16 +335,19 @@ class Form4aController extends BaseController
             if ($form4aStatus === 'Submitted') {
                 // Update status form 4a
                 $updatedForm4a = $this->formService->updateForm4a(
-                    $form4aId,
-                    null, // pkId
-                    null, // daftarTilikId
-                    'form_4a', // form_type tetap dari DB
-                    null, // asesiId
-                    null, // asesiName
-                    null, // asesorId
-                    null, // asesorName
-                    'Approved' // status
+                    $form4aId,    // form_4a_id
+                    null,         // pkId
+                    null,         // asesiId
+                    null,         // asesiName
+                    null,         // asesiDate
+                    null,         // asesorId
+                    null,         // asesorName
+                    null,         // asesorDate
+                    null,         // noReg
+                    'Approved',   // status ✅
+                    null          // ket
                 );
+
 
                 // Update progres & track sesuai form_type turunan
                 $this->formService->updateProgresDanTrack(
