@@ -292,7 +292,6 @@ class Form4cController extends BaseController
         $validator = Validator::make(['form_4c_id' => $form4cId], [
             'form_4c_id' => 'required|integer|exists:form_4c,form_4c_id',
         ]);
-
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
@@ -312,14 +311,17 @@ class Form4cController extends BaseController
                 ], 404);
             }
 
+            Log::info('Approving Form 4C with ID: ' . $form4cId);
+            Log::info('Form 4C Status: ' . $form4c->status);
+
             $form1Id = $this->formService->getParentFormIdByFormId($form4cId);
             $form1   = $this->formService->getParentDataByFormId($form1Id);
 
             $form4cStatus = $this->formService
                 ->getStatusByParentFormIdAndType($form1Id, 'form_4c')
                 ->first();
-
-            if ($form4cStatus === 'Submitted') {
+            // Log::info('Form 4C Status: ' . $form4cStatus);
+            if ($form4c->status === 'Submitted' || ($form4c->status === 'InAssessment')) {
                 $this->formService->updateForm4c(
                     $form4cId,
                     null, null,
@@ -328,6 +330,7 @@ class Form4cController extends BaseController
                     null, null,
                     'Approved'
                 );
+                
 
                 $this->formService->updateProgresDanTrack(
                     $form4cId,
@@ -336,6 +339,9 @@ class Form4cController extends BaseController
                     Auth::id(),
                     'Form 4C telah di-approve oleh Asesor'
                 );
+                Log::info('Form 4C approved successfully.');
+
+                 // Kirim notifikasi ke user terkait
 
                 $this->formService->kirimNotifikasiKeUser(
                     DaftarUser::find($form1->asesor_id),
@@ -348,7 +354,7 @@ class Form4cController extends BaseController
 
             return response()->json([
                 'success' => true,
-                'message' => 'Form 4C berhasil di-approve oleh Asesor',
+                'message' => 'Form 4C berhasil di-approve oleh Asesoraaa',
                 'data'    => []
             ]);
 
