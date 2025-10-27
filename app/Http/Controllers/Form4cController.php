@@ -330,14 +330,14 @@ class Form4cController extends BaseController
                     'form_4c',
                     null, null,
                     null, null,
-                    'Approved'
+                    'Completed'
                 );
                 
 
                 $this->formService->updateProgresDanTrack(
                     $form4cId,
                     'form_4c',
-                    'Approved',
+                    'Completed',
                     $dataForm4c->asesi_id,
                     'Form 4C telah di-approve oleh Asesor'
                 );
