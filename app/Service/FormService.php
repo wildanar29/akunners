@@ -181,7 +181,11 @@ class FormService
 	{
 		return Form5::find($form5Id);
 	}
-
+	
+	function getForm4cDataFromForm4cId($form4cId)
+	{
+		return Form4c::find($form4cId);
+	}
 
     function createProgresDanTrack($formId, $formType, $status, $userId, $parentFormId = null, $description)
 	{

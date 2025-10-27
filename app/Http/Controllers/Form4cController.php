@@ -315,6 +315,8 @@ class Form4cController extends BaseController
             Log::info('Form 4C Status: ' . $form4c->status);
 
             $form1Id = $this->formService->getParentFormIdByFormId($form4cId);
+            $dataForm4c = $this->formService->getForm4cDataFromForm4cId($form4cId);
+            Log::info('Data Form 4C: ' . json_encode($dataForm4c));
             $form1   = $this->formService->getParentDataByFormId($form1Id);
 
             $form4cStatus = $this->formService
@@ -336,7 +338,7 @@ class Form4cController extends BaseController
                     $form4cId,
                     'form_4c',
                     'Approved',
-                    Auth::id(),
+                    $dataForm4c->asesi_id,
                     'Form 4C telah di-approve oleh Asesor'
                 );
                 Log::info('Form 4C approved successfully.');
@@ -354,7 +356,7 @@ class Form4cController extends BaseController
 
             return response()->json([
                 'success' => true,
-                'message' => 'Form 4C berhasil di-approve oleh Asesoraaa',
+                'message' => 'Form 4C berhasil di-approve oleh Asesor',
                 'data'    => []
             ]);
 
