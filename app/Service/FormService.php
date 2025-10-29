@@ -549,21 +549,19 @@ class FormService
 	}
 
 	public function getFormIdsByParentFormIdAndTypeNew(int $formId, string $formType, int $userId)
-{
-    return KompetensiProgres::with('track:id,progres_id,form_type')
-        ->where('parent_form_id', $formId)
-        ->where('user_id', $userId) // 🔹 Tambahkan filter user_id
-        ->whereHas('track', function ($query) use ($formType) {
-            $query->where('form_type', $formType);
-        })
-        ->get()
-        ->pluck('form_id')
-        ->unique()
-        ->values(); // reset indeks array
-}
+	{
+		return KompetensiProgres::with('track:id,progres_id,form_type')
+			->where('parent_form_id', $formId)
+			->where('user_id', $userId) // 🔹 Tambahkan filter user_id
+			->whereHas('track', function ($query) use ($formType) {
+				$query->where('form_type', $formType);
+			})
+			->get()
+			->pluck('form_id')
+			->unique()
+			->values(); // reset indeks array
+	}
 
-
-	
 	public function getStatusByParentFormIdAndType(int $formId, string $formType)
 	{
 		return KompetensiProgres::with('track:id,progres_id,form_type')

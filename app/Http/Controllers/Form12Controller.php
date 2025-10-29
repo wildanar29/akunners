@@ -267,9 +267,10 @@ class Form12Controller extends BaseController
             }
 
             // Ambil form induk (form_1) berdasarkan relasi
-            $form1Id = $this->formService->getParentFormIdByFormId($form12Id);
-            $form1   = $this->formService->getParentDataByFormId($form1Id);
+            // $form1Id = $this->formService->getParentFormIdByFormId($form12Id);
 
+            // $form1   = $this->formService->getParentDataByFormId($form1Id);
+            $form1Id = $this->formService->getParentFormIdByFormIdAndAsesiId($form12Id, $form12->asesi_id);
             // Ambil status form 12 sesuai form_type
             $form12Status = $this->formService
                 ->getStatusByParentFormIdAndType($form1Id, 'form_12')
@@ -294,7 +295,7 @@ class Form12Controller extends BaseController
                     $form12Id,
                     'form_12',
                     'Approved',
-                    Auth::id(),
+                    $form12->asesi_id,
                     'Form form_12 telah di-approve oleh Asesi'
                 );
 

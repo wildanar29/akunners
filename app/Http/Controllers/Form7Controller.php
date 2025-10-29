@@ -541,7 +541,8 @@ class Form7Controller extends BaseController
             }
 
             // Ambil form induk (form_1) berdasarkan relasi
-            $form1Id = $this->formService->getParentFormIdByFormId($form7Id);
+            // $form1Id = $this->formService->getParentFormIdByFormId($form7Id);
+            $form1Id = $this->formService->getParentFormIdByFormIdAndAsesiId($form7Id, $form7->asesi_id);
             $form1   = $this->formService->getParentDataByFormId($form1Id);
 
             // Ambil status form 7 sesuai form_type yang dimiliki
@@ -568,7 +569,7 @@ class Form7Controller extends BaseController
                     $form7Id,
                     'form_7',
                     'Approved',
-                    Auth::id(),
+                    $form7->asesi_id,
                     'Form form_7 telah di-approve oleh Asesi'
                 );
 
@@ -586,6 +587,8 @@ class Form7Controller extends BaseController
                 $form1->pk_id,
                 'form_12'
             );
+
+            Log::info("Cek keberadaan Form 12 untuk Asesi ID: {$form1->asesi_id}, PK ID: {$form1->pk_id} - Ada: " . ($isForm12Exist ? 'Ya' : 'Tidak'));
 
             if (!$isForm12Exist) {
                 Log::info("Form 12 belum ada, membuat form 12...");
