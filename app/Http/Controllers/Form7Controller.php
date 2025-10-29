@@ -145,25 +145,48 @@ class Form7Controller extends BaseController
             ], 422);
         }
 
+        // Ambil data dengan relasi
         $elemen = ElemenForm3::with([
             'kukForm3.iukForm3.soalForm7' => function ($query) use ($pkId) {
                 $query->where('pk_id', $pkId)
                     ->orderBy('id', 'asc')
-                    ->select('id', 'pk_id', 'iuk_form3_id', 'sumber_form'); // pertanyaan tidak diikutkan
+                    ->select('id', 'pk_id', 'iuk_form3_id', 'sumber_form');
             },
             'kukForm3.iukForm3.soalForm7.jawabanForm7' => function ($query) use ($asesiId) {
                 $query->where('asesi_id', $asesiId)
-                    ->select('id', 'asesi_id', 'asesor_id', 'soal_form7_id','keputusan', 'created_at', 'updated_at'); // exclude keputusan & catatan
+                    ->select('id', 'asesi_id', 'asesor_id', 'soal_form7_id', 'keputusan', 'created_at', 'updated_at');
             }
         ])
         ->orderBy('no_elemen_form_3', 'asc')
         ->get();
+
+        // 🔹 Ubah struktur jawaban_form7 jadi single object
+        $elemen->each(function ($el) {
+            $el->kukForm3->each(function ($kuk) {
+                $kuk->iukForm3->each(function ($iuk) {
+                    $iuk->soalForm7->each(function ($soal) {
+                        if ($soal->jawabanForm7 && $soal->jawabanForm7->count() > 0) {
+                            // Simpan sebagai single object
+                            $soal->jawabanForm7 = $soal->jawabanForm7->first();
+                        } else {
+                            $soal->jawabanForm7 = null;
+                        }
+
+                        // 🔥 Hapus relasi aslinya agar tidak muncul lagi di JSON
+                        $soal->unsetRelation('jawabanForm7');
+                    });
+                });
+            });
+        });
 
         return response()->json([
             'status' => 'success',
             'data'   => $elemen
         ]);
     }
+
+
+
 
     public function getIukForm3IdFromForm7($pkId)
     {

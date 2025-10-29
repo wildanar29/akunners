@@ -172,6 +172,8 @@ class FormService
 	}
 
 
+
+
 	function getParentDataByFormId($form1Id)
 	{
 		return BidangModel::find($form1Id);
@@ -546,6 +548,22 @@ class FormService
 			->values(); // reset indeks array
 	}
 
+	public function getFormIdsByParentFormIdAndTypeNew(int $formId, string $formType, int $userId)
+{
+    return KompetensiProgres::with('track:id,progres_id,form_type')
+        ->where('parent_form_id', $formId)
+        ->where('user_id', $userId) // 🔹 Tambahkan filter user_id
+        ->whereHas('track', function ($query) use ($formType) {
+            $query->where('form_type', $formType);
+        })
+        ->get()
+        ->pluck('form_id')
+        ->unique()
+        ->values(); // reset indeks array
+}
+
+
+	
 	public function getStatusByParentFormIdAndType(int $formId, string $formType)
 	{
 		return KompetensiProgres::with('track:id,progres_id,form_type')
@@ -731,6 +749,40 @@ class FormService
 			throw $e;
 		}
 	}
+
+	public function checkForm4Completion($pkId, $asesiId, $asesorId)
+	{
+		try {
+			// Ambil data dari masing-masing form berdasarkan pk_id, asesi_id, dan asesor_id
+			$form4a = Form4a::where('pk_id', $pkId)
+				->where('asesi_id', $asesiId)
+				->where('asesor_id', $asesorId)
+				->exists();
+
+			$form4b = Form4b::where('pk_id', $pkId)
+				->where('asesi_id', $asesiId)
+				->where('asesor_id', $asesorId)
+				->exists();
+
+			$form4c = Form4c::where('pk_id', $pkId)
+				->where('asesi_id', $asesiId)
+				->where('asesor_id', $asesorId)
+				->exists();
+
+			$form4d = Form4d::where('pk_id', $pkId)
+				->where('asesi_id', $asesiId)
+				->where('asesor_id', $asesorId)
+				->exists();
+
+			// Jika semua form sudah ada (terisi), maka true. Jika tidak, false.
+			return ($form4a && $form4b && $form4c && $form4d);
+
+		} catch (\Throwable $e) {
+			Log::error("Gagal mengecek kelengkapan Form 4 untuk PK: {$pkId}, Asesi: {$asesiId}, Asesor: {$asesorId} | Error: " . $e->getMessage());
+			throw $e;
+		}
+	}
+
 
 	public function inputForm7($pkId, $asesiId, $asesiName, $asesorId, $asesorName, $noReg)
     {

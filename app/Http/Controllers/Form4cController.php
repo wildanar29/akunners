@@ -303,6 +303,7 @@ class Form4cController extends BaseController
         try {
             DB::beginTransaction();
 
+            // Pastikan $form4c adalah model tunggal
             $form4c = Form4c::find($form4cId);
             if (!$form4c) {
                 return response()->json([
@@ -311,19 +312,25 @@ class Form4cController extends BaseController
                 ], 404);
             }
 
-            Log::info('Approving Form 4C with ID: ' . $form4cId);
-            Log::info('Form 4C Status: ' . $form4c->status);
+            $form1Id = $this->formService->getParentFormIdByFormIdAndAsesiId($form4cId, $form4c->asesi_id);
 
-            $form1Id = $this->formService->getParentFormIdByFormId($form4cId);
+            // Normalisasi $dataForm4c -> ambil single row jika service mengembalikan Collection
             $dataForm4c = $this->formService->getForm4cDataFromForm4cId($form4cId);
-            Log::info('Data Form 4C: ' . json_encode($dataForm4c));
-            $form1   = $this->formService->getParentDataByFormId($form1Id);
+            if ($dataForm4c instanceof \Illuminate\Support\Collection) {
+                $dataForm4c = $dataForm4c->first();
+            }
+            if (!$dataForm4c) {
+                throw new \RuntimeException('Data Form 4C (detail) tidak ditemukan.');
+            }
+
+            $form1 = $this->formService->getParentDataByFormId($form1Id);
+            Log::info("Form 4C ID: {$form4cId}, Form 1 ID: {$form1Id}");
 
             $form4cStatus = $this->formService
                 ->getStatusByParentFormIdAndType($form1Id, 'form_4c')
                 ->first();
-            // Log::info('Form 4C Status: ' . $form4cStatus);
-            if ($form4c->status === 'Submitted' || ($form4c->status === 'InAssessment')) {
+
+            if ($form4c->status === 'Submitted' || $form4c->status === 'InAssessment') {
                 $this->formService->updateForm4c(
                     $form4cId,
                     null, null,
@@ -332,7 +339,6 @@ class Form4cController extends BaseController
                     null, null,
                     'Completed'
                 );
-                
 
                 $this->formService->updateProgresDanTrack(
                     $form4cId,
@@ -341,15 +347,75 @@ class Form4cController extends BaseController
                     $dataForm4c->asesi_id,
                     'Form 4C telah di-approve oleh Asesor'
                 );
-                Log::info('Form 4C approved successfully.');
 
-                 // Kirim notifikasi ke user terkait
+                Log::info('Form 4C approved successfully.');
 
                 $this->formService->kirimNotifikasiKeUser(
                     DaftarUser::find($form1->asesor_id),
                     'Form 4C sudah di Approved',
                     'Form 4C telah di-approve oleh Asesor.'
                 );
+            }
+
+            // ✅ Cek kelengkapan Form 4
+            $isAllForm4Completed = $this->formService->checkForm4Completion(
+                $form4c->pk_id,
+                $form4c->asesi_id,
+                $form4c->asesor_id
+            );
+
+            if ($isAllForm4Completed) {
+                Log::info("Semua Form 4 (A–D) telah lengkap untuk PK ID: {$form4c->pk_id}");
+
+                $form7Status = $this->formService
+                    ->getStatusByParentFormIdAndType($form1Id, 'form_7') // konsisten lowercase
+                    ->first();
+
+                // Ambil 1 ID Form 7 (bukan Collection)
+                $form7Ids = $this->formService->getFormIdsByParentFormIdAndTypeNew(
+                    $form1Id,
+                    'form_7', // konsisten lowercase
+                    $dataForm4c->asesi_id
+                );
+
+                if ($form7Ids instanceof \Illuminate\Support\Collection) {
+                    $form7Id = $form7Ids->first();
+                } else {
+                    $form7Id = $form7Ids; // jika service sudah mengembalikan scalar
+                }
+
+                Log::info("Form 7 ID for Form 1 ID {$form1Id}: " . json_encode($form7Id));
+
+                if ($form7Id && $form7Status === 'Submitted') {
+                    // Update status form 7
+                    $updatedForm7 = $this->formService->updateForm7(
+                        $form7Id,
+                        null, // pkId
+                        null, // daftarTilikId
+                        'form_7', // form_type
+                        null, // asesiId
+                        null, // asesiName
+                        null, // asesorId
+                        null, // asesorName
+                        'InAssessment' // status
+                    );
+
+                    // Update progres & track
+                    $this->formService->updateProgresDanTrack(
+                        $form7Id,
+                        'form_7',
+                        'InAssessment',
+                        $dataForm4c->asesi_id,
+                        'Form form_7 telah di-approve oleh Asesi'
+                    );
+
+                    // Notifikasi
+                    $this->formService->kirimNotifikasiKeUser(
+                        DaftarUser::find($form1->asesor_id),
+                        'Form form_7 InAssessment',
+                        'Form form_7 telah di-InAssessment oleh Asesi.'
+                    );
+                }
             }
 
             DB::commit();
@@ -369,5 +435,7 @@ class Form4cController extends BaseController
             ], 500);
         }
     }
+
+
 
 }

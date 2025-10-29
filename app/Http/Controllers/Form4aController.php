@@ -298,7 +298,7 @@ class Form4aController extends BaseController
 
     public function ApproveForm4aByAsesi(Request $request, $form4aId)
     {
-        // Validasi ID Form 4a
+        // Validasi ID Form 4A
         $validator = Validator::make(['form_4a_id' => $form4aId], [
             'form_4a_id' => 'required|integer|exists:form_4a,form_4a_id',
         ]);
@@ -314,63 +314,135 @@ class Form4aController extends BaseController
         try {
             DB::beginTransaction();
 
-            // Ambil data form_4a
+            // Pastikan $form4a adalah model tunggal
             $form4a = Form4a::find($form4aId);
             if (!$form4a) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Data Form 4a tidak ditemukan.'
+                    'message' => 'Data Form 4A tidak ditemukan.'
                 ], 404);
             }
 
-            // Ambil form induk (form_1) berdasarkan relasi
-            $form1Id = $this->formService->getParentFormIdByFormId($form4aId);
-            $form1   = $this->formService->getParentDataByFormId($form1Id);
+            // Ambil ID Form 1 berdasarkan form4a + asesi_id
+            $form1Id = $this->formService->getParentFormIdByFormIdAndAsesiId($form4aId, $form4a->asesi_id);
 
-            // Ambil status form 10 sesuai form_type yang dimiliki
+            // Normalisasi hasil service agar bukan Collection
+            $dataForm4a = $this->formService->getForm4aDataFromForm4aId($form4aId);
+            if ($dataForm4a instanceof \Illuminate\Support\Collection) {
+                $dataForm4a = $dataForm4a->first();
+            }
+            if (!$dataForm4a) {
+                throw new \RuntimeException('Data Form 4A (detail) tidak ditemukan.');
+            }
+
+            $form1 = $this->formService->getParentDataByFormId($form1Id);
+            Log::info("Form 4A ID: {$form4aId}, Form 1 ID: {$form1Id}");
+
+            // Ambil status Form 4A
             $form4aStatus = $this->formService
                 ->getStatusByParentFormIdAndType($form1Id, 'form_4a')
                 ->first();
 
-            if ($form4aStatus === 'Submitted') {
-                // Update status form 4a
-                $updatedForm4a = $this->formService->updateForm4a(
-                    $form4aId,    // form_4a_id
-                    null,         // pkId
-                    null,         // asesiId
-                    null,         // asesiName
-                    null,         // asesiDate
-                    null,         // asesorId
-                    null,         // asesorName
-                    null,         // asesorDate
-                    null,         // noReg
-                    'Approved',   // status ✅
-                    null          // ket
+            // Jika Form 4A statusnya Submitted atau InAssessment → Completed
+            if ($form4a->status === 'Submitted' || $form4a->status === 'InAssessment') {
+                $this->formService->updateForm4a(
+                    $form4aId,
+                    null, null,
+                    'form_4a',
+                    null, null,
+                    null, null,
+                    'Completed'
                 );
 
-
-                // Update progres & track sesuai form_type turunan
+                // Update progres & track
                 $this->formService->updateProgresDanTrack(
                     $form4aId,
                     'form_4a',
-                    'Approved',
-                    Auth::id(),
-                    'Form 4A telah di-approve oleh Asesi'
+                    'Completed',
+                    $dataForm4a->asesi_id,
+                    'Form 4A telah di-approve oleh Asesor'
                 );
+
+                Log::info('Form 4A approved successfully.');
 
                 // Kirim notifikasi ke asesor
                 $this->formService->kirimNotifikasiKeUser(
-                    DaftarUser::find($form1->asesor_id),
+                    DaftarUser::find($form1->asesi_id),
                     'Form 4A sudah di Approved',
                     'Form 4A telah di-approve oleh Asesi.'
                 );
+            }
+
+            /**
+             * ✅ Tambahan: cek apakah semua Form 4 (A–D) sudah lengkap.
+             * Jika semua lengkap, maka ubah status Form 7 → InAssessment
+             */
+            $isAllForm4Completed = $this->formService->checkForm4Completion(
+                $form4a->pk_id,
+                $form4a->asesi_id,
+                $form4a->asesor_id
+            );
+
+            if ($isAllForm4Completed) {
+                Log::info("Semua Form 4 (A–D) telah lengkap untuk PK ID: {$form4a->pk_id}");
+
+                // Ambil status Form 7
+                $form7Status = $this->formService
+                    ->getStatusByParentFormIdAndType($form1Id, 'form_7')
+                    ->first();
+
+                // Ambil ID Form 7 (pastikan bukan Collection)
+                $form7Ids = $this->formService->getFormIdsByParentFormIdAndTypeNew(
+                    $form1Id,
+                    'form_7',
+                    $dataForm4a->asesi_id
+                );
+
+                if ($form7Ids instanceof \Illuminate\Support\Collection) {
+                    $form7Id = $form7Ids->first();
+                } else {
+                    $form7Id = $form7Ids;
+                }
+
+                Log::info("Form 7 ID for Form 1 ID {$form1Id}: " . json_encode($form7Id));
+
+                if ($form7Id && $form7Status === 'Submitted') {
+                    // Update status form 7 → InAssessment
+                    $this->formService->updateForm7(
+                        $form7Id,
+                        null, // pkId
+                        null, // daftarTilikId
+                        'form_7',
+                        null, // asesiId
+                        null, // asesiName
+                        null, // asesorId
+                        null, // asesorName
+                        'InAssessment'
+                    );
+
+                    // Update progres & track
+                    $this->formService->updateProgresDanTrack(
+                        $form7Id,
+                        'form_7',
+                        'InAssessment',
+                        $dataForm4a->asesi_id,
+                        'Form form_7 telah di-approve oleh Asesi'
+                    );
+
+                    // Kirim notifikasi ke asesor
+                    $this->formService->kirimNotifikasiKeUser(
+                        DaftarUser::find($form1->asesor_id),
+                        'Form form_7 InAssessment',
+                        'Form form_7 telah di-InAssessment oleh Asesi.'
+                    );
+                }
             }
 
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Form 4A berhasil di-approve oleh Asesi',
+                'message' => 'Form 4A berhasil di-approve oleh Asesor',
                 'data'    => []
             ]);
 
@@ -383,5 +455,6 @@ class Form4aController extends BaseController
             ], 500);
         }
     }
+
 
 }
