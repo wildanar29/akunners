@@ -163,7 +163,7 @@ class AsesiPermohonanController extends Controller
 					'form_type' => 'form_1',
 					'activity' => 'Submitted',
 					'activity_time' => Carbon::now(),
-					'description' => 'Pengajuan Form 1 oleh asesi.',
+					'description' => 'Pengajuan Asesmen oleh asesi.',
 				]);
 
 				DB::commit();

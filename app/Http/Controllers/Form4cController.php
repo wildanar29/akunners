@@ -397,14 +397,14 @@ class Form4cController extends BaseController
                         null, // asesiName
                         null, // asesorId
                         null, // asesorName
-                        'InAssessment' // status
+                        'Process' // status
                     );
 
                     // Update progres & track
                     $this->formService->updateProgresDanTrack(
                         $form7Id,
                         'form_7',
-                        'InAssessment',
+                        'Process',
                         $dataForm4c->asesi_id,
                         'Form form_7 telah di-approve oleh Asesi'
                     );
@@ -412,7 +412,7 @@ class Form4cController extends BaseController
                     // Notifikasi
                     $this->formService->kirimNotifikasiKeUser(
                         DaftarUser::find($form1->asesor_id),
-                        'Form form_7 InAssessment',
+                        'Form form_7 Process',
                         'Form form_7 telah di-InAssessment oleh Asesi.'
                     );
                 }

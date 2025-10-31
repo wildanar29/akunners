@@ -140,7 +140,7 @@ class AsesorController extends Controller
 				'form_type' => 'form_1',
 				'activity' => 'Approved',
 				'activity_time' => Carbon::now(),
-				'description' => 'Form 1 disetujui oleh Asesor.',
+				'description' => 'Pengajuan Asesmen disetujui oleh Asesor.',
 			]);
 
 			// Inisialisasi jawaban form_2
@@ -169,7 +169,7 @@ class AsesorController extends Controller
 				'form_type' => 'form_2',
 				'activity' => 'InAssessment',
 				'activity_time' => Carbon::now(),
-				'description' => 'Form 2 dimulai untuk asesmen oleh Asesor.',
+				'description' => 'Penilaian Mandiri sudah dapat dikerjaan oleh asesi.',
 			]);
 
 			Log::debug('Mengirim notifikasi approval ke pengaju');

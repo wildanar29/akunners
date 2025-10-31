@@ -417,14 +417,14 @@ class Form4aController extends BaseController
                         null, // asesiName
                         null, // asesorId
                         null, // asesorName
-                        'InAssessment'
+                        'Process'
                     );
 
                     // Update progres & track
                     $this->formService->updateProgresDanTrack(
                         $form7Id,
                         'form_7',
-                        'InAssessment',
+                        'Process',
                         $dataForm4a->asesi_id,
                         'Form form_7 telah di-approve oleh Asesi'
                     );

@@ -201,7 +201,7 @@ class BidangController extends Controller
 					'form_type' => 'form_1',
 					'activity' => 'Assigned',
 					'activity_time' => Carbon::now(),
-					'description' => 'Form 1 disetujui dan asesor ditetapkan.',
+					'description' => 'Pengajuan Asesmen diterima dan asesor ditetapkan.',
 				]);
 			} else {
 				Log::warning('Data kompetensi_progres tidak ditemukan untuk form_id', ['form_id' => $bidang->form_1_id]);

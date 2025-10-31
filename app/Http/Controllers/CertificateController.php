@@ -113,7 +113,7 @@ class CertificateController extends Controller
 
              if ($form1->status === 'Approved') {
                 $updateForm1 = $this->formService->updateForm1($form1->form_1_id, 'Completed');
-                $updateProgres = $this->formService->updateProgresDanTrack($form1->form_1_id, 'form_1', 'Completed', Auth::id(), 'Sertifikat sudah dibuat dan dikirim ke Asesi');
+                $updateProgres = $this->formService->updateProgresDanTrack($form1->form_1_id, 'form_1', 'Completed', Auth::id(), 'Sertifikat Asesmen sudah dibuat dan dikirim ke Asesi');
                 $this->formService->KirimNotifikasiKeUser($userAsesi, 'Sertifikat Asesmen', 'Sertifikat sudah dapat diunduh.');
             }
             DB::commit();
