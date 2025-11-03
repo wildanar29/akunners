@@ -182,15 +182,20 @@ class Form9Controller extends BaseController
         }
     }
 
-
-
     public function saveOrUpdateAnswers(Request $request, $form9Id)
     {
         $validator = Validator::make($request->all(), [
             'subject' => 'required|string|in:asesor,asesi',
             'answers' => 'required|array',
+
+            // ✅ Validasi untuk pertanyaan utama
             'answers.*.question_id' => 'required|integer|exists:form9_questions,question_id',
             'answers.*.answer_text' => 'nullable|string',
+
+            // ✅ Tambahan: is_checked khusus untuk asesi (opsional)
+            'answers.*.is_checked' => 'nullable|boolean',
+
+            // ✅ Validasi untuk sub pertanyaan
             'answers.*.sub_questions' => 'nullable|array',
             'answers.*.sub_questions.*.sub_question_id' => 'required|integer|exists:form9_sub_questions,sub_question_id',
             'answers.*.sub_questions.*.answer_text' => 'nullable|string',
@@ -200,7 +205,7 @@ class Form9Controller extends BaseController
             return response()->json([
                 'success' => false,
                 'message' => 'Validasi gagal',
-                'errors' => $validator->errors()
+                'errors'  => $validator->errors()
             ], 422);
         }
 
@@ -224,10 +229,13 @@ class Form9Controller extends BaseController
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan saat menyimpan jawaban',
-                'error' => $e->getMessage()
+                'error'   => $e->getMessage()
             ], 500);
         }
     }
+
+
+
 
     /**
      * Proses jawaban sesuai subject (asesor / asesi)
@@ -240,7 +248,22 @@ class Form9Controller extends BaseController
                 continue;
             }
 
-            // Jawaban utama
+            // 🔹 Data dasar untuk disimpan
+            $baseData = [
+                'user_id' => auth()->id() ?? null,
+            ];
+
+            // 🔹 Tambahkan answer_text kalau ada
+            if (isset($q['answer_text'])) {
+                $baseData['answer_text'] = $q['answer_text'];
+            }
+
+            // 🔹 Tambahkan is_checked hanya untuk asesi (dan ubah ke 1 atau 0)
+            if ($subject === 'asesi' && array_key_exists('is_checked', $q)) {
+                $baseData['is_checked'] = $q['is_checked'] ? 1 : 0;
+            }
+
+            // ✅ Simpan jawaban utama
             if (!isset($q['sub_questions']) || empty($q['sub_questions'])) {
                 Form9Answer::updateOrCreate(
                     [
@@ -248,15 +271,12 @@ class Form9Controller extends BaseController
                         'question_id' => $q['question_id'],
                         'sub_question_id' => null,
                     ],
-                    [
-                        'answer_text' => $q['answer_text'] ?? null,
-                        'user_id' => auth()->id() ?? null,
-                    ]
+                    $baseData
                 );
             }
 
-            // Jawaban sub-question
-            if (isset($q['sub_questions']) && !empty($q['sub_questions'])) {
+            // ✅ Simpan jawaban sub-question (jika ada)
+            if (!empty($q['sub_questions'])) {
                 foreach ($q['sub_questions'] as $sq) {
                     Form9Answer::updateOrCreate(
                         [
@@ -273,6 +293,7 @@ class Form9Controller extends BaseController
             }
         }
     }
+
 
     /**
      * Setelah jawaban tersimpan → update status form & kirim notifikasi ke pihak lawan

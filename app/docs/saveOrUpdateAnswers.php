@@ -10,13 +10,14 @@ namespace App\Docs;
  *     description="
  * Endpoint ini digunakan untuk **menyimpan atau memperbarui jawaban Form 9** berdasarkan role pengguna (`asesor` atau `asesi`).
  * 
- * 🔹 Jika `subject=asesor` → Jawaban berisi kombinasi **pertanyaan utama dan sub-pertanyaan**  
- * 🔹 Jika `subject=asesi` → Jawaban berisi **pertanyaan utama saja** tanpa sub-pertanyaan  
+ * 🔹 **Asesi** → hanya memiliki pertanyaan utama dengan field tambahan `is_checked` (true/false).  
+ * 🔹 **Asesor** → memiliki pertanyaan utama dan daftar `sub_questions` untuk setiap pertanyaan tertentu.
  * 
- * Contoh akses:
+ * Contoh pemanggilan:
  * - `/form9/1/save-jawaban` dengan body `subject=asesi`
  * - `/form9/1/save-jawaban` dengan body `subject=asesor`
  *     ",
+ * 
  *     @OA\Parameter(
  *         name="form9Id",
  *         in="path",
@@ -27,11 +28,38 @@ namespace App\Docs;
  * 
  *     @OA\RequestBody(
  *         required=true,
- *         description="Contoh struktur JSON untuk Asesor dan Asesi",
+ *         description="Contoh struktur JSON untuk Asesi (dengan is_checked) dan Asesor (dengan sub_questions)",
  *         @OA\JsonContent(
  *             oneOf={
  *                 @OA\Schema(
- *                     title="Contoh request body untuk Asesor",
+ *                     title="Contoh request body untuk Asesi (dengan is_checked)",
+ *                     example={
+ *                         "subject": "asesi",
+ *                         "answers": {
+ *                             {
+ *                                 "question_id": 1,
+ *                                 "answer_text": "Saya mendapatkan penjelasan yang cukup memadai mengenai proses asesmen/uji kompetensi",
+ *                                 "is_checked": true,
+ *                                 "sub_questions": {}
+ *                             },
+ *                             {
+ *                                 "question_id": 2,
+ *                                 "answer_text": "Saya diberikan kesempatan untuk mempelajari standar kompetensi yang akan diujikan dan menilai diri sendiri terhadap pencapaiannya",
+ *                                 "is_checked": true,
+ *                                 "sub_questions": {}
+ *                             },
+ *                             {
+ *                                 "question_id": 3,
+ *                                 "answer_text": "Asesor memberikan kesempatan untuk mendiskusikan/ menegosiasikan metoda, instrumen dan sumber asesmen serta jadwal asesmen",
+ *                                 "is_checked": true,
+ *                                 "sub_questions": {}
+ *                             }
+ *                         }
+ *                     }
+ *                 ),
+ * 
+ *                 @OA\Schema(
+ *                     title="Contoh request body untuk Asesor (dengan sub_questions)",
  *                     example={
  *                         "subject": "asesor",
  *                         "answers": {
@@ -56,35 +84,6 @@ namespace App\Docs;
  *                             {
  *                                 "question_id": 13,
  *                                 "answer_text": "Bukti asesmen konsisten terhadap dimensi kompetensi: task skill",
- *                                 "sub_questions": {}
- *                             },
- *                             {
- *                                 "question_id": 16,
- *                                 "answer_text": "Bukti asesmen konsisten terhadap dimensi kompetensi: environment management skill",
- *                                 "sub_questions": {}
- *                             }
- *                         }
- *                     }
- *                 ),
- * 
- *                 @OA\Schema(
- *                     title="Contoh request body untuk Asesi",
- *                     example={
- *                         "subject": "asesi",
- *                         "answers": {
- *                             {
- *                                 "question_id": 1,
- *                                 "answer_text": "Saya mendapatkan penjelasan yang cukup memadai mengenai proses asesmen/uji kompetensi",
- *                                 "sub_questions": {}
- *                             },
- *                             {
- *                                 "question_id": 2,
- *                                 "answer_text": "Saya diberikan kesempatan untuk mempelajari standar kompetensi yang akan diujikan dan menilai diri sendiri terhadap pencapaiannya",
- *                                 "sub_questions": {}
- *                             },
- *                             {
- *                                 "question_id": 3,
- *                                 "answer_text": "Asesor memberikan kesempatan untuk mendiskusikan/ menegosiasikan metoda, instrumen dan sumber asesmen serta jadwal asesmen",
  *                                 "sub_questions": {}
  *                             }
  *                         }
