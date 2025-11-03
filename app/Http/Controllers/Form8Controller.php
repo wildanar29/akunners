@@ -83,17 +83,28 @@ class Form8Controller extends BaseController
             ], 404);
         }
 
+        // 🔒 Cek apakah form banding dengan form_1_id ini sudah ada
+        $existing = FormBandingAsesmen::where('form_1_id', $request->form_1_id)->first();
+
+        if ($existing) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Form Banding Asesmen untuk form_1_id ini sudah pernah dibuat.',
+                'data'    => $existing,
+            ], 409); // 409 Conflict
+        }
+
         DB::beginTransaction();
         try {
-            // Simpan data
+            // Simpan data baru
             $formBanding = FormBandingAsesmen::create([
-                'form_1_id'         => $request->form_1_id,   // << simpan juga form_1_id
-                'asesi_id'          => $form1->asesi_id,
-                'asesor_id'         => $form1->asesor_id,
-                'tanggal_asesmen'   => $form1->asesor_date,
-                'alasan_banding'    => $request->alasan_banding,
-                'persetujuan_asesi' => $request->persetujuan_asesi ?? false,
-                'persetujuan_asesor'=> $request->persetujuan_asesor ?? false,
+                'form_1_id'          => $request->form_1_id,
+                'asesi_id'           => $form1->asesi_id,
+                'asesor_id'          => $form1->asesor_id,
+                'tanggal_asesmen'    => $form1->asesor_date,
+                'alasan_banding'     => $request->alasan_banding,
+                'persetujuan_asesi'  => $request->persetujuan_asesi ?? false,
+                'persetujuan_asesor' => $request->persetujuan_asesor ?? false,
             ]);
 
             $this->formService->createProgresDanTrack(
@@ -120,9 +131,11 @@ class Form8Controller extends BaseController
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan saat menyimpan data',
+                'error'   => $e->getMessage()
             ], 500);
         }
     }
+
 
     public function approveFormBandingAsesmen(Request $request, $bandingId)
     {
@@ -209,8 +222,9 @@ class Form8Controller extends BaseController
         try {
             // ✅ Validasi input
             $validator = Validator::make($request->all(), [
-                'asesor_id' => 'nullable|integer',
-                'asesi_id'  => 'nullable|integer',
+                'banding_id' => 'nullable|integer',
+                'asesor_id'  => 'nullable|integer',
+                'asesi_id'   => 'nullable|integer',
             ]);
 
             if ($validator->fails()) {
@@ -221,31 +235,41 @@ class Form8Controller extends BaseController
                 ], 422);
             }
 
-            // ✅ Query data
+            // ✅ Query data dasar
             $query = FormBandingAsesmen::query();
 
+            // Filter berdasarkan banding_id (jika ada)
+            if ($request->filled('banding_id')) {
+                $query->where('banding_id', $request->banding_id);
+            }
+
+            // Filter berdasarkan asesor_id (jika ada)
             if ($request->filled('asesor_id')) {
                 $query->where('asesor_id', $request->asesor_id);
             }
 
+            // Filter berdasarkan asesi_id (jika ada)
             if ($request->filled('asesi_id')) {
                 $query->where('asesi_id', $request->asesi_id);
             }
 
-            $data = $query->get();
+            // Jalankan query
+            $data = $query->first(); // ⚡ gunakan first() agar hasilnya 1 object, bukan array
 
-            if ($data->isEmpty()) {
+            // ✅ Jika tidak ada data
+            if (!$data) {
                 return response()->json([
                     'status'  => 'SUCCESS',
                     'message' => 'Data form banding tidak ditemukan',
-                    'data'    => [],
+                    'data'    => (object)[], // hasil tetap berbentuk object kosong
                 ], 200);
             }
 
+            // ✅ Jika data ditemukan
             return response()->json([
                 'status'  => 'SUCCESS',
                 'message' => 'Data form banding berhasil diambil',
-                'data'    => $data,
+                'data'    => $data, // hasil berupa object JSON
             ], 200);
 
         } catch (\Exception $e) {
@@ -255,10 +279,11 @@ class Form8Controller extends BaseController
             return response()->json([
                 'status'  => 'ERROR',
                 'message' => 'Terjadi kesalahan pada server',
-                'error'   => $e->getMessage(), // kalau mau sembunyikan detail, bisa dihapus
+                'error'   => $e->getMessage(), // kalau mau disembunyikan, hapus baris ini
             ], 500);
         }
     }
+
 
 
 
