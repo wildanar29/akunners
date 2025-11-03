@@ -6,39 +6,94 @@ namespace App\Docs;
  * @OA\Post(
  *     path="/form9/{form9Id}/save-jawaban",
  *     tags={"FORM 9 (UMPAN BALIK)"},
- *     summary="API ini digunakan untuk menyimpan jawaban yang diberikan oleh asesi atau asesor",
- *     description="Endpoint ini akan menyimpan atau memperbarui jawaban Form 9 berdasarkan role (`asesor` atau `asesi`). 
- *                  Mendukung jawaban untuk pertanyaan utama dan sub-pertanyaan.",
+ *     summary="Simpan atau perbarui jawaban Form 9 (oleh Asesor atau Asesi)",
+ *     description="
+ * Endpoint ini digunakan untuk **menyimpan atau memperbarui jawaban Form 9** berdasarkan role pengguna (`asesor` atau `asesi`).
+ * 
+ * 🔹 Jika `subject=asesor` → Jawaban berisi kombinasi **pertanyaan utama dan sub-pertanyaan**  
+ * 🔹 Jika `subject=asesi` → Jawaban berisi **pertanyaan utama saja** tanpa sub-pertanyaan  
+ * 
+ * Contoh akses:
+ * - `/form9/1/save-jawaban` dengan body `subject=asesi`
+ * - `/form9/1/save-jawaban` dengan body `subject=asesor`
+ *     ",
  *     @OA\Parameter(
  *         name="form9Id",
  *         in="path",
  *         required=true,
- *         description="ID Form 9",
+ *         description="ID Form 9 yang akan disimpan jawabannya",
  *         @OA\Schema(type="integer", example=1)
  *     ),
+ * 
  *     @OA\RequestBody(
  *         required=true,
+ *         description="Contoh struktur JSON untuk Asesor dan Asesi",
  *         @OA\JsonContent(
- *             required={"subject","answers"},
- *             @OA\Property(property="subject", type="string", enum={"asesor","asesi"}, example="asesor"),
- *             @OA\Property(
- *                 property="answers",
- *                 type="array",
- *                 @OA\Items(
- *                     @OA\Property(property="question_id", type="integer", example=10),
- *                     @OA\Property(property="answer_text", type="string", nullable=true, example="Jawaban utama"),
- *                     @OA\Property(
- *                         property="sub_questions",
- *                         type="array",
- *                         @OA\Items(
- *                             @OA\Property(property="sub_question_id", type="integer", example=101),
- *                             @OA\Property(property="answer_text", type="string", nullable=true, example="Jawaban sub")
- *                         )
- *                     )
+ *             oneOf={
+ *                 @OA\Schema(
+ *                     title="Contoh request body untuk Asesor",
+ *                     example={
+ *                         "subject": "asesor",
+ *                         "answers": {
+ *                             {
+ *                                 "question_id": 10,
+ *                                 "sub_questions": {
+ *                                     {"sub_question_id": 1, "answer_text": "1"},
+ *                                     {"sub_question_id": 2, "answer_text": "0"},
+ *                                     {"sub_question_id": 3, "answer_text": "1"},
+ *                                     {"sub_question_id": 4, "answer_text": "1"}
+ *                                 }
+ *                             },
+ *                             {
+ *                                 "question_id": 11,
+ *                                 "sub_questions": {
+ *                                     {"sub_question_id": 5, "answer_text": "1"},
+ *                                     {"sub_question_id": 6, "answer_text": "1"},
+ *                                     {"sub_question_id": 7, "answer_text": "0"},
+ *                                     {"sub_question_id": 8, "answer_text": "1"}
+ *                                 }
+ *                             },
+ *                             {
+ *                                 "question_id": 13,
+ *                                 "answer_text": "Bukti asesmen konsisten terhadap dimensi kompetensi: task skill",
+ *                                 "sub_questions": {}
+ *                             },
+ *                             {
+ *                                 "question_id": 16,
+ *                                 "answer_text": "Bukti asesmen konsisten terhadap dimensi kompetensi: environment management skill",
+ *                                 "sub_questions": {}
+ *                             }
+ *                         }
+ *                     }
+ *                 ),
+ * 
+ *                 @OA\Schema(
+ *                     title="Contoh request body untuk Asesi",
+ *                     example={
+ *                         "subject": "asesi",
+ *                         "answers": {
+ *                             {
+ *                                 "question_id": 1,
+ *                                 "answer_text": "Saya mendapatkan penjelasan yang cukup memadai mengenai proses asesmen/uji kompetensi",
+ *                                 "sub_questions": {}
+ *                             },
+ *                             {
+ *                                 "question_id": 2,
+ *                                 "answer_text": "Saya diberikan kesempatan untuk mempelajari standar kompetensi yang akan diujikan dan menilai diri sendiri terhadap pencapaiannya",
+ *                                 "sub_questions": {}
+ *                             },
+ *                             {
+ *                                 "question_id": 3,
+ *                                 "answer_text": "Asesor memberikan kesempatan untuk mendiskusikan/ menegosiasikan metoda, instrumen dan sumber asesmen serta jadwal asesmen",
+ *                                 "sub_questions": {}
+ *                             }
+ *                         }
+ *                     }
  *                 )
- *             )
+ *             }
  *         )
  *     ),
+ * 
  *     @OA\Response(
  *         response=200,
  *         description="Jawaban berhasil disimpan atau diperbarui",
@@ -47,9 +102,10 @@ namespace App\Docs;
  *             @OA\Property(property="message", type="string", example="Jawaban berhasil disimpan/diperbarui")
  *         )
  *     ),
+ * 
  *     @OA\Response(
  *         response=422,
- *         description="Validasi gagal",
+ *         description="Validasi gagal (contoh: question_id tidak ditemukan atau data tidak sesuai)",
  *         @OA\JsonContent(
  *             @OA\Property(property="success", type="boolean", example=false),
  *             @OA\Property(property="message", type="string", example="Validasi gagal"),
@@ -62,6 +118,7 @@ namespace App\Docs;
  *             )
  *         )
  *     ),
+ * 
  *     @OA\Response(
  *         response=500,
  *         description="Terjadi kesalahan server",
@@ -73,5 +130,4 @@ namespace App\Docs;
  *     )
  * )
  */
-
- class saveOrUpdateAnswers {}
+class saveOrUpdateAnswers {}
