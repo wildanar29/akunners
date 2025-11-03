@@ -112,6 +112,8 @@ class Form9Controller extends BaseController
                     $query->where('form_9_id', $form9Id);
                 }
             ])
+            // urutkan berdasarkan subject: asesi dulu, lalu asesor
+            ->orderByRaw("CASE WHEN subject = 'asesi' THEN 1 WHEN subject = 'asesor' THEN 2 ELSE 3 END")
             ->orderBy('order_no', 'asc')
             ->get();
 
@@ -135,14 +137,31 @@ class Form9Controller extends BaseController
                     'order_no' => $q->order_no,
                     'subject' => $q->subject,
                     'has_sub_questions' => $hasSub ? 1 : 0,
-                    // Jika ada sub question, jawaban pertanyaan utama dikosongkan
-                    'answers' => $hasSub ? [] : $q->answers,
+                    
+                    // Jika tidak punya sub question, konversi answer_text ke boolean
+                    'answers' => $hasSub ? [] : $q->answers->map(function ($a) {
+                        return [
+                            'answer_id' => $a->answer_id,
+                            'question_id' => $a->question_id,
+                            'form_9_id' => $a->form_9_id,
+                            'answer_text' => $a->answer_text === '1' ? true : ($a->answer_text === '0' ? false : $a->answer_text),
+                        ];
+                    }),
+
+                    // Untuk sub_questions
                     'sub_questions' => $q->subQuestions->map(function ($sq) {
                         return [
                             'sub_question_id' => $sq->sub_question_id,
                             'sub_label' => $sq->sub_label,
                             'order_no' => $sq->order_no,
-                            'answers' => $sq->answers
+                            'answers' => $sq->answers->map(function ($sa) {
+                                return [
+                                    'answer_id' => $sa->answer_id,
+                                    'sub_question_id' => $sa->sub_question_id,
+                                    'form_9_id' => $sa->form_9_id,
+                                    'answer_text' => $sa->answer_text === '1' ? true : ($sa->answer_text === '0' ? false : $sa->answer_text),
+                                ];
+                            })
                         ];
                     })->values(),
                 ];
@@ -154,7 +173,7 @@ class Form9Controller extends BaseController
             ], 200);
 
         } catch (\Exception $e) {
-            \Log::error('Error ambil pertanyaan & jawaban Form 9: '.$e->getMessage());
+            \Log::error('Error ambil pertanyaan & jawaban Form 9: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan saat mengambil pertanyaan & jawaban',
@@ -162,6 +181,8 @@ class Form9Controller extends BaseController
             ], 500);
         }
     }
+
+
 
     public function saveOrUpdateAnswers(Request $request, $form9Id)
     {
