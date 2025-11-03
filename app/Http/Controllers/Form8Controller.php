@@ -102,7 +102,7 @@ class Form8Controller extends BaseController
                 'Submitted',
                 $form1->asesi_id,
                 $form1->form_1_id,
-                'Form 8 sudah dapat diisi.'
+                'Form 8 diisi oleh asesi.'
             );
 
             DB::commit();
