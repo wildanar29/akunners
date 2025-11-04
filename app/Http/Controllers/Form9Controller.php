@@ -53,41 +53,70 @@ class Form9Controller extends BaseController
     public function getQuestionsBySubject(Request $request)
     {
         try {
-            // Ambil input subject (section) dan pk_id
+            // Ambil input subject dan pk_id
             $subject = $request->input('subject');
             $pkId = $request->input('pk_id');
 
-            // Query ke model
-            $questions = Form9Question::query()
-                ->when($subject, function ($query, $subject) {
-                    $query->where('subject', $subject);
-                })
-                ->when($pkId, function ($query, $pkId) {
-                    $query->where('pk_id', $pkId);
-                })
-                ->orderBy('order_no', 'asc')
-                ->get();
+            // Query ke model dengan relasi subQuestions
+            $questions = Form9Question::with([
+                'subQuestions' => function ($query) {
+                    $query->orderBy('order_no', 'asc');
+                }
+            ])
+            ->when($subject, function ($query, $subject) {
+                $query->where('subject', $subject);
+            })
+            ->when($pkId, function ($query, $pkId) {
+                $query->where('pk_id', $pkId);
+            })
+            ->orderBy('order_no', 'asc')
+            ->get();
 
             // Kalau tidak ada hasil
             if ($questions->isEmpty()) {
                 return response()->json([
                     'success' => false,
-                    'message' => ($subject || $pkId) 
+                    'message' => ($subject || $pkId)
                         ? "Tidak ada pertanyaan ditemukan untuk filter yang diberikan"
                         : "Tidak ada pertanyaan ditemukan",
                     'data' => []
                 ], 404);
             }
 
-            // Kalau berhasil
+            // Transform hasil agar formatnya mirip dengan fungsi 2 (tanpa answers)
+            $result = $questions->map(function ($q) {
+                $hasSub = $q->subQuestions->isNotEmpty();
+
+                return [
+                    'question_id' => $q->question_id,
+                    'pk_id' => $q->pk_id,
+                    'section' => $q->section,
+                    'sub_section' => $q->sub_section,
+                    'question_text' => $q->question_text,
+                    'criteria' => $q->criteria,
+                    'order_no' => $q->order_no,
+                    'subject' => $q->subject,
+                    'has_sub_questions' => (bool) $hasSub,
+
+                    // ✅ Tambahkan daftar sub_questions agar bisa dikirim di request JSON
+                    'sub_questions' => $q->subQuestions->map(function ($sq) {
+                        return [
+                            'sub_question_id' => $sq->sub_question_id,
+                            'sub_label' => $sq->sub_label,
+                            'order_no' => $sq->order_no,
+                        ];
+                    })->values(),
+                ];
+            });
+
+            // Response sukses
             return response()->json([
                 'success' => true,
-                'data' => $questions
+                'data' => $result
             ], 200);
 
         } catch (\Exception $e) {
-            // Log error untuk debugging
-            \Log::error('Error ambil pertanyaan Form 9: '.$e->getMessage());
+            \Log::error('Error ambil pertanyaan Form 9: ' . $e->getMessage());
 
             return response()->json([
                 'success' => false,
@@ -96,6 +125,7 @@ class Form9Controller extends BaseController
             ], 500);
         }
     }
+
 
 
     public function getQuestionsAndAnswersByFormId($form9Id)
