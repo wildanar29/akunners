@@ -328,7 +328,7 @@
             <div class="signature-space">
                 <img src="{{ public_path('ttd.png') }}" alt="Tanda Tangan" class="signature-image">
             </div>
-            <div class="signature-name">dr. Danurrendra, Sp. B., CRP., CHAE.</div>
+            <div class="signature-name">dr. DAVID SANTOSO, M.M.</div>
             <div class="signature-title">Direktur Utama RS Immanuel</div>
         </div>
     </div>
