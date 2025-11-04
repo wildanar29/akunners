@@ -157,6 +157,8 @@ class Form8Controller extends BaseController
 
             // Ambil data form banding
             $formBanding = FormBandingAsesmen::find($bandingId);
+            Log::info('FormBandingAsesmen ditemukan: ', ['banding_id' => $bandingId]);
+
             if (!$formBanding) {
                 return response()->json([
                     'success' => false,
@@ -166,17 +168,37 @@ class Form8Controller extends BaseController
 
             // Ambil form induk (form_1)
             $form1 = $this->formService->getParentDataByFormId($formBanding->form_1_id);
+            Log::info('FormInduk ditemukan untuk form_1_id: ', ['form_1_id' => $formBanding->form_1_id]);
+
+            // Ambil Form 8 ID
+            $form8id = $this->formService
+                ->getFormIdsByParentFormIdAndTypeNew($form1->form_1_id, 'form_8', $form1->asesi_id)
+                ->first();
+
+            Log::info('Form_8 ID ditemukan: ', ['form_8_id' => $form8id]);
 
             // Ambil status form_8 (banding)
             $form8Status = $this->formService
-                ->getStatusByParentFormIdAndType($form1->form_1_id, 'form_8')
+                ->getStatusByParentAndFormIdAndType($form1->form_1_id, $form8id, 'form_8')
                 ->first();
 
+            Log::info('Status form_8 ditemukan: ', ['status' => $form8Status]);
+
+            // 🚫 Cek apakah form 8 sudah disetujui sebelumnya
+            if ($form8Status === 'Approved') {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Pengajuan banding sudah disetujui sebelumnya.',
+                ], 409); // HTTP 409 Conflict
+            }
+
+            // ✅ Kalau status form_8 masih "Submitted", lanjut approve
             if ($form8Status === 'Submitted') {
                 // Update status form banding (form 8)
                 $formBanding->update([
                     'status'         => 'Approved',
-                    'approved_by'    => Auth::id(),   // id asesor yang approve
+                    'approved_by'    => $form1->asesor_id,
                     'approved_at'    => Carbon::now(),
                 ]);
 
@@ -185,7 +207,7 @@ class Form8Controller extends BaseController
                     $formBanding->banding_id,
                     'form_8',
                     'Approved',
-                    Auth::id(),
+                    $form1->asesi_id,
                     $form1->form_1_id,
                     'Form banding asesmen (form 8) telah di-approve oleh Asesor.'
                 );
@@ -216,6 +238,8 @@ class Form8Controller extends BaseController
             ], 500);
         }
     }
+
+
 
     public function getFormBandingByUser(Request $request)
     {

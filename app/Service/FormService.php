@@ -575,6 +575,21 @@ class FormService
 			->values();         // Reset indeks array
 	}
 
+	public function getStatusByParentAndFormIdAndType(int $parentFormId, int $formId, string $formType)
+	{
+		return KompetensiProgres::with('track:id,progres_id,form_type')
+			->where('parent_form_id', $parentFormId)
+			->where('form_id', $formId)
+			->whereHas('track', function ($query) use ($formType) {
+				$query->where('form_type', $formType);
+			})
+			->get()
+			->pluck('status')   // Ambil nilai status saja
+			->unique()           // Hilangkan duplikat
+			->values();          // Reset indeks array agar rapi
+	}
+
+
 	function isUserAsesor(?int $userId): bool
 	{
 		if (!$userId) {
