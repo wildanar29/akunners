@@ -85,7 +85,9 @@ class Form6Controller extends BaseController
     public function simpanJawabanForm6(Request $request)
     {
         try {
+            // 🔹 Validasi input termasuk asesi_id
             $validator = Validator::make($request->all(), [
+                'asesi_id' => 'required|integer|exists:users,user_id',
                 'pk_id' => 'required|integer',
                 'jawaban' => 'required|array|min:1',
                 'jawaban.*.kegiatan_id' => 'required|integer|exists:kegiatan_form6,id',
@@ -100,49 +102,71 @@ class Form6Controller extends BaseController
             }
 
             $validated = $validator->validated();
-            $userId = Auth::id();
+            $asesiId = $validated['asesi_id']; // 🔹 Ambil dari request body
+            $asesorId = Auth::id(); // 🔹 Asesor tetap diambil dari user login (opsional)
 
-            DB::beginTransaction(); // Mulai transaksi
+            DB::beginTransaction();
+
             foreach ($validated['jawaban'] as $item) {
                 $sudahAda = JawabanForm6::where('pk_id', $validated['pk_id'])
                     ->where('kegiatan_id', $item['kegiatan_id'])
-                    ->where('user_id', $userId)
+                    ->where('user_id', $asesiId)
                     ->exists();
 
                 if ($sudahAda) {
-                    // Rollback transaksi jika ditemukan duplikasi
                     DB::rollBack();
-
                     return response()->json([
                         'message' => 'Jawaban untuk kegiatan ID ' . $item['kegiatan_id'] . ' sudah pernah disimpan.',
-                    ], 409); // 409 Conflict
+                    ], 409);
                 }
 
                 JawabanForm6::create([
                     'pk_id' => $validated['pk_id'],
                     'kegiatan_id' => $item['kegiatan_id'],
-                    'user_id' => $userId,
+                    'user_id' => $asesiId, // 🔹 asesi_id dipakai sebagai user_id penyimpan
                     'pencapaian' => $item['pencapaian'],
                 ]);
             }
 
-            $form1 = $this->formService->getForm1ByAsesiIdAndPkId($userId, $validated['pk_id']);
-            $userAsesor = $this->formService->findUser($form1->asesor_id);
-            $AsesorNotif = $this->formService->KirimNotifikasiKeUser($userAsesor, 'Jawaban Form 6 Tersimpan', 'Jawaban Form 6 telah disimpan oleh asesor.');
-
-            $isFormExist = $this->formService->isFormExistSingle($userId, $validated['pk_id'], 'form_6');
-            if ($isFormExist) {
-                $form6 = $this->formService->getFormIdsByParentFormIdAndType($form1->form_1_id, 'form_6');
-                $this->formService->updateProgresDanTrack($form6, 'form_6', 'Submitted', $form1->asesi_id, 'jawaban Form 6 telah diisi Asesor');
+            // 🔹 Ambil Form 1 berdasarkan asesi (bukan user login)
+            $form1 = $this->formService->getForm1ByAsesiIdAndPkId($asesiId, $validated['pk_id']);
+            Log::info('Form 1 yang ditemukan untuk asesi_id ' . $asesiId . ' dan pk_id ' . $validated['pk_id'], ['form1' => $form1]);
+            if (!$form1) {
+                DB::rollBack();
+                return response()->json([
+                    'message' => 'Data Form 1 tidak ditemukan untuk asesi ini dan PK ID tersebut.',
+                ], 404);
             }
 
-            DB::commit(); // Simpan semua perubahan jika tidak ada error
+            // 🔹 Kirim notifikasi ke asesor dari Form 1
+            $userAsesor = $this->formService->findUser($form1->asesor_id);
+            $this->formService->KirimNotifikasiKeUser(
+                $userAsesor,
+                'Jawaban Form 6 Tersimpan',
+                'Jawaban Form 6 telah disimpan oleh asesor.'
+            );
+
+            // 🔹 Cek apakah form6 ada, lalu update progres dan track
+            $isFormExist = $this->formService->isFormExistSingle($asesiId, $validated['pk_id'], 'form_6');
+            if ($isFormExist) {
+                $form6 = $this->formService->getFormIdsByParentFormIdAndType($form1->form_1_id, 'form_6');
+                $this->formService->updateProgresDanTrack(
+                    $form6,
+                    'form_6',
+                    'Submitted',
+                    $form1->asesi_id,
+                    'Jawaban Form 6 telah diisi oleh Asesor'
+                );
+            }
+
+            DB::commit();
+
             return response()->json([
                 'message' => 'Jawaban berhasil disimpan.',
             ], 200);
 
         } catch (\Exception $e) {
-            DB::rollBack(); // Batalkan semua perubahan jika terjadi error
+            DB::rollBack();
 
             Log::error('Gagal menyimpan Jawaban Form 6', [
                 'error_message' => $e->getMessage(),
@@ -157,6 +181,7 @@ class Form6Controller extends BaseController
             ], 500);
         }
     }
+
 
     public function getSoalDanJawabanForm6(Request $request, $pkId)
     {
