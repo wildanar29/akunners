@@ -208,8 +208,8 @@ class Form8Controller extends BaseController
                     'form_8',
                     'Approved',
                     $form1->asesi_id,
-                    $form1->form_1_id,
                     'Form banding asesmen (form 8) telah di-approve oleh Asesor.'
+                    
                 );
 
                 // Kirim notifikasi ke ASESI

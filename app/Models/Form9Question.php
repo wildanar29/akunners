@@ -15,6 +15,10 @@ class Form9Question extends Model
     // Primary Key
     protected $primaryKey = 'question_id';
 
+    protected $casts = [
+        'has_sub_questions' => 'boolean', // ✅ otomatis ubah 0/1 → true/false
+    ];
+    
     // Mass assignment (fillable)
     protected $fillable = [
         'section',

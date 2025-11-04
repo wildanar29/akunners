@@ -136,7 +136,7 @@ class Form9Controller extends BaseController
                     'criteria' => $q->criteria,
                     'order_no' => $q->order_no,
                     'subject' => $q->subject,
-                    'has_sub_questions' => $hasSub ? 1 : 0,
+                    'has_sub_questions' => (bool) $hasSub,
                     
                     // Jika tidak punya sub question, konversi answer_text ke boolean
                     'answers' => $hasSub ? [] : $q->answers->map(function ($a) {
@@ -213,15 +213,29 @@ class Form9Controller extends BaseController
         $subject = $data['subject'];
 
         try {
-            // Simpan jawaban sesuai subject
+            // ✅ Cek apakah subject sudah pernah mengisi Form 9 ini
+            $alreadyFilled = \DB::table('form9_answers as a')
+                ->join('form9_questions as q', 'a.question_id', '=', 'q.question_id')
+                ->where('a.form_9_id', $form9Id)
+                ->where('q.subject', $subject)
+                ->exists();
+
+            if ($alreadyFilled) {
+                return response()->json([
+                    'success' => false,
+                    'message' => ucfirst($subject) . ' sudah mengisi Form 9 sebelumnya.'
+                ], 409); // HTTP 409: Conflict
+            }
+
+            // ✅ Jika belum pernah isi, lanjut proses penyimpanan
             $this->processAnswersBySubject($form9Id, $data['answers'], $subject);
 
-            // Setelah berhasil simpan, update status & kirim notifikasi
+            // ✅ Setelah simpan, update status & kirim notifikasi
             $this->afterAnswerSaved($form9Id, $subject);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Jawaban berhasil disimpan/diperbarui'
+                'message' => 'Jawaban berhasil disimpan'
             ], 200);
 
         } catch (\Exception $e) {
@@ -234,14 +248,33 @@ class Form9Controller extends BaseController
         }
     }
 
-
-
-
     /**
      * Proses jawaban sesuai subject (asesor / asesi)
      */
     private function processAnswersBySubject($form9Id, array $answers, $subject)
     {
+        $form9 = Form9::with(['asesi', 'asesor', 'answers'])
+            ->where('form_9_id', $form9Id)
+            ->first();
+
+        // Jika tidak ditemukan
+        if (!$form9) {
+            \Log::error("Form9 dengan ID {$form9Id} tidak ditemukan.");
+            return null;
+        }
+
+        // Ambil data form1 berdasarkan form9
+        $form1Id = $this->formService->getParentFormIdByFormIdAndAsesiId($form9Id, $form9->asesi_id);
+        $form1   = $this->formService->getParentDataByFormId($form1Id);
+
+        // Tentukan user_id berdasarkan subject
+        $userId = null;
+        if ($subject === 'asesi') {
+            $userId = $form1->asesi_id ?? null;
+        } elseif ($subject === 'asesor') {
+            $userId = $form1->asesor_id ?? null;
+        }
+
         foreach ($answers as $q) {
             $question = \App\Models\Form9Question::find($q['question_id']);
             if (!$question || $question->subject !== $subject) {
@@ -250,7 +283,7 @@ class Form9Controller extends BaseController
 
             // 🔹 Data dasar untuk disimpan
             $baseData = [
-                'user_id' => auth()->id() ?? null,
+                'user_id' => $userId, // ✅ gunakan user_id sesuai subject
             ];
 
             // 🔹 Tambahkan answer_text kalau ada
@@ -258,7 +291,7 @@ class Form9Controller extends BaseController
                 $baseData['answer_text'] = $q['answer_text'];
             }
 
-            // 🔹 Tambahkan is_checked hanya untuk asesi (dan ubah ke 1 atau 0)
+            // 🔹 Tambahkan is_checked hanya untuk asesi
             if ($subject === 'asesi' && array_key_exists('is_checked', $q)) {
                 $baseData['is_checked'] = $q['is_checked'] ? 1 : 0;
             }
@@ -286,13 +319,14 @@ class Form9Controller extends BaseController
                         ],
                         [
                             'answer_text' => $sq['answer_text'] ?? null,
-                            'user_id' => auth()->id() ?? null,
+                            'user_id' => $userId, // ✅ tetap gunakan user_id dari subject
                         ]
                     );
                 }
             }
         }
     }
+
 
 
     /**
@@ -305,75 +339,87 @@ class Form9Controller extends BaseController
             'subject' => $subject
         ]);
 
-        // cek apakah formService ada
+        // Cek apakah formService tersedia
         if (!$this->formService) {
             \Log::error("formService NULL di afterAnswerSaved");
-            return; // stop biar ga error fatal
+            return;
         }
 
-        // ambil form induk dari form_9
+        // Ambil form induk dari form_9
         $form1Id = $this->formService->getParentFormIdByFormId($form9Id);
         \Log::info("Hasil getParentFormIdByFormId", ['form1Id' => $form1Id]);
 
         $form1 = $this->formService->getParentDataByFormId($form1Id);
         \Log::info("Hasil getParentDataByFormId", ['form1' => $form1]);
 
-        // cek status form_9
+        // Ambil status form_9 saat ini
         $form9Status = $this->formService
             ->getStatusByParentFormIdAndType($form1Id, 'form_9')
             ->first();
 
-        \Log::info("Status form_9", ['status' => $form9Status]);
+        \Log::info("Status form_9 sebelum update", ['status' => $form9Status]);
 
-        if ($form9Status === 'Submitted' || $form9Status === 'InAssessment') {
-            // update status jadi Approved
-            $this->formService->updateForm9(
-                $form9Id,
-                null,   // pk_id
-                null,   // asesi_id
-                null,   // asesi_name
-                null,   // asesi_date
-                null,   // asesor_id
-                null,   // asesor_name
-                null,   // asesor_date
-                null,   // no_reg
-                'Approved' // status
-            );
-
-
-
-            $this->formService->updateProgresDanTrack(
-                $form9Id,
-                'form_9',
-                'Approved',
-                Auth::id(),
-                "Form 9 telah di-approve oleh {$subject}"
-            );
-
-            // kirim notifikasi ke pihak lawan
-            if ($subject === 'asesi') {
-                \Log::info("Kirim notifikasi ke Asesor", [
-                    'asesor_id' => $form1->asesor_id ?? null
-                ]);
-
-                $this->formService->kirimNotifikasiKeUser(
-                    DaftarUser::find($form1->asesor_id),
-                    'Form 9 Approved',
-                    'Form 9 telah diisi & disetujui oleh Asesi.'
-                );
-            } else {
-                \Log::info("Kirim notifikasi ke Asesi", [
-                    'asesi_id' => $form1->asesi_id ?? null
-                ]);
-
-                $this->formService->kirimNotifikasiKeUser(
-                    DaftarUser::find($form1->asesi_id),
-                    'Form 9 Approved',
-                    'Form 9 telah diisi & disetujui oleh Asesor.'
-                );
-            }
+        // ✅ Tentukan status baru berdasarkan subject
+        if ($subject === 'asesi') {
+            $newStatus = 'Submitted';
+        } else {
+            $newStatus = 'Approved';
         }
+
+        // Update status Form 9
+        $this->formService->updateForm9(
+            $form9Id,
+            null,   // pk_id
+            null,   // asesi_id
+            null,   // asesi_name
+            null,   // asesi_date
+            null,   // asesor_id
+            null,   // asesor_name
+            null,   // asesor_date
+            null,   // no_reg
+            $newStatus // status baru sesuai subject
+        );
+
+        Log::info($form1->asesi_id);
+        // Update progres dan track
+        $this->formService->updateProgresDanTrack(
+            $form9Id,
+            'form_9',
+            $newStatus,
+            $form1->asesi_id,
+            "Form 9 telah di-update oleh {$subject} dengan status {$newStatus}"
+        );
+
+        // ✅ Kirim notifikasi ke pihak lawan
+        if ($subject === 'asesi') {
+            \Log::info("Kirim notifikasi ke Asesor", [
+                'asesor_id' => $form1->asesor_id ?? null
+            ]);
+
+            $this->formService->kirimNotifikasiKeUser(
+                DaftarUser::find($form1->asesor_id),
+                'Form 9 Submitted',
+                'Form 9 telah diisi oleh Asesi dan menunggu persetujuan Asesor.'
+            );
+        } else {
+            \Log::info("Kirim notifikasi ke Asesi", [
+                'asesi_id' => $form1->asesi_id ?? null
+            ]);
+
+            $this->formService->kirimNotifikasiKeUser(
+                DaftarUser::find($form1->asesi_id),
+                'Form 9 Approved',
+                'Form 9 telah disetujui oleh Asesor.'
+            );
+        }
+
+        \Log::info("afterAnswerSaved selesai", [
+            'form9Id' => $form9Id,
+            'statusBaru' => $newStatus,
+            'subject' => $subject
+        ]);
     }
+
 
 
 
