@@ -4,14 +4,14 @@ namespace App\Docs;
 
 /**
  * @OA\Get(
- *     path="/api/notifications",
+ *     path="/notification",
  *     summary="Mengambil daftar notifikasi dengan pagination",
  *     description="Endpoint ini mengembalikan daftar notifikasi berdasarkan user yang sedang login. 
  * 
  * Dapat difilter berdasarkan status `is_read` (sudah dibaca/belum), dan mendukung pagination menggunakan parameter `page` serta `per_page`.
  * 
  * **Contoh penggunaan:**  
- * `GET /api/notifications?is_read=0&page=2&per_page=5`  
+ * `GET /notification?is_read=0&page=2&per_page=5`  
  * 
  * Header yang diperlukan:  
  * `Authorization: Bearer {token}`",
@@ -22,7 +22,7 @@ namespace App\Docs;
  *     @OA\Parameter(
  *         name="is_read",
  *         in="query",
- *         description="Filter berdasarkan status baca. Gunakan 1 untuk notifikasi yang sudah dibaca, 0 untuk yang belum dibaca.",
+ *         description="Filter notifikasi berdasarkan status baca. Gunakan 1 untuk sudah dibaca, 0 untuk belum dibaca.",
  *         required=false,
  *         @OA\Schema(type="boolean", example=0)
  *     ),
@@ -55,7 +55,7 @@ namespace App\Docs;
  *                 @OA\Property(
  *                     property="notifications",
  *                     type="array",
- *                     description="Daftar notifikasi berdasarkan halaman aktif.",
+ *                     description="Daftar notifikasi pada halaman saat ini.",
  *                     @OA\Items(
  *                         @OA\Property(property="id", type="integer", example=12),
  *                         @OA\Property(property="user_id", type="integer", example=101),
