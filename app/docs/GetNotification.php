@@ -7,12 +7,14 @@ namespace App\Docs;
  *     path="/api/notifications",
  *     summary="Mengambil daftar notifikasi dengan pagination",
  *     description="Endpoint ini mengembalikan daftar notifikasi berdasarkan user yang sedang login. 
- * Dapat difilter berdasarkan status `is_read` (sudah dibaca/belum) dan mendukung pagination.  
+ * 
+ * Dapat difilter berdasarkan status `is_read` (sudah dibaca/belum), dan mendukung pagination menggunakan parameter `page` serta `per_page`.
  * 
  * **Contoh penggunaan:**  
- * `GET /api/notifications?is_read=0&page=2&per_page=5`
+ * `GET /api/notifications?is_read=0&page=2&per_page=5`  
  * 
- * Endpoint ini membutuhkan header Authorization dengan Bearer Token yang valid.",
+ * Header yang diperlukan:  
+ * `Authorization: Bearer {token}`",
  *     operationId="getNotifications",
  *     tags={"Notifikasi"},
  *     security={{"bearerAuth": {}}},
@@ -20,7 +22,7 @@ namespace App\Docs;
  *     @OA\Parameter(
  *         name="is_read",
  *         in="query",
- *         description="Filter notifikasi berdasarkan status baca. Gunakan 1 untuk sudah dibaca, 0 untuk belum dibaca.",
+ *         description="Filter berdasarkan status baca. Gunakan 1 untuk notifikasi yang sudah dibaca, 0 untuk yang belum dibaca.",
  *         required=false,
  *         @OA\Schema(type="boolean", example=0)
  *     ),
@@ -53,21 +55,21 @@ namespace App\Docs;
  *                 @OA\Property(
  *                     property="notifications",
  *                     type="array",
- *                     description="Daftar notifikasi pada halaman saat ini",
+ *                     description="Daftar notifikasi berdasarkan halaman aktif.",
  *                     @OA\Items(
- *                         @OA\Property(property="id", type="integer", example=1),
- *                         @OA\Property(property="user_id", type="integer", example=123),
- *                         @OA\Property(property="title", type="string", example="Judul Notifikasi"),
- *                         @OA\Property(property="description", type="string", example="Isi notifikasi"),
+ *                         @OA\Property(property="id", type="integer", example=12),
+ *                         @OA\Property(property="user_id", type="integer", example=101),
+ *                         @OA\Property(property="title", type="string", example="Transaksi baru diterima"),
+ *                         @OA\Property(property="description", type="string", example="Transaksi pembelian telah berhasil diproses."),
  *                         @OA\Property(property="is_read", type="boolean", example=false),
- *                         @OA\Property(property="created_at", type="string", format="date-time", example="2025-11-05T07:30:00Z"),
- *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2025-11-05T08:00:00Z")
+ *                         @OA\Property(property="created_at", type="string", format="date-time", example="2025-11-05T09:30:00Z"),
+ *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2025-11-05T10:00:00Z")
  *                     )
  *                 ),
  *                 @OA\Property(
  *                     property="pagination",
  *                     type="object",
- *                     description="Informasi pagination",
+ *                     description="Informasi pagination dari hasil query.",
  *                     @OA\Property(property="current_page", type="integer", example=2),
  *                     @OA\Property(property="last_page", type="integer", example=5),
  *                     @OA\Property(property="per_page", type="integer", example=5),
@@ -77,7 +79,7 @@ namespace App\Docs;
  *             )
  *         ),
  *         @OA\Example(
- *             example="success",
+ *             example="successExample",
  *             summary="Contoh response sukses",
  *             value={
  *                 "status": "OK",
@@ -87,13 +89,22 @@ namespace App\Docs;
  *                 "data": {
  *                     "notifications": {
  *                         {
- *                             "id": 6,
- *                             "user_id": 123,
+ *                             "id": 12,
+ *                             "user_id": 101,
  *                             "title": "Transaksi baru diterima",
- *                             "description": "Transaksi pembelian berhasil diproses.",
+ *                             "description": "Transaksi pembelian telah berhasil diproses.",
  *                             "is_read": false,
- *                             "created_at": "2025-11-05T13:00:00Z",
- *                             "updated_at": "2025-11-05T13:30:00Z"
+ *                             "created_at": "2025-11-05T09:30:00Z",
+ *                             "updated_at": "2025-11-05T10:00:00Z"
+ *                         },
+ *                         {
+ *                             "id": 11,
+ *                             "user_id": 101,
+ *                             "title": "Saldo telah diperbarui",
+ *                             "description": "Saldo akun Anda bertambah sebesar Rp50.000.",
+ *                             "is_read": true,
+ *                             "created_at": "2025-11-04T14:10:00Z",
+ *                             "updated_at": "2025-11-04T15:00:00Z"
  *                         }
  *                     },
  *                     "pagination": {
@@ -119,8 +130,8 @@ namespace App\Docs;
  *             @OA\Property(property="data", type="string", nullable=true, example=null)
  *         ),
  *         @OA\Example(
- *             example="unauthorized",
- *             summary="Contoh response gagal (Unauthorized)",
+ *             example="unauthorizedExample",
+ *             summary="Contoh response unauthorized",
  *             value={
  *                 "status": "ERROR",
  *                 "errorCode": "401",
