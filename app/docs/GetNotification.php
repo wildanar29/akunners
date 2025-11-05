@@ -1,25 +1,36 @@
 <?php
 
 namespace App\Docs;
+
 /**
- * @OA\Post(
+ * @OA\Get(
  *     path="/notification",
- *     summary="Mengambil daftar notifikasi untuk user yang login",
- *     description="Endpoint ini mengembalikan daftar notifikasi berdasarkan user yang sedang login. Opsional bisa memfilter notifikasi berdasarkan status `is_read`.",
+ *     summary="Mengambil daftar notifikasi dengan pagination",
+ *     description="Endpoint ini mengembalikan daftar notifikasi berdasarkan user yang sedang login. Dapat difilter berdasarkan status `is_read` (sudah dibaca/belum) dan mendukung pagination.",
  *     operationId="getNotifications",
  *     tags={"Notifikasi"},
  *     security={{"bearerAuth": {}}},
  *
- *     @OA\RequestBody(
+ *     @OA\Parameter(
+ *         name="is_read",
+ *         in="query",
+ *         description="Filter notifikasi berdasarkan status baca. Gunakan 1 untuk sudah dibaca, 0 untuk belum.",
  *         required=false,
- *         @OA\JsonContent(
- *             @OA\Property(
- *                 property="is_read",
- *                 type="boolean",
- *                 description="Filter berdasarkan status baca (true atau false)",
- *                 example=true
- *             )
- *         )
+ *         @OA\Schema(type="boolean", example=0)
+ *     ),
+ *     @OA\Parameter(
+ *         name="per_page",
+ *         in="query",
+ *         description="Jumlah notifikasi per halaman (default: 10).",
+ *         required=false,
+ *         @OA\Schema(type="integer", example=10)
+ *     ),
+ *     @OA\Parameter(
+ *         name="page",
+ *         in="query",
+ *         description="Nomor halaman untuk pagination.",
+ *         required=false,
+ *         @OA\Schema(type="integer", example=1)
  *     ),
  *
  *     @OA\Response(
@@ -36,6 +47,7 @@ namespace App\Docs;
  *                 @OA\Property(
  *                     property="notifications",
  *                     type="array",
+ *                     description="Daftar notifikasi pada halaman saat ini.",
  *                     @OA\Items(
  *                         @OA\Property(property="id", type="integer", example=1),
  *                         @OA\Property(property="user_id", type="integer", example=123),
@@ -45,6 +57,16 @@ namespace App\Docs;
  *                         @OA\Property(property="created_at", type="string", format="date-time", example="2025-07-15T07:30:00Z"),
  *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2025-07-15T07:45:00Z")
  *                     )
+ *                 ),
+ *                 @OA\Property(
+ *                     property="pagination",
+ *                     type="object",
+ *                     description="Informasi pagination",
+ *                     @OA\Property(property="current_page", type="integer", example=1),
+ *                     @OA\Property(property="last_page", type="integer", example=5),
+ *                     @OA\Property(property="per_page", type="integer", example=10),
+ *                     @OA\Property(property="total", type="integer", example=45),
+ *                     @OA\Property(property="has_more_pages", type="boolean", example=true)
  *                 )
  *             )
  *         )
@@ -63,5 +85,4 @@ namespace App\Docs;
  *     )
  * )
  */
-
- class GetNotification {}
+class GetNotification {}

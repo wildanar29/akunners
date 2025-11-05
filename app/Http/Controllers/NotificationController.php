@@ -72,8 +72,9 @@ class NotificationController extends Controller
 			], 401);
 		}
 
-		$userId = $user->user_id; // atau $user->id tergantung struktur auth-mu
-		$isRead = $request->input('is_read'); // Optional filter
+		$userId = $user->user_id ?? $user->id; // fallback ke id jika kolomnya beda
+		$isRead = $request->input('is_read'); // Optional filter (0/1)
+		$perPage = $request->input('per_page', 10); // Default 10 item per halaman
 
 		// Query notifikasi berdasarkan user_id login
 		$query = Notification::where('user_id', $userId);
@@ -82,7 +83,13 @@ class NotificationController extends Controller
 			$query->where('is_read', $isRead);
 		}
 
-		$notifications = $query->orderBy('created_at', 'desc')->get()->map(function ($notification) {
+		// Gunakan pagination
+		$notifications = $query
+			->orderBy('created_at', 'desc')
+			->paginate($perPage);
+
+		// Konversi is_read ke boolean agar seragam di frontend
+		$notifications->getCollection()->transform(function ($notification) {
 			$notification->is_read = (bool) $notification->is_read;
 			return $notification;
 		});
@@ -93,10 +100,18 @@ class NotificationController extends Controller
 			'message' => 'Notifikasi berhasil diambil.',
 			'errorMessages' => '',
 			'data' => [
-				'notifications' => $notifications
+				'notifications' => $notifications->items(), // data notifikasi
+				'pagination' => [
+					'current_page' => $notifications->currentPage(),
+					'last_page' => $notifications->lastPage(),
+					'per_page' => $notifications->perPage(),
+					'total' => $notifications->total(),
+					'has_more_pages' => $notifications->hasMorePages(),
+				]
 			]
 		], 200);
 	}
+
 
 	public function markAsRead(Request $request)
 	{
