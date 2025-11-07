@@ -155,7 +155,7 @@ class AsesorController extends Controller
 			$progresForm2 = KompetensiProgres::create([
 				'form_id' => $form2->form_2_id,
 				'parent_form_id' => $form->form_1_id,
-				'user_id' => $user->user_id,
+				'user_id' => $form->asesi_id,
 				'status' => 'InAssessment',
 			]);
 

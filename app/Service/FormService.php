@@ -17,6 +17,7 @@ use App\Models\KompetensiTrack;
 use App\Models\KompetensiProgres;
 use App\Models\Notification;
 use App\Models\ElemenForm3;
+use App\Models\Form3Model;
 use App\Models\Form5;
 use App\Models\Form6;
 use App\Models\Form7;
@@ -254,6 +255,21 @@ class FormService
 		return $form1;
 	}
 
+
+	function inputForm3($pkId, $asesiId, $asesiName, $asesorId, $asesorName, $noReg)
+	{
+		return Form3Model::create([
+			'pk_id'         => $pkId,
+			'user_id'      => $asesiId,
+			'asesi_name'    => $asesiName,
+			'asesi_date'    => Carbon::now(),
+			'asesor_id'     => $asesorId,
+			'asesor_name'   => $asesorName,
+			'asesor_date'   => Carbon::now(),
+			'no_reg'        => $noReg,
+			'status'        => 'Waiting',
+		]);
+	}
 
 
     function inputForm6($pkId, $asesiId, $asesiName, $asesorId, $asesorName, $noReg)

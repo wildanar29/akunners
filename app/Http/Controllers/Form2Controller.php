@@ -21,7 +21,9 @@ use Illuminate\Support\Facades\Redis; // Tambahkan Redis facade
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;  
 use App\Service\OneSignalService;
+use App\Service\FormService;
 use App\Models\Notification;
+
 
 /**
  * @OA\Tag(
@@ -33,10 +35,12 @@ use App\Models\Notification;
 class Form2Controller extends Controller
 {
     protected $oneSignalService;
+    protected $formService;
 
-	public function __construct(OneSignalService $oneSignalService)
+	public function __construct(OneSignalService $oneSignalService, FormService $formService)
 	{
 		$this->oneSignalService = $oneSignalService;
+        $this->formService = $formService;
 	}
 
     public function getSoals(Request $request)
@@ -346,7 +350,11 @@ class Form2Controller extends Controller
         }
 
         $user = auth()->user();
-        $form = BidangModel::where('asesi_id', $user->user_id)->first();
+        $form2 = Form2::where('form_2_id', $request->form_2_id)->first();
+        $asesiId = $form2 ? $form2->user_jawab_form_2_id : null;
+        $form1 = $this->formService->getParentFormIdByFormIdAndAsesiId($request->form_2_id, $asesiId);
+        $form = $this->formService->getParentDataByFormId($form1);
+        // $form = BidangModel::where('asesi_id', $user->user_id)->first();
 
         if (!$form) {
             return response()->json([
@@ -373,7 +381,7 @@ class Form2Controller extends Controller
             }
 
             $total_soal = SoalForm2Model::count();
-            $jawabanUser = JawabanForm2Model::where('user_jawab_form_2_id', $user->user_id)->get();
+            $jawabanUser = JawabanForm2Model::where('user_jawab_form_2_id', $form2->user_jawab_form_2_id)->get();
 
             $k_count = $jawabanUser->where('k', true)->count();
             $bk_count = $jawabanUser->where('bk', true)->count();
@@ -382,7 +390,7 @@ class Form2Controller extends Controller
             $penilaian = PenilaianForm2Model::updateOrCreate(
                 [
                     'form_2_id' => $request->form_2_id,
-                    'user_jawab_form_2_id' => $user->user_id,
+                    'user_jawab_form_2_id' => $form2->user_jawab_form_2_id,
                 ],
                 [
                     'k' => $k_count,
@@ -403,6 +411,40 @@ class Form2Controller extends Controller
             $asesor = DaftarUser::find($form->asesor_id);
             if ($asesor) {
                 $this->kirimNotifikasiKeAsesor($asesor, $penilaian->form_2_id);
+            }
+
+            $form2 = Form2::where('form_2_id', $request->form_2_id)->first();
+			$asesiId = $form2 ? $form2->user_jawab_form_2_id : null;
+            $parentFormId = $this->formService->getParentFormIdByFormIdAndAsesiId($request->form_2_id, $asesiId);
+            $form1Data = $this->formService->getParentDataByFormId($parentFormId);
+            $isForm3Exist = $this->formService->isFormExistSingle(
+                $form1Data->asesi_id,
+                $form1Data->pk_id,
+                'form_3'
+            );
+
+            if (!$isForm3Exist) {
+                Log::info("Form 3a belum ada, membuat form 3...");
+
+                $form3 = $this->formService->inputForm3(
+                    $form1Data->pk_id,
+                    $form1Data->asesi_id,
+                    $form1Data->asesi_name,
+                    $form1Data->asesor_id,
+                    $form1Data->asesor_name,
+                    $form1Data->no_reg
+                );
+
+                $this->formService->createProgresDanTrack(
+                    $form3->form_3_id,
+                    'form_3',
+                    'InAssessment',
+                    $form1Data->asesi_id,
+                    $form1Data->form_1_id,
+                    'Form 3 sudah dapat diisi.'
+                );
+            } else {
+                Log::info("Form 3 sudah ada, tidak membuat ulang.");
             }
 
             return response()->json([
@@ -493,9 +535,6 @@ class Form2Controller extends Controller
         ]);
 
     }
-
-
-
 }
 
 

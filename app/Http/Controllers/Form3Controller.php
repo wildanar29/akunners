@@ -23,16 +23,19 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;  
 use Carbon\Carbon; // Tambahkan ini untuk menggunakan Carbon
 use App\Service\OneSignalService;
+use App\Service\FormService;
 use App\Models\Notification;
 
 class Form3Controller extends BaseController
 {
 
     protected $oneSignalService;
+    protected $formService;
 
-	public function __construct(OneSignalService $oneSignalService)
+	public function __construct(OneSignalService $oneSignalService, FormService $formService)
 	{
 		$this->oneSignalService = $oneSignalService;
+        $this->formService = $formService;
 	}
 
     public function getAllDataFormB(Request $request)
@@ -632,10 +635,15 @@ class Form3Controller extends BaseController
         }
     }
 
-	public function ApproveAsesiForm3()
+	public function ApproveAsesiForm3(Request $request)
     {
         $user = auth()->user(); // Ambil user login
+        $form3Id = $request->input('form_3_id'); // Ambil form_3_id dari body
+        $form3Data = Form3Model::find($form3Id);
 
+        $form1Id = $this->formService->getParentFormIdByFormIdAndAsesiId($form3Id, $form3Data->user_id); // Ambil form_1_id terkait form_3_id
+        Log::info("Form 1 ID terkait untuk Form 3 ID {$form3Id}: " . ($form1Id ?? 'null'));
+        // ✅ Cek apakah user login ada
         if (!$user) {
             return response()->json([
                 'status' => 'ERROR',
@@ -644,7 +652,7 @@ class Form3Controller extends BaseController
             ], 401);
         }
 
-        // Cek apakah user adalah Asesi
+        // ✅ Cek apakah user adalah Asesi
         $isAsesi = UserRole::where('user_id', $user->user_id)
             ->where('role_id', 1)
             ->exists();
@@ -657,8 +665,9 @@ class Form3Controller extends BaseController
             ], 403);
         }
 
-        // Cek apakah user memiliki form_1_id di BidangModel
-        $bidang = BidangModel::where('asesi_id', $user->user_id)->first();
+        // ✅ Cek apakah user memiliki form_1_id di BidangModel
+        $bidang = BidangModel::where('form_1_id', $form1Id)->first();
+        Log::info("Bidang data for user_id={$user->user_id}: " . ($bidang ? json_encode($bidang) : 'null'));
 
         if (!$bidang || !$bidang->form_1_id) {
             return response()->json([
@@ -668,53 +677,78 @@ class Form3Controller extends BaseController
             ], 404);
         }
 
-        // Ambil data progres dari KompetensiProgres berdasarkan form_1_id
-        $progres = KompetensiProgres::where('form_id', $bidang->form_1_id)->first();
+        // ✅ Ambil Form3 berdasarkan form_3_id dari request, atau buat baru
+        if ($form3Id) {
+            $form3 = Form3Model::find($form3Id);
 
-        if (!$progres) {
-            return response()->json([
-                'status' => 'ERROR',
-                'message' => 'Progres tidak ditemukan untuk Form 1 ini.',
-                'data' => null
-            ], 404);
+            if (!$form3) {
+                return response()->json([
+                    'status' => 'ERROR',
+                    'message' => 'Form 3 dengan ID tersebut tidak ditemukan.',
+                    'data' => null
+                ], 404);
+            }
+
+            // Update data form3 yang sudah ada
+            $form3->asesi_name = $user->nama;
+            $form3->asesi_date = Carbon::now();
+            $form3->status = 'Waiting';
+            $form3->save();
+            Log::info('ini if');
+
+        } else {
+            // Buat Form3 baru jika tidak ada form_3_id di request
+            $form3 = new Form3Model();
+            $form3->user_id = $user->user_id;
+            $form3->asesi_name = $user->nama;
+            $form3->asesi_date = Carbon::now();
+            $form3->status = 'Waiting';
+            $form3->save();
+            Log::info('ini else');
         }
 
-        // Cek apakah sudah ada form_type = form_3 untuk progres ini
-        $existingForm3Track = KompetensiTrack::where('progres_id', $progres->progres_id)
-            ->where('form_type', 'form_3')
-            ->exists();
+        // ✅ Cek apakah sudah ada progres untuk form_3 ini
+        $existingProgres = KompetensiProgres::where('form_id', $form3->form_3_id)
+            ->where('user_id', $user->user_id)
+            ->whereHas('track', function ($query) {
+                $query->where('form_type', 'form_3');
+            })
+            ->first();
 
-        if ($existingForm3Track) {
+        try {
+            if ($existingProgres) {
+                // Jika progres sudah ada → update progres dan tambah track baru
+                $progres = $this->formService->updateProgresDanTrack(
+                    $form3->form_3_id,
+                    'form_3',
+                    'Submitted',
+                    $user->user_id,
+                    'Form 3 diperbarui oleh asesi.'
+                );
+            } else {
+                // Jika belum ada → buat progres baru dan track-nya
+                $progres = $this->createProgresDanTrack(
+                    $form3->form_3_id,
+                    'form_3',
+                    'Submitted',
+                    $user->user_id,
+                    $bidang->form_1_id ?? null,
+                    'Form 3 dibuat dan disubmit oleh asesi.'
+                );
+            }
+
+            Log::info("Progres untuk Form 3 ID {$form3->form_3_id} berhasil diproses: " . json_encode($progres));
+        } catch (\Exception $e) {
+            Log::error("Gagal membuat atau memperbarui progres form_3: " . $e->getMessage());
+
             return response()->json([
                 'status' => 'ERROR',
-                'message' => 'Form 3 sudah pernah dibuat untuk progres ini.',
-                'data' => null
-            ], 409);
+                'message' => 'Terjadi kesalahan saat memperbarui progres form_3.',
+                'error' => $e->getMessage()
+            ], 500);
         }
 
-        // Update atau create Form3Model (hanya update ases_date)
-        $form3 = Form3Model::firstOrNew(['user_id' => $user->user_id]);
-        $form3->user_id = $user->user_id;
-        $form3->asesi_name = $user->nama;
-        $form3->asesi_date = Carbon::now();
-        $form3->status = 'Waiting';
-        $form3->save();
-
-         $progres = KompetensiProgres::updateOrCreate(
-            ['form_id' => $form3->form_3_id],
-            ['status' => 'Submitted']
-        );
-
-
-        KompetensiTrack::create([
-            'progres_id' => $progres->id,
-            'form_type' => 'form_3',
-            'activity' => 'Submitted',
-            'activity_time' => Carbon::now(),
-            'description' => 'Asesi Menyetujui rencana asesmen.',
-        ]);
-
-        // Kirim notifikasi ke Asesor jika ada
+        // ✅ Kirim notifikasi ke Asesor jika ada
         if (!empty($bidang->asesor_id)) {
             $userAsesor = DaftarUser::where('user_id', $bidang->asesor_id)->first();
             if ($userAsesor) {
@@ -724,10 +758,12 @@ class Form3Controller extends BaseController
 
         return response()->json([
             'status' => 'OK',
-            'message' => 'Form3 berhasil disimpan atau diperbarui.',
+            'message' => 'Form 3 berhasil disimpan atau diperbarui.',
             'data' => $form3
         ], 201);
     }
+
+
 
     private function kirimNotifikasiKeUser(DaftarUser $userTarget, string $title, string $message, $formId)
     {
