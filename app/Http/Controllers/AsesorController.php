@@ -363,53 +363,65 @@ class AsesorController extends Controller
      * Proses update dokumen (reusable)
      */
     private function processDocument($docData, $modelClass, $type)
-    {
-        $validator = Validator::make($docData, [
-            "{$type}_id" => "required|integer|exists:users_{$type}_file,{$type}_id",
-            'valid'      => 'nullable|boolean',
-            'authentic'  => 'nullable|boolean',
-            'current'    => 'nullable|boolean',
-            'sufficient' => 'nullable|boolean',
-        ]);
+	{
+		// Jika key "id" ada, ubah jadi key sesuai tipe, misal: spk_id, ijazah_id, dll
+		if (isset($docData['id']) && !isset($docData["{$type}_id"])) {
+			$docData["{$type}_id"] = $docData['id'];
+		}
 
-        if ($validator->fails()) {
-            return [
-                'status'  => 'validation_error',
-                'message' => $validator->errors(),
-            ];
-        }
+		// Validasi dinamis
+		$validator = Validator::make($docData, [
+			"{$type}_id" => "required|integer|exists:users_{$type}_file,{$type}_id",
+			'valid'      => 'nullable|boolean',
+			'authentic'  => 'nullable|boolean',
+			'current'    => 'nullable|boolean',
+			'sufficient' => 'nullable|boolean',
+		]);
 
-        $id = $docData["{$type}_id"];
-        $updateData = collect($docData)
-            ->only(['valid', 'authentic', 'current', 'sufficient'])
-            ->filter(fn($v) => !is_null($v))
-            ->toArray();
+		if ($validator->fails()) {
+			return [
+				'status'  => 'validation_error',
+				'message' => $validator->errors(),
+			];
+		}
 
-        if (empty($updateData)) {
-            return [
-                'status'  => 'no_fields_provided',
-                'id'      => $id,
-                'message' => 'Tidak ada field status yang dikirim untuk diperbarui.',
-            ];
-        }
+		// Ambil ID berdasarkan tipe
+		$id = $docData["{$type}_id"];
 
-        $record = $modelClass::find($id);
-        if (!$record) {
-            return [
-                'status'  => 'not_found',
-                'id'      => $id,
-                'message' => "Data {$type} tidak ditemukan.",
-            ];
-        }
+		// Ambil field yang akan diupdate
+		$updateData = collect($docData)
+			->only(['valid', 'authentic', 'current', 'sufficient'])
+			->filter(fn($v) => !is_null($v))
+			->toArray();
 
-        $record->update($updateData);
+		if (empty($updateData)) {
+			return [
+				'status'  => 'no_fields_provided',
+				'id'      => $id,
+				'message' => 'Tidak ada field status yang dikirim untuk diperbarui.',
+			];
+		}
 
-        return [
-            'status'  => 'updated',
-            'id'      => $id,
-            'updated_fields' => $updateData,
-        ];
-    }
+		// Temukan record berdasarkan ID dan model class
+		$record = $modelClass::find($id);
+		if (!$record) {
+			return [
+				'status'  => 'not_found',
+				'id'      => $id,
+				'message' => "Data {$type} tidak ditemukan.",
+			];
+		}
+
+		// Lakukan update
+		$record->update($updateData);
+
+		return [
+			'status'  => 'updated',
+			'id'      => $id,
+			'updated_fields' => $updateData,
+		];
+	}
+
 
 	private function buatForm2DariForm1($form)
 	{

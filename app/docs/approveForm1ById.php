@@ -11,7 +11,7 @@ namespace App\Docs;
  *     description="Endpoint ini digunakan oleh asesor untuk menyetujui Form 1 yang berstatus 'Assigned'. 
  *     Setelah disetujui, status Form 1 akan berubah menjadi 'InAssessment', Form 2 otomatis dibuat, 
  *     progres dan track akan diperbarui, serta dokumen opsional (Ijazah, STR, SIP, SPK) dapat diperbarui
- *     dengan status validasinya.",
+ *     dengan status validasinya. Setiap dokumen menggunakan field `id` sebagai pengenal universal.",
  *     security={{"bearerAuth":{}}},
  *
  *     @OA\Parameter(
@@ -32,7 +32,7 @@ namespace App\Docs;
  *                 property="ijazah",
  *                 type="object",
  *                 nullable=true,
- *                 @OA\Property(property="ijazah_id", type="integer", example=45),
+ *                 @OA\Property(property="id", type="integer", example=45, description="ID dokumen Ijazah"),
  *                 @OA\Property(property="valid", type="boolean", example=true),
  *                 @OA\Property(property="authentic", type="boolean", example=true),
  *                 @OA\Property(property="current", type="boolean", example=false),
@@ -43,7 +43,7 @@ namespace App\Docs;
  *                 property="str",
  *                 type="object",
  *                 nullable=true,
- *                 @OA\Property(property="str_id", type="integer", example=21),
+ *                 @OA\Property(property="id", type="integer", example=21, description="ID dokumen STR"),
  *                 @OA\Property(property="valid", type="boolean", example=true),
  *                 @OA\Property(property="authentic", type="boolean", example=true),
  *                 @OA\Property(property="current", type="boolean", example=true),
@@ -54,7 +54,7 @@ namespace App\Docs;
  *                 property="sip",
  *                 type="object",
  *                 nullable=true,
- *                 @OA\Property(property="sip_id", type="integer", example=14),
+ *                 @OA\Property(property="id", type="integer", example=14, description="ID dokumen SIP"),
  *                 @OA\Property(property="valid", type="boolean", example=true),
  *                 @OA\Property(property="authentic", type="boolean", example=false),
  *                 @OA\Property(property="current", type="boolean", example=true),
@@ -65,7 +65,7 @@ namespace App\Docs;
  *                 property="spk",
  *                 type="object",
  *                 nullable=true,
- *                 @OA\Property(property="spk_id", type="integer", example=8),
+ *                 @OA\Property(property="id", type="integer", example=8, description="ID dokumen SPK"),
  *                 @OA\Property(property="valid", type="boolean", example=true),
  *                 @OA\Property(property="authentic", type="boolean", example=true),
  *                 @OA\Property(property="current", type="boolean", example=true),
@@ -90,10 +90,17 @@ namespace App\Docs;
  *                     type="object",
  *                     example={
  *                         "ijazah": {
- *                             "ijazah_id": 45,
+ *                             "id": 45,
  *                             "valid": true,
  *                             "authentic": true,
  *                             "current": false,
+ *                             "sufficient": true
+ *                         },
+ *                         "str": {
+ *                             "id": 21,
+ *                             "valid": true,
+ *                             "authentic": true,
+ *                             "current": true,
  *                             "sufficient": true
  *                         }
  *                     }
