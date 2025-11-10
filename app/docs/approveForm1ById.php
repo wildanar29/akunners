@@ -10,8 +10,8 @@ namespace App\Docs;
  *     operationId="approveForm1ById",
  *     description="Endpoint ini digunakan oleh asesor untuk menyetujui Form 1 yang berstatus 'Assigned'. 
  *     Setelah disetujui, status Form 1 akan berubah menjadi 'InAssessment', Form 2 otomatis dibuat, 
- *     dan progres/track akan diperbarui. 
- *     Dokumen opsional seperti Ijazah, STR, SIP, dan SPK juga dapat diperbarui bersamaan.",
+ *     progres dan track akan diperbarui, serta dokumen opsional (Ijazah, STR, SIP, SPK) dapat diperbarui
+ *     dengan status validasinya.",
  *     security={{"bearerAuth":{}}},
  *
  *     @OA\Parameter(
@@ -24,32 +24,52 @@ namespace App\Docs;
  *
  *     @OA\RequestBody(
  *         required=false,
- *         description="Data dokumen opsional yang dapat diperbarui bersamaan dengan approval",
+ *         description="Data validasi dokumen opsional yang dapat diperbarui bersamaan dengan approval",
  *         @OA\JsonContent(
  *             type="object",
+ *
  *             @OA\Property(
  *                 property="ijazah",
  *                 type="object",
  *                 nullable=true,
- *                 example={"nomor": "IJZ-2025-001", "tanggal": "2025-11-10"}
+ *                 @OA\Property(property="ijazah_id", type="integer", example=45),
+ *                 @OA\Property(property="valid", type="boolean", example=true),
+ *                 @OA\Property(property="authentic", type="boolean", example=true),
+ *                 @OA\Property(property="current", type="boolean", example=false),
+ *                 @OA\Property(property="sufficient", type="boolean", example=true)
  *             ),
+ *
  *             @OA\Property(
  *                 property="str",
  *                 type="object",
  *                 nullable=true,
- *                 example={"nomor": "STR-778822", "masa_berlaku": "2027-11-10"}
+ *                 @OA\Property(property="str_id", type="integer", example=21),
+ *                 @OA\Property(property="valid", type="boolean", example=true),
+ *                 @OA\Property(property="authentic", type="boolean", example=true),
+ *                 @OA\Property(property="current", type="boolean", example=true),
+ *                 @OA\Property(property="sufficient", type="boolean", example=true)
  *             ),
+ *
  *             @OA\Property(
  *                 property="sip",
  *                 type="object",
  *                 nullable=true,
- *                 example={"nomor": "SIP-88990", "masa_berlaku": "2026-12-31"}
+ *                 @OA\Property(property="sip_id", type="integer", example=14),
+ *                 @OA\Property(property="valid", type="boolean", example=true),
+ *                 @OA\Property(property="authentic", type="boolean", example=false),
+ *                 @OA\Property(property="current", type="boolean", example=true),
+ *                 @OA\Property(property="sufficient", type="boolean", example=true)
  *             ),
+ *
  *             @OA\Property(
  *                 property="spk",
  *                 type="object",
  *                 nullable=true,
- *                 example={"nomor": "SPK-7788", "penerbit": "RS Umum Jakarta"}
+ *                 @OA\Property(property="spk_id", type="integer", example=8),
+ *                 @OA\Property(property="valid", type="boolean", example=true),
+ *                 @OA\Property(property="authentic", type="boolean", example=true),
+ *                 @OA\Property(property="current", type="boolean", example=true),
+ *                 @OA\Property(property="sufficient", type="boolean", example=false)
  *             )
  *         )
  *     ),
@@ -69,8 +89,13 @@ namespace App\Docs;
  *                     property="dokumen",
  *                     type="object",
  *                     example={
- *                         "ijazah": {"nomor": "IJZ-2025-001"},
- *                         "str": {"nomor": "STR-778822"}
+ *                         "ijazah": {
+ *                             "ijazah_id": 45,
+ *                             "valid": true,
+ *                             "authentic": true,
+ *                             "current": false,
+ *                             "sufficient": true
+ *                         }
  *                     }
  *                 )
  *             )
