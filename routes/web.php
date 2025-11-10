@@ -19,6 +19,8 @@ $router->get('/', function () use ($router) {
     return $router->app->version();
 });
 
+$router->post('/documents/update-status', 'DocumentApprovalController@updateAllDocuments');
+
 // MASTER DATA
 $router->get('/get-educations', 'MasterController@getEducations');
 $router->get('/get-kompetensi-pk', 'MasterController@getKompetensiPk');

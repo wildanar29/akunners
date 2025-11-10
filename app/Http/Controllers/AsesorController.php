@@ -1,8 +1,13 @@
 <?php  
   
 namespace App\Http\Controllers;  
-  
-use Illuminate\Http\Request;  
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use App\Models\StrModel;
+use App\Models\SipModel;
+use App\Models\SpkModel;
+use Illuminate\Support\Facades\DB; 
 use App\Models\BidangModel;
 use App\Models\Notification;
 use Illuminate\Support\Facades\Log;  
@@ -11,8 +16,6 @@ use App\Models\PenilaianForm2Model;
 use App\Models\DaftarUser; // Pastikan untuk mengimpor model User  
 use App\Models\IjazahModel; // Model untuk users_ijazah_file  
 use App\Models\TranskripModel; // Model untuk users_transkrip_file  
-use App\Models\SipModel; // Model untuk users_sip_file  
-use App\Models\StrModel; // Model untuk users_str_file  
 use App\Models\UjikomModel; // Model untuk users_str_file  
 use App\Models\DataAsesorModel; // Model untuk users_str_file  
 use App\Models\PkProgressModel; // Model untuk users_str_file  
@@ -22,8 +25,6 @@ use App\Models\SoalForm2Model;
 use App\Models\KompetensiTrack;
 use App\Models\KompetensiProgres;
 use App\Models\User; // Model untuk user  
-use Illuminate\Support\Facades\Validator;  
-use Illuminate\Support\Facades\DB; // Tambahkan DB untuk query manual
 use Carbon\Carbon; // Pastikan untuk mengimpor Carbon  
 use App\Service\OneSignalService;
 use App\Service\FormService;
@@ -55,151 +56,360 @@ class AsesorController extends Controller
 		]);
 	}
 	
-	public function approveForm1ById($form_1_id)
-	{
-		$form_1_id = (int) $form_1_id;
-		$user = auth()->user();
+	// public function approveForm1ById($form_1_id)
+	// {
+	// 	$form_1_id = (int) $form_1_id;
+	// 	$user = auth()->user();
 
-		Log::info('Memulai proses approveForm1ById', [
-			'form_1_id' => $form_1_id,
-			'user_id' => $user->user_id ?? null,
-		]);
+	// 	Log::info('Memulai proses approveForm1ById', [
+	// 		'form_1_id' => $form_1_id,
+	// 		'user_id' => $user->user_id ?? null,
+	// 	]);
 
-		DB::beginTransaction();
+	// 	DB::beginTransaction();
 
-		try {
-			$formDebug = BidangModel::find($form_1_id);
+	// 	try {
+	// 		$formDebug = BidangModel::find($form_1_id);
 
-			if ($formDebug) {
-				Log::debug('Data form_1 ditemukan', [
-					'form_1_id' => $form_1_id,
-					'status' => $formDebug->status ?? null,
-					'asesor_id' => $formDebug->asesor_id ?? null,
-					'user_id_pengaju' => $formDebug->asesi_id ?? null,
-					'current_user_id' => $user->user_id ?? null,
-				]);
-			}
+	// 		if ($formDebug) {
+	// 			Log::debug('Data form_1 ditemukan', [
+	// 				'form_1_id' => $form_1_id,
+	// 				'status' => $formDebug->status ?? null,
+	// 				'asesor_id' => $formDebug->asesor_id ?? null,
+	// 				'user_id_pengaju' => $formDebug->asesi_id ?? null,
+	// 				'current_user_id' => $user->user_id ?? null,
+	// 			]);
+	// 		}
 
-			$form = BidangModel::where('form_1_id', $form_1_id)
-				->where('status', 'Assigned')
-				->where('asesor_id', $user->user_id)
-				->first();
+	// 		$form = BidangModel::where('form_1_id', $form_1_id)
+	// 			->where('status', 'Assigned')
+	// 			->where('asesor_id', $user->user_id)
+	// 			->first();
 
-			if (!$form) {
-				Log::warning('Form tidak ditemukan atau bukan asesor yang sesuai', [
-					'form_1_id' => $form_1_id,
-					'user_id' => $user->user_id,
-				]);
+	// 		if (!$form) {
+	// 			Log::warning('Form tidak ditemukan atau bukan asesor yang sesuai', [
+	// 				'form_1_id' => $form_1_id,
+	// 				'user_id' => $user->user_id,
+	// 			]);
 
-				DB::rollBack();
+	// 			DB::rollBack();
 
-				return response()->json([
-					'status' => 403,
-					'message' => 'Data tidak ditemukan atau Anda bukan asesor yang ditugaskan.'
-				], 403);
-			}
+	// 			return response()->json([
+	// 				'status' => 403,
+	// 				'message' => 'Data tidak ditemukan atau Anda bukan asesor yang ditugaskan.'
+	// 			], 403);
+	// 		}
 
-			Log::debug('Update status form_1 ke Approved', ['form_1_id' => $form_1_id]);
-			$form->status = 'InAssessment';
-			$form->updated_at = Carbon::now();
-			$form->save();
+	// 		Log::debug('Update status form_1 ke Approved', ['form_1_id' => $form_1_id]);
+	// 		$form->status = 'InAssessment';
+	// 		$form->updated_at = Carbon::now();
+	// 		$form->save();
 
-			Log::info('Form berhasil disetujui', [
-				'form_1_id' => $form_1_id,
-				'user_id' => $user->user_id,
-			]);
+	// 		Log::info('Form berhasil disetujui', [
+	// 			'form_1_id' => $form_1_id,
+	// 			'user_id' => $user->user_id,
+	// 		]);
 
-			// Update atau create progres
-			Log::debug('Cek progres form_1', ['form_id' => $form->form_1_id]);
-			$progres = KompetensiProgres::where('form_id', $form->form_1_id)->first();
+	// 		// Update atau create progres
+	// 		Log::debug('Cek progres form_1', ['form_id' => $form->form_1_id]);
+	// 		$progres = KompetensiProgres::where('form_id', $form->form_1_id)->first();
 
-			if ($progres) {
-				$progres->status = 'Approved';
-				$progres->save();
+	// 		if ($progres) {
+	// 			$progres->status = 'Approved';
+	// 			$progres->save();
 
-				Log::info('Status kompetensi_progres diperbarui menjadi Approved', [
-					'form_id' => $form->form_1_id,
-					'progres_id' => $progres->id,
-				]);
-			} else {
-				$progres = KompetensiProgres::create([
-					'form_id' => $form->form_1_id,
-					'status' => 'Approved',
-				]);
+	// 			Log::info('Status kompetensi_progres diperbarui menjadi Approved', [
+	// 				'form_id' => $form->form_1_id,
+	// 				'progres_id' => $progres->id,
+	// 			]);
+	// 		} else {
+	// 			$progres = KompetensiProgres::create([
+	// 				'form_id' => $form->form_1_id,
+	// 				'status' => 'Approved',
+	// 			]);
 
-				Log::info('Data kompetensi_progres baru dibuat dengan status Approved', [
-					'form_id' => $form->form_1_id,
-					'progres_id' => $progres->id,
-				]);
-			}
+	// 			Log::info('Data kompetensi_progres baru dibuat dengan status Approved', [
+	// 				'form_id' => $form->form_1_id,
+	// 				'progres_id' => $progres->id,
+	// 			]);
+	// 		}
 
-			// Tambahkan track
-			Log::debug('Menambahkan track untuk form_1', ['form_id' => $form->form_1_id]);
-			KompetensiTrack::create([
-				'progres_id' => $progres->id,
-				'form_type' => 'form_1',
-				'activity' => 'Approved',
-				'activity_time' => Carbon::now(),
-				'description' => 'Pengajuan Asesmen disetujui oleh Asesor.',
-			]);
+	// 		// Tambahkan track
+	// 		Log::debug('Menambahkan track untuk form_1', ['form_id' => $form->form_1_id]);
+	// 		KompetensiTrack::create([
+	// 			'progres_id' => $progres->id,
+	// 			'form_type' => 'form_1',
+	// 			'activity' => 'Approved',
+	// 			'activity_time' => Carbon::now(),
+	// 			'description' => 'Pengajuan Asesmen disetujui oleh Asesor.',
+	// 		]);
 
-			// Inisialisasi jawaban form_2
-			Log::debug('Memulai initJawabanForm2', ['form_id' => $form->form_1_id]);
-			$this->initJawabanForm2($user, $form);
-			Log::debug('Selesai initJawabanForm2');
+	// 		// Inisialisasi jawaban form_2
+	// 		Log::debug('Memulai initJawabanForm2', ['form_id' => $form->form_1_id]);
+	// 		$this->initJawabanForm2($user, $form);
+	// 		Log::debug('Selesai initJawabanForm2');
 
-			Log::debug('Memulai buatForm2DariForm1', ['form_id' => $form->form_1_id]);
-			$form2 = $this->buatForm2DariForm1($form);
-			Log::debug('Selesai buatForm2DariForm1', ['form_2_id' => $form2->form_2_id ?? null]);
+	// 		Log::debug('Memulai buatForm2DariForm1', ['form_id' => $form->form_1_id]);
+	// 		$form2 = $this->buatForm2DariForm1($form);
+	// 		Log::debug('Selesai buatForm2DariForm1', ['form_2_id' => $form2->form_2_id ?? null]);
 
-			$progresForm2 = KompetensiProgres::create([
-				'form_id' => $form2->form_2_id,
-				'parent_form_id' => $form->form_1_id,
-				'user_id' => $form->asesi_id,
-				'status' => 'InAssessment',
-			]);
+	// 		$progresForm2 = KompetensiProgres::create([
+	// 			'form_id' => $form2->form_2_id,
+	// 			'parent_form_id' => $form->form_1_id,
+	// 			'user_id' => $form->asesi_id,
+	// 			'status' => 'InAssessment',
+	// 		]);
 
-			Log::info('Progres form_2 dibuat', [
-				'form_2_id' => $form2->form_2_id ?? null,
-				'progres_id' => $progresForm2->id,
-			]);
+	// 		Log::info('Progres form_2 dibuat', [
+	// 			'form_2_id' => $form2->form_2_id ?? null,
+	// 			'progres_id' => $progresForm2->id,
+	// 		]);
 
-			KompetensiTrack::create([
-				'progres_id' => $progresForm2->id,
-				'form_type' => 'form_2',
-				'activity' => 'InAssessment',
-				'activity_time' => Carbon::now(),
-				'description' => 'Penilaian Mandiri sudah dapat dikerjaan oleh asesi.',
-			]);
+	// 		KompetensiTrack::create([
+	// 			'progres_id' => $progresForm2->id,
+	// 			'form_type' => 'form_2',
+	// 			'activity' => 'InAssessment',
+	// 			'activity_time' => Carbon::now(),
+	// 			'description' => 'Penilaian Mandiri sudah dapat dikerjaan oleh asesi.',
+	// 		]);
 
-			Log::debug('Mengirim notifikasi approval ke pengaju');
-			$this->kirimNotifikasiApprovalKePengaju($formDebug);
+	// 		Log::debug('Mengirim notifikasi approval ke pengaju');
+	// 		$this->kirimNotifikasiApprovalKePengaju($formDebug);
 
-			DB::commit();
+	// 		DB::commit();
 
-			return response()->json([
-				'status' => 200,
-				'message' => 'Status berhasil diperbarui menjadi Approved dan notifikasi dikirim.'
-			]);
-		} catch (\Exception $e) {
-			DB::rollBack();
+	// 		return response()->json([
+	// 			'status' => 200,
+	// 			'message' => 'Status berhasil diperbarui menjadi Approved dan notifikasi dikirim.'
+	// 		]);
+	// 	} catch (\Exception $e) {
+	// 		DB::rollBack();
 
-			Log::error('Terjadi error saat approveForm1ById', [
-				'form_1_id' => $form_1_id,
-				'user_id' => $user->user_id ?? null,
-				'error_message' => $e->getMessage(),
-				'error_trace' => $e->getTraceAsString(),
-			]);
+	// 		Log::error('Terjadi error saat approveForm1ById', [
+	// 			'form_1_id' => $form_1_id,
+	// 			'user_id' => $user->user_id ?? null,
+	// 			'error_message' => $e->getMessage(),
+	// 			'error_trace' => $e->getTraceAsString(),
+	// 		]);
 
-			return response()->json([
-				'status' => 500,
-				'message' => 'Terjadi kesalahan saat memproses data.',
-				'error' => $e->getMessage(),
-			], 500);
-		}
-	}
+	// 		return response()->json([
+	// 			'status' => 500,
+	// 			'message' => 'Terjadi kesalahan saat memproses data.',
+	// 			'error' => $e->getMessage(),
+	// 		], 500);
+	// 	}
+	// }
 
 
+	public function approveForm1ById(Request $request, $form_1_id)
+    {
+        $form_1_id = (int) $form_1_id;
+        $user = auth()->user();
+
+        Log::info('Memulai proses approveForm1ById', [
+            'form_1_id' => $form_1_id,
+            'user_id' => $user->user_id ?? null,
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            // =====================
+            // 1️⃣ Proses Approval Form 1
+            // =====================
+            $formDebug = BidangModel::find($form_1_id);
+
+            if ($formDebug) {
+                Log::debug('Data form_1 ditemukan', [
+                    'form_1_id' => $form_1_id,
+                    'status' => $formDebug->status ?? null,
+                    'asesor_id' => $formDebug->asesor_id ?? null,
+                    'user_id_pengaju' => $formDebug->asesi_id ?? null,
+                    'current_user_id' => $user->user_id ?? null,
+                ]);
+            }
+
+            $form = BidangModel::where('form_1_id', $form_1_id)
+                ->where('status', 'Assigned')
+                ->where('asesor_id', $user->user_id)
+                ->first();
+
+            if (!$form) {
+                Log::warning('Form tidak ditemukan atau bukan asesor yang sesuai', [
+                    'form_1_id' => $form_1_id,
+                    'user_id' => $user->user_id,
+                ]);
+
+                DB::rollBack();
+
+                return response()->json([
+                    'status' => 403,
+                    'message' => 'Data tidak ditemukan atau Anda bukan asesor yang ditugaskan.'
+                ], 403);
+            }
+
+            Log::debug('Update status form_1 ke InAssessment', ['form_1_id' => $form_1_id]);
+            $form->status = 'InAssessment';
+            $form->updated_at = Carbon::now();
+            $form->save();
+
+            Log::info('Form berhasil disetujui', [
+                'form_1_id' => $form_1_id,
+                'user_id' => $user->user_id,
+            ]);
+
+            // =====================
+            // 2️⃣ Update atau buat progres
+            // =====================
+            $progres = KompetensiProgres::where('form_id', $form->form_1_id)->first();
+            if ($progres) {
+                $progres->status = 'Approved';
+                $progres->save();
+            } else {
+                $progres = KompetensiProgres::create([
+                    'form_id' => $form->form_1_id,
+                    'status' => 'Approved',
+                ]);
+            }
+
+            // Tambahkan track
+            KompetensiTrack::create([
+                'progres_id' => $progres->id,
+                'form_type' => 'form_1',
+                'activity' => 'Approved',
+                'activity_time' => Carbon::now(),
+                'description' => 'Pengajuan Asesmen disetujui oleh Asesor.',
+            ]);
+
+            // =====================
+            // 3️⃣ Inisialisasi Form 2
+            // =====================
+            $this->initJawabanForm2($user, $form);
+            $form2 = $this->buatForm2DariForm1($form);
+
+            $progresForm2 = KompetensiProgres::create([
+                'form_id' => $form2->form_2_id,
+                'parent_form_id' => $form->form_1_id,
+                'user_id' => $form->asesi_id,
+                'status' => 'InAssessment',
+            ]);
+
+            KompetensiTrack::create([
+                'progres_id' => $progresForm2->id,
+                'form_type' => 'form_2',
+                'activity' => 'InAssessment',
+                'activity_time' => Carbon::now(),
+                'description' => 'Penilaian Mandiri sudah dapat dikerjakan oleh asesi.',
+            ]);
+
+            // =====================
+            // 4️⃣ Proses Update Dokumen (optional)
+            // =====================
+            $results = [];
+
+            if ($request->has('ijazah')) {
+                $results['ijazah'] = $this->processDocument($request->input('ijazah'), IjazahModel::class, 'ijazah');
+            }
+
+            if ($request->has('str')) {
+                $results['str'] = $this->processDocument($request->input('str'), StrModel::class, 'str');
+            }
+
+            if ($request->has('sip')) {
+                $results['sip'] = $this->processDocument($request->input('sip'), SipModel::class, 'sip');
+            }
+
+            if ($request->has('spk')) {
+                $results['spk'] = $this->processDocument($request->input('spk'), SpkModel::class, 'spk');
+            }
+
+            if (!empty($results)) {
+                Log::info('Beberapa dokumen berhasil diperbarui bersamaan dengan approval', $results);
+            }
+
+            // =====================
+            // 5️⃣ Kirim Notifikasi dan Commit
+            // =====================
+            $this->kirimNotifikasiApprovalKePengaju($formDebug);
+            DB::commit();
+
+            return response()->json([
+                'status' => 200,
+                'message' => 'Form 1 disetujui dan dokumen diperbarui (jika ada).',
+                'data' => [
+                    'form_1_id' => $form_1_id,
+                    'dokumen' => $results,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Terjadi error saat approveForm1ById', [
+                'form_1_id' => $form_1_id,
+                'user_id' => $user->user_id ?? null,
+                'error_message' => $e->getMessage(),
+                'error_trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'status' => 500,
+                'message' => 'Terjadi kesalahan saat memproses data.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Proses update dokumen (reusable)
+     */
+    private function processDocument($docData, $modelClass, $type)
+    {
+        $validator = Validator::make($docData, [
+            "{$type}_id" => "required|integer|exists:users_{$type}_file,{$type}_id",
+            'valid'      => 'nullable|boolean',
+            'authentic'  => 'nullable|boolean',
+            'current'    => 'nullable|boolean',
+            'sufficient' => 'nullable|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return [
+                'status'  => 'validation_error',
+                'message' => $validator->errors(),
+            ];
+        }
+
+        $id = $docData["{$type}_id"];
+        $updateData = collect($docData)
+            ->only(['valid', 'authentic', 'current', 'sufficient'])
+            ->filter(fn($v) => !is_null($v))
+            ->toArray();
+
+        if (empty($updateData)) {
+            return [
+                'status'  => 'no_fields_provided',
+                'id'      => $id,
+                'message' => 'Tidak ada field status yang dikirim untuk diperbarui.',
+            ];
+        }
+
+        $record = $modelClass::find($id);
+        if (!$record) {
+            return [
+                'status'  => 'not_found',
+                'id'      => $id,
+                'message' => "Data {$type} tidak ditemukan.",
+            ];
+        }
+
+        $record->update($updateData);
+
+        return [
+            'status'  => 'updated',
+            'id'      => $id,
+            'updated_fields' => $updateData,
+        ];
+    }
 
 	private function buatForm2DariForm1($form)
 	{
