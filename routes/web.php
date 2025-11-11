@@ -194,7 +194,7 @@ $router->post('/notification/read', 'NotificationController@markAsRead');
 $router->post('/notification/send-feedback-doc/{form_1_id}', 'NotificationController@sendNotifyReject');
 // Cukup Sampai Sini Form 1
 
- 
+ $router->get('/panduan-form2', 'DocumentApprovalController@panduanForm2');
 //Bagian API Form2
 
 

@@ -109,4 +109,96 @@ class DocumentApprovalController extends Controller
             'data'    => $record,
         ];
     }
+
+    public function panduanForm2()
+    {
+        // Buat konten HTML dengan gaya profesional dan penekanan aturan
+        $html = '<!DOCTYPE html>
+        <html lang="id">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Panduan Penilaian Mandiri - Form 3 D</title>
+            <style>
+                body {
+                    font-family: "Segoe UI", Arial, sans-serif;
+                    line-height: 1.7;
+                    color: #333;
+                    margin: 30px;
+                    background-color: #fafafa;
+                }
+                h2 {
+                    text-align: center;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    color: #222;
+                }
+                h3 {
+                    margin-top: 25px;
+                    color: #444;
+                }
+                p.intro {
+                    font-size: 15px;
+                    background: #eef3f8;
+                    border-left: 5px solid #007bff;
+                    padding: 10px 15px;
+                    border-radius: 4px;
+                }
+                ol {
+                    margin-top: 15px;
+                    margin-left: 25px;
+                    font-size: 15px;
+                }
+                li {
+                    margin-bottom: 10px;
+                }
+                strong {
+                    color: #d9534f;
+                }
+                hr {
+                    border: none;
+                    border-top: 2px solid #007bff;
+                    margin: 20px 0;
+                }
+                footer {
+                    margin-top: 30px;
+                    font-size: 13px;
+                    text-align: center;
+                    color: #666;
+                    font-style: italic;
+                }
+            </style>
+        </head>
+        <body>
+            <h2>Panduan Penilaian Mandiri</h2>
+            <hr>
+            <p class="intro">
+                <strong>Perhatian:</strong> Panduan ini merupakan <u>aturan resmi</u> yang <strong>wajib diikuti oleh seluruh peserta asesmen</strong>.
+                Setiap peserta diharapkan membaca dengan seksama dan melaksanakan seluruh petunjuk berikut sesuai dengan ketentuan yang berlaku.
+            </p>
+
+            <h3>Petunjuk:</h3>
+            <ol>
+                <li>Pelajari seluruh standar <strong>Kriteria Unjuk Kerja (KUK)</strong> pada Standar Kompetensi dan pahami dengan seksama.</li>
+                <li>Laksanakan penilaian mandiri secara jujur dan obyektif. Nilai kemampuan anda terhadap setiap pertanyaan, 
+                    kemudian tentukan apakah sudah <strong>Kompeten (K)</strong> atau <strong>Belum Kompeten (BK)</strong>.</li>
+                <li>Asesor akan menggunakan format ini pada saat <strong>konsultasi pra-asesmen</strong> untuk memvalidasi kesiapan anda, 
+                    termasuk memberikan pertanyaan kritikal yang relevan dengan unit kompetensi.</li>
+                <li>Setelah penilaian selesai, <strong>Asesor dan Asesi wajib menandatangani</strong> format asesmen mandiri sebagai bentuk pernyataan keabsahan data.</li>
+            </ol>
+
+            <footer>
+                Dokumen ini menjadi bagian dari proses asesmen resmi dan tidak boleh diabaikan atau diubah tanpa persetujuan asesor.
+            </footer>
+        </body>
+        </html>';
+
+        // Return dalam format JSON seperti fungsi sebelumnya
+        return response()->json([
+            'status' => 'OK',
+            'message' => 'Panduan penilaian mandiri berhasil ditampilkan.',
+            'data' => $html
+        ]);
+    }
+
 }
