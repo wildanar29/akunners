@@ -10,8 +10,8 @@ namespace App\Docs;
  *     operationId="approveForm1ById",
  *     description="Endpoint ini digunakan oleh asesor untuk menyetujui Form 1 yang berstatus 'Assigned'. 
  *     Setelah disetujui, status Form 1 akan berubah menjadi 'InAssessment', Form 2 otomatis dibuat, 
- *     progres dan track akan diperbarui, serta dokumen opsional (Ijazah, STR, SIP, SPK) dapat diperbarui
- *     dengan status validasinya. Setiap dokumen menggunakan field `id` sebagai pengenal universal.",
+ *     progres dan track akan diperbarui, serta dokumen opsional (Ijazah, STR, SIP, SPK, dan Sertifikat Pendukung) 
+ *     dapat diperbarui dengan status validasinya. Setiap dokumen menggunakan field `id` sebagai pengenal universal.",
  *     security={{"bearerAuth":{}}},
  *
  *     @OA\Parameter(
@@ -70,6 +70,18 @@ namespace App\Docs;
  *                 @OA\Property(property="authentic", type="boolean", example=true),
  *                 @OA\Property(property="current", type="boolean", example=true),
  *                 @OA\Property(property="sufficient", type="boolean", example=false)
+ *             ),
+ *
+ *             @OA\Property(
+ *                 property="sertifikat",
+ *                 type="object",
+ *                 nullable=true,
+ *                 description="Sertifikat pendukung tambahan seperti pelatihan, workshop, seminar, dll.",
+ *                 @OA\Property(property="id", type="integer", example=33, description="ID sertifikat pendukung"),
+ *                 @OA\Property(property="valid", type="boolean", example=true),
+ *                 @OA\Property(property="authentic", type="boolean", example=true),
+ *                 @OA\Property(property="current", type="boolean", example=true),
+ *                 @OA\Property(property="sufficient", type="boolean", example=true)
  *             )
  *         )
  *     ),
@@ -98,6 +110,13 @@ namespace App\Docs;
  *                         },
  *                         "str": {
  *                             "id": 21,
+ *                             "valid": true,
+ *                             "authentic": true,
+ *                             "current": true,
+ *                             "sufficient": true
+ *                         },
+ *                         "sertifikat": {
+ *                             "id": 33,
  *                             "valid": true,
  *                             "authentic": true,
  *                             "current": true,

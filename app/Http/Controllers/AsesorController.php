@@ -303,14 +303,15 @@ class AsesorController extends Controller
 			]);
 
 			// =====================
-			// 4️⃣ Proses Update Dokumen (skip jika null)
+			// 4️⃣ Proses Update Dokumen (termasuk Sertifikat Pendukung)
 			// =====================
 			$results = [];
 			$dokumenTypes = [
-				'ijazah' => IjazahModel::class,
-				'str'    => StrModel::class,
-				'sip'    => SipModel::class,
-				'spk'    => SpkModel::class,
+				'ijazah'     => IjazahModel::class,
+				'str'        => StrModel::class,
+				'sip'        => SipModel::class,
+				'spk'        => SpkModel::class,
+				'sertifikat' => SertifikatModel::class, // ✅ tambahan baru
 			];
 
 			foreach ($dokumenTypes as $type => $modelClass) {
@@ -360,6 +361,7 @@ class AsesorController extends Controller
 			], 500);
 		}
 	}
+
 
 	/**
 	 * Helper: Mengecek apakah data dokumen kosong/null

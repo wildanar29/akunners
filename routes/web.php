@@ -191,6 +191,7 @@ $router->post('/jawaban-form2/update/asesor', 'AsesorController@updateJawabanFor
 $router->put('/jawaban-form2/update-if-empty/{user_jawab_form2_id}', 'AsesorController@updateIfEmptyByUserJawabForm2Id');
 $router->post('/notification', 'NotificationController@getNotifications');
 $router->post('/notification/read', 'NotificationController@markAsRead');
+$router->post('/notification/send-feedback-doc/{form_1_id}', 'NotificationController@sendNotifyReject');
 // Cukup Sampai Sini Form 1
 
  
