@@ -79,20 +79,22 @@ class MasterController extends Controller
             ], 200);
         }
 
-        $html = '<table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%;">';
-        $html .= '<thead>
-                    <tr>
-                        <th>No</th>
-                        <th>Isi Elemen</th>
-                    </tr>
-                </thead>';
-        $html .= '<tbody>';
-        
+        // Tambahkan style agar kolom No kecil & baris lebih padat
+        $html = '
+        <table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 13px;">
+            <thead style="background-color: #f0f0f0;">
+                <tr>
+                    <th style="width: 5%; text-align: center;">No</th>
+                    <th style="width: 95%;">Isi Elemen</th>
+                </tr>
+            </thead>
+            <tbody>';
+
         foreach ($data as $row) {
-            $html .= '<tr>';
-            $html .= '<td>' . htmlspecialchars($row->no_elemen_form_3) . '</td>';
-            $html .= '<td>' . nl2br(htmlspecialchars($row->isi_elemen)) . '</td>';
-            $html .= '</tr>';
+            $html .= '<tr>
+                        <td style="text-align: center;">' . htmlspecialchars($row->no_elemen_form_3) . '</td>
+                        <td>' . nl2br(htmlspecialchars($row->isi_elemen)) . '</td>
+                    </tr>';
         }
 
         $html .= '</tbody></table>';

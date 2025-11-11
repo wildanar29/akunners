@@ -17,6 +17,7 @@ use App\Models\KompetensiProgres;
 use App\Models\KompetensiTrack;
 use App\Models\DataAsesorModel;
 use App\Models\PkProgressModel;
+use App\Models\ElemenForm3;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -37,6 +38,187 @@ class Form3Controller extends BaseController
 		$this->oneSignalService = $oneSignalService;
         $this->formService = $formService;
 	}
+
+    public function getRencanaAsesmen(Request $request)
+    {
+        $pk_id = $request->query('pk_id');
+
+        // Validasi parameter pk_id wajib
+        if (!$pk_id) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Parameter pk_id wajib diisi.',
+                'data' => null
+            ], 400);
+        }
+
+        // === Ambil data SPO berdasarkan pk_id ===
+        $spoList = \App\Models\Spo::where('pk_id', $pk_id)
+            ->orderByRaw('CAST(no_spo AS UNSIGNED) ASC')
+            ->get();
+
+        // Ambil data elemen beserta relasi KUK dan IUK
+        $elemenList = \App\Models\ElemenForm3::with(['kukForm3.iukForm3'])
+            ->where('pk_id', $pk_id)
+            ->orderByRaw('CAST(no_elemen_form_3 AS UNSIGNED) ASC')
+            ->get();
+
+        if ($spoList->isEmpty() && $elemenList->isEmpty()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Data tidak ditemukan untuk pk_id tersebut.',
+                'data' => null
+            ], 404);
+        }
+
+        // Mapping nilai group_no ke Metode Asesmen dan Perangkat Asesmen
+        $metodeMap = [
+            '4A' => 'Observasi',
+            '4B' => 'Uji Lisan',
+            '4C' => 'Uji Tulis',
+            '4D' => 'Portofolio',
+        ];
+
+        $perangkatMap = [
+            '4A' => 'Daftar Checklist',
+            '4B' => 'Daftar Pertanyaan Lisan',
+            '4C' => 'Daftar Pertanyaan Tulisan',
+            '4D' => 'Daftar Checklist EMR',
+        ];
+
+        // Buat HTML tampilan SPO + Rencana Asesmen
+        $html = '<!DOCTYPE html>
+        <html lang="id">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Rencana Asesmen</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                }
+                h2, h3 {
+                    text-align: center;
+                    margin-bottom: 15px;
+                }
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-bottom: 30px;
+                }
+                th, td {
+                    border: 1px solid #000;
+                    padding: 8px;
+                    vertical-align: middle;
+                }
+                th {
+                    background-color: #e2e2e2;
+                    text-align: center;
+                }
+                td.center {
+                    text-align: center;
+                }
+                .elemen-header {
+                    background-color: #d9d9d9;
+                    font-weight: bold;
+                    padding: 8px;
+                }
+                ul {
+                    margin: 0;
+                    padding-left: 20px;
+                }
+            </style>
+        </head>
+        <body>
+        <h2>STANDAR PROSEDUR OPERASIONAL (SPO)</h2>';
+
+        // === Tabel SPO ===
+        if ($spoList->isNotEmpty()) {
+            $html .= '<table>
+                        <thead>
+                            <tr>
+                                <th style="width: 10%">No</th>
+                                <th style="width: 25%">Nomor SPO</th>
+                                <th style="width: 65%">Nama SPO</th>
+                            </tr>
+                        </thead>
+                        <tbody>';
+
+            foreach ($spoList as $index => $spo) {
+                $html .= '<tr>
+                            <td class="center">' . ($index + 1) . '</td>
+                            <td>' . htmlspecialchars($spo->no_spo) . '</td>
+                            <td>' . htmlspecialchars($spo->nama_spo) . '</td>
+                        </tr>';
+            }
+
+            $html .= '</tbody></table>';
+        } else {
+            $html .= '<p style="text-align:center;"><em>Tidak ada data SPO untuk pk_id ini.</em></p>';
+        }
+
+        // === Tabel Rencana Asesmen ===
+        $html .= '<h2>RENCANA ASESMEN</h2>';
+
+        foreach ($elemenList as $elemen) {
+            $html .= '<div class="elemen-section">';
+            $html .= '<table>';
+            $html .= '<thead>
+                        <tr>
+                            <th colspan="4" class="elemen-header">Elemen: ' .
+                                htmlspecialchars($elemen->no_elemen_form_3 . ' - ' . $elemen->isi_elemen) .
+                            '</th>
+                        </tr>
+                        <tr>
+                            <th style="width: 25%">Kriteria Unjuk Kerja (KUK)</th>
+                            <th style="width: 25%">Indikator Unjuk Kerja (IUK)</th>
+                            <th style="width: 25%">Metode Asesmen</th>
+                            <th style="width: 25%">Perangkat Asesmen</th>
+                        </tr>
+                    </thead>
+                    <tbody>';
+
+            foreach ($elemen->kukForm3 as $kuk) {
+                $rowspan = max(count($kuk->iukForm3), 1);
+
+                if ($rowspan > 0) {
+                    $html .= '<tr>
+                        <td class="center" rowspan="' . $rowspan . '">' .
+                            htmlspecialchars($kuk->no_kuk . ' - ' . $kuk->kuk_name) .
+                        '</td>';
+
+                    foreach ($kuk->iukForm3 as $index => $iuk) {
+                        if ($index > 0) $html .= '<tr>';
+
+                        $metode = $metodeMap[$iuk->group_no] ?? '-';
+                        $perangkat = $perangkatMap[$iuk->group_no] ?? '-';
+
+                        $html .= '<td>' . htmlspecialchars($iuk->no_iuk . ' - ' . $iuk->iuk_name) . '</td>
+                                <td class="center">' . htmlspecialchars($metode) . '</td>
+                                <td class="center">' . htmlspecialchars($perangkat) . '</td>
+                                </tr>';
+                    }
+                } else {
+                    $html .= '<tr>
+                        <td class="center">' . htmlspecialchars($kuk->no_kuk . ' - ' . $kuk->kuk_name) . '</td>
+                        <td colspan="3" class="center"><em>Tidak ada IUK terkait</em></td>
+                    </tr>';
+                }
+            }
+
+            $html .= '</tbody></table></div>';
+        }
+
+        $html .= '</body></html>';
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Berhasil menampilkan data SPO dan Rencana Asesmen.',
+            'data' => $html
+        ]);
+    }
+
+
 
     public function getAllDataFormB(Request $request)
     {

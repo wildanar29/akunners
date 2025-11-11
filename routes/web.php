@@ -214,6 +214,8 @@ $router->get('/get-form2-by-no-reg', 'Form2Controller@getForm2ByNoReg');
 $router->get('/get-soal-jawab-form2', 'Form2Controller@getSoalDanJawaban');
 
 //Asesor Form3 Input Approved
+$router->get('/form3/data', 'Form3Controller@getRencanaAsesmen');
+
 $router->post('/input-form3/{user_id}', 'Form3Controller@Form3Input');
 
 $router->get('/form1', 'ProgressController@getForm1');

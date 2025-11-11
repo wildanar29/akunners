@@ -45,7 +45,7 @@ class UsersController extends Controller
 				'no_telp' => 'required|max:13|unique:users',
 			];
 
-			if (in_array($roleId, [2, 3])) {
+			if (in_array($roleId, [2])) {
 				$rules['no_reg'] = 'required|string';
 				$rules['valid_from'] = 'required|date';
 				$rules['valid_until'] = 'required|date|after_or_equal:valid_from';

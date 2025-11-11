@@ -55,7 +55,7 @@ $app->register(App\Providers\WablasServiceProvider::class);
 $app->register(Tymon\JWTAuth\Providers\LumenServiceProvider::class);  
 $app->register(Illuminate\Redis\RedisServiceProvider::class);
 $app->register(Illuminate\Mail\MailServiceProvider::class);
-
+$app->register(Illuminate\Database\MigrationServiceProvider::class);
 class_alias(Tymon\JWTAuth\Facades\JWTAuth::class, 'JWTAuth');  
 class_alias(Tymon\JWTAuth\Facades\JWTFactory::class, 'JWTFactory');  
 
