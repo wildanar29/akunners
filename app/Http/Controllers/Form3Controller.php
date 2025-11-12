@@ -819,13 +819,13 @@ class Form3Controller extends BaseController
 
 	public function ApproveAsesiForm3(Request $request)
     {
-        $user = auth()->user(); // Ambil user login
+        // $user = auth()->user(); // Ambil user login
         $form3Id = $request->input('form_3_id'); // Ambil form_3_id dari body
         $form3Data = Form3Model::find($form3Id);
         Log::info("Form 3 Data for form_3_id={$form3Id}: " . ($form3Data ? json_encode($form3Data) : 'wa'));
         $form1Id = $this->formService->getParentFormIdByFormIdAndAsesiId($form3Id, $form3Data->user_id); // Ambil form_1_id terkait form_3_id
         Log::info("Form 1 ID terkait Form 3 ID {$form3Id}: " . ($form1Id ?? 'null'));
-        $user = User::where('user_id', $form3Data->user_id)->first();
+        $user = DaftarUser::where('user_id', $form3Data->user_id)->first();
         Log::info("Logged in user: " . ($user ? json_encode($user) : 'null'));
         // ✅ Cek apakah user login ada
         if (!$user) {
