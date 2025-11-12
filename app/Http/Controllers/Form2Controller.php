@@ -127,9 +127,6 @@ class Form2Controller extends Controller
         ]);
     }
 
-
-
-
      public function getForm2Data(Request $request)
      {
          // Ambil parameter filter dari query string
@@ -260,18 +257,35 @@ class Form2Controller extends Controller
                  ->update(['no_id' => null, 'k' => null, 'bk' => null]);
 
              } elseif ($request->status === 'Approved') {
-                // Cari progress_id dari pk_progress berdasarkan form_2_id
-                $progress = PkProgressModel::where('form_2_id', $request->form_2_id)->first();
 
-                if ($progress) {
-                    // Update pk_status dengan progress_id yang sesuai
-                    DB::table('pk_status')
-                        ->where('progress_id', $progress->progress_id)
-                        ->update([
-                            'form_2_status' => 'Completed',
-                            'form_3_status' => 'Open',
-                        ]);
-                }
+                $this->formService->updateProgresDanTrack(
+                    $request->form_2_id,
+                    'form_2',
+                    'Completed',
+                    $penilaian->user_jawab_form_2_id,
+                    'Form 2 telah di setujui Asesor'
+                );
+
+                $form2 = Form2::where('form_2_id', $request->form_2_id)->first();
+
+                $this->formService->kirimNotifikasiKeUser(
+                    DaftarUser::find($form2->asesor_id),
+                    'Self Assessment Approved',
+                    'Self Assessment telah selesai.'
+                );
+
+                // Cari progress_id dari pk_progress berdasarkan form_2_id
+                // $progress = PkProgressModel::where('form_2_id', $request->form_2_id)->first();
+
+                // if ($progress) {
+                //     // Update pk_status dengan progress_id yang sesuai
+                //     DB::table('pk_status')
+                //         ->where('progress_id', $progress->progress_id)
+                //         ->update([
+                //             'form_2_status' => 'Completed',
+                //             'form_3_status' => 'Open',
+                //         ]);
+                // }
             }
      
          // Simpan perubahan status
@@ -404,6 +418,14 @@ class Form2Controller extends Controller
 
             DB::commit();
 
+            $this->formService->updateProgresDanTrack(
+                $request->form_2_id,
+                'form_2',
+                'Submitted',
+                $form2->user_jawab_form_2_id,
+                'Form 2 telah di isi oleh Asesi'
+            );
+
             $asesor = DaftarUser::find($form->asesor_id);
             if ($asesor) {
                 $this->kirimNotifikasiKeAsesor($asesor, $penilaian->form_2_id);
@@ -468,9 +490,6 @@ class Form2Controller extends Controller
             ], 500);
         }
     }
-
-
-
 
     public function getSoalDanJawaban(Request $request)
     {
