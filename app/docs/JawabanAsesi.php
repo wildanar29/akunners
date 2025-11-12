@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Docs;
+
 /**
  * @OA\Post(
  *     path="/jawaban-asesi",
@@ -20,6 +21,7 @@ namespace App\Docs;
  *             @OA\Property(
  *                 property="jawaban",
  *                 type="array",
+ *                 description="Daftar jawaban untuk setiap soal Form 2",
  *                 @OA\Items(
  *                     type="object",
  *                     required={"no_id", "k", "bk"},
@@ -34,11 +36,17 @@ namespace App\Docs;
  *         response=200,
  *         description="Jawaban berhasil disimpan atau diperbarui",
  *         @OA\JsonContent(
+ *             @OA\Property(property="status", type="string", example="success"),
  *             @OA\Property(property="message", type="string", example="Jawaban berhasil disimpan atau diperbarui."),
- *             @OA\Property(property="penilaian_asesi", type="number", format="float", example=85.5),
- *             @OA\Property(property="total_k", type="integer", example=10),
- *             @OA\Property(property="total_bk", type="integer", example=2),
- *             @OA\Property(property="form_2_id", type="integer", example=1)
+ *             @OA\Property(
+ *                 property="data",
+ *                 type="object",
+ *                 @OA\Property(property="penilaian_asesi", type="number", format="float", example=85.5, description="Nilai hasil self assessment (0–100)"),
+ *                 @OA\Property(property="total_k", type="integer", example=10, description="Jumlah jawaban kompeten"),
+ *                 @OA\Property(property="total_bk", type="integer", example=2, description="Jumlah jawaban belum kompeten"),
+ *                 @OA\Property(property="form_2_id", type="integer", example=1, description="ID Form 2 yang dinilai"),
+ *                 @OA\Property(property="is_pass", type="boolean", example=true, description="Status kelulusan berdasarkan nilai ≥ 80 (true = lulus, false = tidak lulus)")
+ *             )
  *         )
  *     ),
  *     @OA\Response(
@@ -54,14 +62,18 @@ namespace App\Docs;
  *         response=404,
  *         description="Data form_1 tidak ditemukan untuk user ini",
  *         @OA\JsonContent(
- *             @OA\Property(property="error", type="string", example="Data form_1 tidak ditemukan untuk user ini")
+ *             @OA\Property(property="status", type="string", example="error"),
+ *             @OA\Property(property="message", type="string", example="Data form_1 tidak ditemukan untuk user ini"),
+ *             @OA\Property(property="data", type="array", @OA\Items(type="string"))
  *         )
  *     ),
  *     @OA\Response(
  *         response=422,
  *         description="Validasi input gagal",
  *         @OA\JsonContent(
- *             @OA\Property(property="errors", type="object",
+ *             @OA\Property(property="status", type="string", example="error"),
+ *             @OA\Property(property="message", type="string", example="Validasi gagal."),
+ *             @OA\Property(property="data", type="object",
  *                 @OA\Property(
  *                     property="form_2_id",
  *                     type="array",
@@ -79,12 +91,13 @@ namespace App\Docs;
  *         response=500,
  *         description="Terjadi kesalahan saat menyimpan jawaban.",
  *         @OA\JsonContent(
+ *             @OA\Property(property="status", type="string", example="error"),
  *             @OA\Property(property="message", type="string", example="Terjadi kesalahan saat menyimpan jawaban."),
- *             @OA\Property(property="error", type="string", example="SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row...")
+ *             @OA\Property(property="data", type="object",
+ *                 @OA\Property(property="error", type="string", example="SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row...")
+ *             )
  *         )
  *     )
  * )
  */
-
-
- class JawabanAsesi {}
+class JawabanAsesi {}
