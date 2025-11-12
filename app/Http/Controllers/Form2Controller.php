@@ -354,7 +354,6 @@ class Form2Controller extends Controller
         $asesiId = $form2 ? $form2->user_jawab_form_2_id : null;
         $form1 = $this->formService->getParentFormIdByFormIdAndAsesiId($request->form_2_id, $asesiId);
         $form = $this->formService->getParentDataByFormId($form1);
-        // $form = BidangModel::where('asesi_id', $user->user_id)->first();
 
         if (!$form) {
             return response()->json([
@@ -403,18 +402,15 @@ class Form2Controller extends Controller
                 ]
             );
 
-            // ... kode simpan progres & track (tidak saya ubah) ...
-
             DB::commit();
 
-            // ✅ Panggil kirim notifikasi setelah transaksi berhasil
             $asesor = DaftarUser::find($form->asesor_id);
             if ($asesor) {
                 $this->kirimNotifikasiKeAsesor($asesor, $penilaian->form_2_id);
             }
 
             $form2 = Form2::where('form_2_id', $request->form_2_id)->first();
-			$asesiId = $form2 ? $form2->user_jawab_form_2_id : null;
+            $asesiId = $form2 ? $form2->user_jawab_form_2_id : null;
             $parentFormId = $this->formService->getParentFormIdByFormIdAndAsesiId($request->form_2_id, $asesiId);
             $form1Data = $this->formService->getParentDataByFormId($parentFormId);
             $isForm3Exist = $this->formService->isFormExistSingle(
@@ -447,6 +443,9 @@ class Form2Controller extends Controller
                 Log::info("Form 3 sudah ada, tidak membuat ulang.");
             }
 
+            // ✅ Tambahan: tentukan apakah lulus atau tidak
+            $is_pass = $penilaian_asesi >= 80;
+
             return response()->json([
                 'status'  => 'success',
                 'message' => 'Jawaban berhasil disimpan atau diperbarui.',
@@ -455,6 +454,7 @@ class Form2Controller extends Controller
                     'total_k'         => $k_count,
                     'total_bk'        => $bk_count,
                     'form_2_id'       => $penilaian->form_2_id,
+                    'is_pass'         => $is_pass, // ✅ nilai true/false sesuai kondisi
                 ],
             ], 200);
 
@@ -468,6 +468,7 @@ class Form2Controller extends Controller
             ], 500);
         }
     }
+
 
 
 
