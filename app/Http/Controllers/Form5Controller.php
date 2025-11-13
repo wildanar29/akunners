@@ -343,8 +343,8 @@ class Form5Controller extends BaseController
 			$this->formService->updateProgresDanTrack(
 				$updatedInterview->interview_id,      // formId
 				'intv_pra_asesmen',                   // formType
-				'Updated',                            // status
-				$user->user_id,                       // userId
+				'Submitted',                            // status
+				$bidang->asesi_id,                       // userId
 				'Asesi memperbarui data konsultasi pra asesmen.' // description
 			);
 
