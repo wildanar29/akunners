@@ -340,7 +340,7 @@ class Form5Controller extends BaseController
 			DB::commit();
 
 			// Buat progress baru
-			$this->updateProgresDanTrack(
+			$this->formService->updateProgresDanTrack(
 				$updatedInterview->interview_id,      // formId
 				'intv_pra_asesmen',                   // formType
 				'Updated',                            // status
