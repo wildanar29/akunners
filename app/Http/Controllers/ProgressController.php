@@ -126,7 +126,7 @@ class ProgressController extends Controller
             $asesiEmail = $item->asesiUser->email ?? null;
             $asesiNoTelp = $item->asesiUser->no_telp ?? null;
             $asesiFoto = $item->asesiUser && $item->asesiUser->foto
-                ? url('storage/foto/' . $item->asesiUser->foto)
+                ? url('storage/' . $item->asesiUser->foto)
                 : null;
 
             // ================================================================
@@ -139,7 +139,7 @@ class ProgressController extends Controller
             $asesorEmail = $asesorUser->email ?? null;
             $asesorNoTelp = $asesorUser->no_telp ?? null;
             $asesorFoto = $asesorUser && $asesorUser->foto
-                ? url('storage/foto/' . $asesorUser->foto)
+                ? url('storage/' . $asesorUser->foto)
                 : null;
 
             // ================================================================
