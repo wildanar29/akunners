@@ -165,6 +165,7 @@ class ProgressController extends Controller
             $responseData = [
                 'form_1_id' => $item->form_1_id,
                 'asesi_name' => $item->asesi_name,
+                'asesi_date' => $item->asesi_date,
                 'asesi_id' => $item->asesi_id,
                 'asesor_name' => $item->asesor_name,
                 'asesor_id' => $item->asesor_id,

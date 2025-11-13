@@ -18,6 +18,7 @@ use App\Models\KompetensiProgres;
 use App\Models\Notification;
 use App\Models\ElemenForm3;
 use App\Models\Form3Model;
+use App\Models\InterviewModel;
 use App\Models\Form5;
 use App\Models\Form6;
 use App\Models\Form7;
@@ -101,6 +102,37 @@ class FormService
 		}
 	}
 
+
+	function updateInterview(
+		$interviewId,
+		$asesiName = null,
+		$asesorName = null,
+		$userId = null,
+		$date = null,
+		$time = null,
+		$place = null,
+		$form1Id = null,
+		$asesorId = null,
+		$status = null
+	) {
+		// Ambil data interview berdasarkan ID
+		$interview = InterviewModel::findOrFail($interviewId);
+
+		// Update dengan nilai baru atau fallback ke nilai lama
+		$interview->update([
+			'asesi_name' => $asesiName ?? $interview->asesi_name,
+			'asesor_name' => $asesorName ?? $interview->asesor_name,
+			'user_id' => $userId ?? $interview->user_id,
+			'date' => $date ?? $interview->date,
+			'time' => $time ?? $interview->time,
+			'place' => $place ?? $interview->place,
+			'form_1_id' => $form1Id ?? $interview->form_1_id,
+			'asesor_id' => $asesorId ?? $interview->asesor_id,
+			'status' => $status ?? $interview->status,
+		]);
+
+		return $interview;
+	}
 
     public function getForm1ByAsesiIdAndPkId($asesiId, $pkId)
     {

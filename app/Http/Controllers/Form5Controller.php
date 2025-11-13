@@ -117,6 +117,135 @@ class Form5Controller extends BaseController
 		}
 	}
 	
+	// public function pengajuanKonsultasiPraAsesmen(Request $request)
+	// {
+	// 	$user = auth()->user();
+
+	// 	if (!$user) {
+	// 		return response()->json([
+	// 			'status' => 401,
+	// 			'message' => 'Pengguna belum login atau token tidak valid.',
+	// 			'data' => []
+	// 		], 401);
+	// 	}
+
+	// 	// ✅ Cek role_id melalui model UserRole
+	// 	$isAsesi = UserRole::where('user_id', $user->user_id)
+	// 		->where('role_id', 1)
+	// 		->exists();
+
+	// 	if (!$isAsesi) {
+	// 		return response()->json([
+	// 			'status' => 403,
+	// 			'message' => 'Akses ditolak. Hanya asesi yang dapat melakukan pengajuan konsultasi.',
+	// 			'data' => []
+	// 		], 403);
+	// 	}
+
+	// 	// ✅ Validasi input (tambahkan pk_id)
+	// 	$this->validate($request, [
+	// 		'date' => 'required|date',
+	// 		'time' => 'required',
+	// 		'place' => 'required|string|max:255',
+	// 		'form_1_id' => 'required|integer|exists:form_1,form_1_id',
+	// 		'pk_id' => 'required|integer' // validasi pk_id
+	// 	]);
+
+	// 	// Cek apakah user sudah memiliki pengajuan untuk form_1_id ini
+	// 	$existing = InterviewModel::where('user_id', $user->user_id)
+	// 		->where('form_1_id', $request->form_1_id)
+	// 		->exists();
+
+	// 	if ($existing) {
+	// 		return response()->json([
+	// 			'status' => 409,
+	// 			'message' => 'Pengajuan untuk form ini sudah ada. Anda tidak dapat mengajukan dua kali.'
+	// 		]);
+	// 	}
+
+	// 	DB::beginTransaction();
+
+	// 	try {
+	// 		// Ambil data bidang / form_1
+	// 		$bidang = BidangModel::find($request->form_1_id);
+	// 		if (!$bidang) {
+	// 			return response()->json([
+	// 				'status' => 404,
+	// 				'message' => 'Data form_1 tidak ditemukan.'
+	// 			], 404);
+	// 		}
+
+	// 		// ✅ Validasi kecocokan pk_id dari form_1 dengan request
+	// 		if ($bidang->pk_id != $request->pk_id) {
+	// 			return response()->json([
+	// 				'status' => 400,
+	// 				'message' => 'Form yang dipilih tidak sesuai dengan program keahlian yang Anda ajukan.'
+	// 			], 400);
+	// 		}
+
+	// 		// Ambil data asesor
+	// 		$asesorData = DataAsesorModel::where('no_reg', $bidang->no_reg)->first();
+	// 		if (!$asesorData) {
+	// 			return response()->json([
+	// 				'status' => 404,
+	// 				'message' => 'Data asesor dengan no_reg tersebut tidak ditemukan.'
+	// 			]);
+	// 		}
+
+	// 		$userAsesor = DaftarUser::where('user_id', $asesorData->user_id)->first();
+	// 		$asesorName = $userAsesor ? $userAsesor->nama : 'Nama tidak tersedia';
+
+	// 		// Simpan ke InterviewModel
+	// 		$interview = new InterviewModel();
+	// 		$interview->asesi_name = $user->nama;
+	// 		$interview->user_id = $user->user_id;
+	// 		$interview->date = $request->date;
+	// 		$interview->time = $request->time;
+	// 		$interview->place = $request->place;
+	// 		$interview->form_1_id = $request->form_1_id;
+	// 		$interview->asesor_id = $asesorData->user_id;
+	// 		$interview->asesor_name = $asesorName;
+	// 		$interview->status = 'Waiting';
+	// 		$interview->pk_id = $request->pk_id;
+
+	// 		$interview->save();
+
+	// 		if ($userAsesor) {
+	// 			$this->kirimNotifikasiKeAsesor($userAsesor, $request->form_1_id);
+	// 		}
+	// 		DB::commit();
+
+	// 		$progres = KompetensiProgres::create([
+	// 			'form_id' => $interview->interview_id,
+	// 			'parent_form_id' => $request->form_1_id,
+	// 			'user_id' => $user->user_id,
+	// 			'status' => 'Submitted',
+	// 		]);
+
+	// 		KompetensiTrack::create([
+	// 			'progres_id' => $progres->id,
+	// 			'form_type' => 'intv_pra_asesmen',
+	// 			'activity' => 'Submitted',
+	// 			'activity_time' => Carbon::now(),
+	// 			'description' => 'Asesi mengajukan konsultasi pra asesmen.',
+	// 		]);
+
+	// 		return response()->json([
+	// 			'status' => 201,
+	// 			'message' => 'Pengajuan konsultasi pra asesmen berhasil disimpan.',
+	// 			'data' => $interview
+	// 		], 201);
+	// 	} catch (\Exception $e) {
+	// 		DB::rollBack();
+
+	// 		return response()->json([
+	// 			'status' => 500,
+	// 			'message' => 'Terjadi kesalahan saat menyimpan pengajuan konsultasi.',
+	// 			'error' => $e->getMessage()
+	// 		], 500);
+	// 	}
+	// }
+
 	public function pengajuanKonsultasiPraAsesmen(Request $request)
 	{
 		$user = auth()->user();
@@ -129,8 +258,8 @@ class Form5Controller extends BaseController
 			], 401);
 		}
 
-		// ✅ Cek role_id melalui model UserRole
-		$isAsesi = UserRole::where('user_id', $user->user_id)
+		// Cek role asesi
+		$isAsesi = DaftarUser::where('user_id', $user->user_id)
 			->where('role_id', 1)
 			->exists();
 
@@ -142,31 +271,24 @@ class Form5Controller extends BaseController
 			], 403);
 		}
 
-		// ✅ Validasi input (tambahkan pk_id)
+		// Validasi input
 		$this->validate($request, [
+			'interview_id' => 'required|integer|exists:interview,interview_id',
 			'date' => 'required|date',
 			'time' => 'required',
 			'place' => 'required|string|max:255',
 			'form_1_id' => 'required|integer|exists:form_1,form_1_id',
-			'pk_id' => 'required|integer' // validasi pk_id
+			'pk_id' => 'required|integer'
 		]);
-
-		// Cek apakah user sudah memiliki pengajuan untuk form_1_id ini
-		$existing = InterviewModel::where('user_id', $user->user_id)
-			->where('form_1_id', $request->form_1_id)
-			->exists();
-
-		if ($existing) {
-			return response()->json([
-				'status' => 409,
-				'message' => 'Pengajuan untuk form ini sudah ada. Anda tidak dapat mengajukan dua kali.'
-			]);
-		}
 
 		DB::beginTransaction();
 
 		try {
-			// Ambil data bidang / form_1
+
+			// Ambil interview lama
+			$interview = InterviewModel::findOrFail($request->interview_id);
+
+			// Cek form_1
 			$bidang = BidangModel::find($request->form_1_id);
 			if (!$bidang) {
 				return response()->json([
@@ -175,7 +297,7 @@ class Form5Controller extends BaseController
 				], 404);
 			}
 
-			// ✅ Validasi kecocokan pk_id dari form_1 dengan request
+			// Cek kesesuaian pk_id
 			if ($bidang->pk_id != $request->pk_id) {
 				return response()->json([
 					'status' => 400,
@@ -183,68 +305,67 @@ class Form5Controller extends BaseController
 				], 400);
 			}
 
-			// Ambil data asesor
+			// Ambil asesor sesuai no_reg form_1
 			$asesorData = DataAsesorModel::where('no_reg', $bidang->no_reg)->first();
 			if (!$asesorData) {
 				return response()->json([
 					'status' => 404,
-					'message' => 'Data asesor dengan no_reg tersebut tidak ditemukan.'
+					'message' => 'Data asesor tidak ditemukan.'
 				]);
 			}
 
 			$userAsesor = DaftarUser::where('user_id', $asesorData->user_id)->first();
-			$asesorName = $userAsesor ? $userAsesor->nama : 'Nama tidak tersedia';
+			$asesorName = $userAsesor ? $userAsesor->nama : $interview->asesor_name;
 
-			// Simpan ke InterviewModel
-			$interview = new InterviewModel();
-			$interview->asesi_name = $user->nama;
-			$interview->user_id = $user->user_id;
-			$interview->date = $request->date;
-			$interview->time = $request->time;
-			$interview->place = $request->place;
-			$interview->form_1_id = $request->form_1_id;
-			$interview->asesor_id = $asesorData->user_id;
-			$interview->asesor_name = $asesorName;
-			$interview->status = 'Waiting';
-			$interview->pk_id = $request->pk_id;
+			// 🔄 Update menggunakan fungsi updateInterview()
+			$updatedInterview = $this->formService->updateInterview(
+				$request->interview_id,
+				$user->nama,                       // asesiName
+				$asesorName,                       // asesorName
+				$user->user_id,                    // userId
+				$request->date,                    // date
+				$request->time,                    // time
+				$request->place,                   // place
+				$request->form_1_id,               // form1Id
+				$asesorData->user_id,              // asesorId
+				'Waiting'                          // status
+			);
 
-			$interview->save();
-
+			// Kirim notifikasi ke asesor
 			if ($userAsesor) {
 				$this->kirimNotifikasiKeAsesor($userAsesor, $request->form_1_id);
 			}
+
 			DB::commit();
 
-			$progres = KompetensiProgres::create([
-				'form_id' => $interview->interview_id,
-				'parent_form_id' => $request->form_1_id,
-				'user_id' => $user->user_id,
-				'status' => 'Submitted',
-			]);
+			// Buat progress baru
+			$this->updateProgresDanTrack(
+				$updatedInterview->interview_id,      // formId
+				'intv_pra_asesmen',                   // formType
+				'Updated',                            // status
+				$user->user_id,                       // userId
+				'Asesi memperbarui data konsultasi pra asesmen.' // description
+			);
 
-			KompetensiTrack::create([
-				'progres_id' => $progres->id,
-				'form_type' => 'intv_pra_asesmen',
-				'activity' => 'Submitted',
-				'activity_time' => Carbon::now(),
-				'description' => 'Asesi mengajukan konsultasi pra asesmen.',
-			]);
 
 			return response()->json([
-				'status' => 201,
-				'message' => 'Pengajuan konsultasi pra asesmen berhasil disimpan.',
-				'data' => $interview
-			], 201);
+				'status' => 200,
+				'message' => 'Pengajuan konsultasi pra asesmen berhasil diperbarui.',
+				'data' => $updatedInterview
+			], 200);
+
 		} catch (\Exception $e) {
+
 			DB::rollBack();
 
 			return response()->json([
 				'status' => 500,
-				'message' => 'Terjadi kesalahan saat menyimpan pengajuan konsultasi.',
+				'message' => 'Terjadi kesalahan saat memperbarui konsultasi.',
 				'error' => $e->getMessage()
 			], 500);
 		}
 	}
+
 
 	public function getJadwalInterviewGabungan(Request $request)
 	{
