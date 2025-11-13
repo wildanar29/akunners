@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\KompetensiProgres;
 use App\Models\KompetensiTrack;
 use App\Models\BidangModel;
+use App\Models\DaftarUser;
 
 class ProgressController extends Controller
 {
@@ -94,7 +95,7 @@ class ProgressController extends Controller
                 ], 400);
             }
 
-            // 🔹 Ambil data bidang + user (email, no_telp)
+            // 🔹 Ambil data form + relasi user asesi
             $item = BidangModel::with(['asesiUser:user_id,email,no_telp'])
                 ->where('pk_id', $pk_id)
                 ->where('asesi_id', $asesi_id)
@@ -117,11 +118,25 @@ class ProgressController extends Controller
                 ], 200);
             }
 
-            // 🔹 Tambahkan data kontak asesi jika ada
-            $email = $item->asesiUser->email ?? null;
-            $no_telp = $item->asesiUser->no_telp ?? null;
+            // ================================================================
+            // 🔹 Ambil kontak A S E S I dari DaftarUser
+            // ================================================================
+            $asesiEmail = $item->asesiUser->email ?? null;
+            $asesiNoTelp = $item->asesiUser->no_telp ?? null;
 
+            // ================================================================
+            // 🔹 Ambil kontak A S E S O R dari DaftarUser
+            // ================================================================
+            $asesorUser = DaftarUser::where('user_id', $item->asesor_id)
+                ->select('user_id', 'email', 'no_telp')
+                ->first();
+
+            $asesorEmail = $asesorUser->email ?? null;
+            $asesorNoTelp = $asesorUser->no_telp ?? null;
+
+            // ================================================================
             // 🔹 Ambil progres utama
+            // ================================================================
             $progresUtama = \App\Models\KompetensiProgres::where('form_id', $item->form_1_id)
                 ->select('id', 'form_id', 'status', 'user_id')
                 ->first();
@@ -130,7 +145,7 @@ class ProgressController extends Controller
                 $item->status_utama = $progresUtama->status;
                 $item->pk_id = $pk_id;
 
-                // Ambil tracks untuk form utama
+                // Tracks progres utama
                 $tracksUtama = \DB::table('kompetensi_tracks')
                     ->where('progres_id', $progresUtama->id)
                     ->orderBy('activity_time', 'asc')
@@ -143,7 +158,9 @@ class ProgressController extends Controller
                 $item->pk_id = $pk_id;
             }
 
-            // 🔹 Ambil progres anak + tracks
+            // ================================================================
+            // 🔹 Ambil progres anak
+            // ================================================================
             $progres = \App\Models\KompetensiProgres::where('parent_form_id', $item->form_1_id)
                 ->select('id', 'form_id', 'status', 'user_id', 'parent_form_id')
                 ->get()
@@ -161,17 +178,25 @@ class ProgressController extends Controller
 
             $item->progres = $progres;
 
-            // ✅ Tambahkan ke data output
+            // ================================================================
+            // 🔹 Response
+            // ================================================================
             $responseData = [
                 'form_1_id' => $item->form_1_id,
                 'asesi_name' => $item->asesi_name,
                 'asesi_date' => $item->asesi_date,
                 'asesi_id' => $item->asesi_id,
+
+                'asesi_email' => $asesiEmail,
+                'asesi_no_telp' => $asesiNoTelp,
+
                 'asesor_name' => $item->asesor_name,
                 'asesor_id' => $item->asesor_id,
+
+                'asesor_email' => $asesorEmail,
+                'asesor_no_telp' => $asesorNoTelp,
+
                 'pk_id' => $pk_id,
-                'email' => $email,
-                'no_telp' => $no_telp,
                 'status_utama' => $item->status_utama,
                 'tracks_utama' => $item->tracks_utama,
                 'progres' => $item->progres,
@@ -182,6 +207,7 @@ class ProgressController extends Controller
                 'message' => 'Data progres berhasil diambil.',
                 'data' => $responseData,
             ]);
+
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'ERROR',
@@ -190,6 +216,7 @@ class ProgressController extends Controller
             ], 500);
         }
     }
+
 
 
 
