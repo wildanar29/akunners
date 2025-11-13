@@ -249,7 +249,7 @@ class Form5Controller extends BaseController
 	public function pengajuanKonsultasiPraAsesmen(Request $request)
 	{
 		$user = auth()->user();
-
+		Log::info('User pengajuanKonsultasiPraAsesmen:', ['user_id' => $user?->user_id]);
 		if (!$user) {
 			return response()->json([
 				'status' => 401,
@@ -258,9 +258,10 @@ class Form5Controller extends BaseController
 			], 401);
 		}
 
+		
 		// Cek role asesi
-		$isAsesi = DaftarUser::where('user_id', $user->user_id)
-			->where('role_id', 1)
+		$isAsesi = UserRole::where('user_id', $user->user_id)
+			->where('role_id', 1) // role_id = 1 → Asesi
 			->exists();
 
 		if (!$isAsesi) {
