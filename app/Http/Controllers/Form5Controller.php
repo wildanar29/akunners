@@ -647,25 +647,35 @@ class Form5Controller extends BaseController
 			->update($updateData);
 
 		// Update or Create KompetensiProgres
-		$progres = KompetensiProgres::firstOrCreate(
-			['form_id' => $request->interview_id],
-			['status' => 'Approved']
-		);
-		$progres->status = 'Approved';
-		$progres->save();
+		// $progres = KompetensiProgres::firstOrCreate(
+		// 	['form_id' => $request->interview_id],
+		// 	['status' => 'Approved']
+		// );
+		// $progres->status = 'Approved';
+		// $progres->save();
 
-		// Tambahkan track untuk interview approval
-		KompetensiTrack::create([
-			'progres_id' => $progres->id,
-			'form_type' => 'intv_pra_asesmen',
-			'activity' => 'Approved',
-			'activity_time' => Carbon::now(),
-			'description' => 'Pengajuan konsultasi pra asesmen disetujui oleh Asesor.',
-		]);
+		// // Tambahkan track untuk interview approval
+		// KompetensiTrack::create([
+		// 	'progres_id' => $progres->id,
+		// 	'form_type' => 'intv_pra_asesmen',
+		// 	'activity' => 'Approved',
+		// 	'activity_time' => Carbon::now(),
+		// 	'description' => 'Pengajuan konsultasi pra asesmen disetujui oleh Asesor.',
+		// ]);
+
+		$this->formService->updateProgresDanTrack(
+			formId: $request->interview_id,
+			formType: 'intv_pra_asesmen',
+			status: 'Approved',
+			userId: $interview->user_id, // atau masukkan user_id yang sesuai
+			description: 'Pengajuan konsultasi pra asesmen disetujui oleh Asesor.'
+		);
+
+		
 
 		// Proses Form5
-		$form5Result = $this->initForm5($user?->user_id, $request->asesor_id, $interview->pk_id ?? null);
-
+		$form5Result = $this->initForm5($interview->user_id, $request->asesor_id, $interview->pk_id ?? null);
+		Log::info('Hasil inisialisasi Form5:', ['result' => $form5Result]);
 		if (!$form5Result || !isset($form5Result['form5'])) {
 			return response()->json([
 				'status' => 'FAILED',
