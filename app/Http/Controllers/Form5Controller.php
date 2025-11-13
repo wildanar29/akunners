@@ -274,7 +274,7 @@ class Form5Controller extends BaseController
 
 		// Validasi input
 		$this->validate($request, [
-			'interview_id' => 'required|integer|exists:interview,interview_id',
+			'interview_id' => 'required|integer|exists:schedule_interview,interview_id',
 			'date' => 'required|date',
 			'time' => 'required',
 			'place' => 'required|string|max:255',
