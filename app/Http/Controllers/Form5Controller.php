@@ -345,7 +345,7 @@ class Form5Controller extends BaseController
 				'intv_pra_asesmen',                   // formType
 				'Submitted',                            // status
 				$bidang->asesi_id,                       // userId
-				'Asesi memperbarui data konsultasi pra asesmen.' // description
+				'Asesi telah mengajukan jadwal konsultasi pra asesmen.' // description
 			);
 
 
