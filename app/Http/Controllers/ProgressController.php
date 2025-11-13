@@ -95,8 +95,10 @@ class ProgressController extends Controller
                 ], 400);
             }
 
+            // ================================================================
             // 🔹 Ambil data form + relasi user asesi
-            $item = BidangModel::with(['asesiUser:user_id,email,no_telp'])
+            // ================================================================
+            $item = BidangModel::with(['asesiUser:user_id,email,no_telp,foto'])
                 ->where('pk_id', $pk_id)
                 ->where('asesi_id', $asesi_id)
                 ->select([
@@ -119,20 +121,26 @@ class ProgressController extends Controller
             }
 
             // ================================================================
-            // 🔹 Ambil kontak A S E S I dari DaftarUser
+            // 🔹 Data Kontak A S E S I
             // ================================================================
             $asesiEmail = $item->asesiUser->email ?? null;
             $asesiNoTelp = $item->asesiUser->no_telp ?? null;
+            $asesiFoto = $item->asesiUser && $item->asesiUser->foto
+                ? url('storage/foto/' . $item->asesiUser->foto)
+                : null;
 
             // ================================================================
-            // 🔹 Ambil kontak A S E S O R dari DaftarUser
+            // 🔹 Data Kontak A S E S O R
             // ================================================================
             $asesorUser = DaftarUser::where('user_id', $item->asesor_id)
-                ->select('user_id', 'email', 'no_telp')
+                ->select('user_id', 'email', 'no_telp', 'foto')
                 ->first();
 
             $asesorEmail = $asesorUser->email ?? null;
             $asesorNoTelp = $asesorUser->no_telp ?? null;
+            $asesorFoto = $asesorUser && $asesorUser->foto
+                ? url('storage/foto/' . $asesorUser->foto)
+                : null;
 
             // ================================================================
             // 🔹 Ambil progres utama
@@ -145,7 +153,6 @@ class ProgressController extends Controller
                 $item->status_utama = $progresUtama->status;
                 $item->pk_id = $pk_id;
 
-                // Tracks progres utama
                 $tracksUtama = \DB::table('kompetensi_tracks')
                     ->where('progres_id', $progresUtama->id)
                     ->orderBy('activity_time', 'asc')
@@ -179,22 +186,25 @@ class ProgressController extends Controller
             $item->progres = $progres;
 
             // ================================================================
-            // 🔹 Response
+            // 🔹 Response Final
             // ================================================================
             $responseData = [
                 'form_1_id' => $item->form_1_id,
-                'asesi_name' => $item->asesi_name,
-                'asesi_date' => $item->asesi_date,
-                'asesi_id' => $item->asesi_id,
 
+                // AS ESI
+                'asesi_name' => $item->asesi_name,
+                'asesi_id'   => $item->asesi_id,
+                'asesi_date' => $item->asesi_date,
                 'asesi_email' => $asesiEmail,
                 'asesi_no_telp' => $asesiNoTelp,
+                'asesi_foto' => $asesiFoto,
 
+                // AS ESOR
                 'asesor_name' => $item->asesor_name,
-                'asesor_id' => $item->asesor_id,
-
+                'asesor_id'   => $item->asesor_id,
                 'asesor_email' => $asesorEmail,
                 'asesor_no_telp' => $asesorNoTelp,
+                'asesor_foto' => $asesorFoto,
 
                 'pk_id' => $pk_id,
                 'status_utama' => $item->status_utama,
@@ -216,6 +226,7 @@ class ProgressController extends Controller
             ], 500);
         }
     }
+
 
 
 
