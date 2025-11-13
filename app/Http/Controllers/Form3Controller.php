@@ -9,6 +9,7 @@ use App\Models\TypeForm3_C;
 use App\Models\TypeForm3_A;
 use App\Models\TypeForm3_D;
 use App\Models\PenilaianForm2Model;
+use App\Models\InterviewModel;
 use App\Models\Form3Model;
 use App\Models\UserRole;
 use App\Models\DaftarUser;
@@ -907,7 +908,7 @@ class Form3Controller extends BaseController
                     'form_3',
                     'Submitted',
                     $user->user_id,
-                    'Form 3 diperbarui oleh asesi.'
+                    'Form 3 telah disetujui oleh asesi.'
                 );
             } else {
                 // Jika belum ada → buat progres baru dan track-nya
@@ -1001,6 +1002,7 @@ class Form3Controller extends BaseController
             ], 401);
         }
 
+        // Pastikan user adalah asesor
         $hasRoleAsesor = UserRole::where('user_id', $user->user_id)
             ->where('role_id', 2)
             ->exists();
@@ -1013,18 +1015,16 @@ class Form3Controller extends BaseController
             ], 403);
         }
 
-        // Mulai transaksi
-        DB::beginTransaction();
-
         try {
+            // Jalankan seluruh proses dalam 1 transaksi atomik
+            DB::beginTransaction();
+
+            /** ===============================
+             * 1️⃣ Validasi dan Update Form 3
+             * =============================== */
             $form3 = Form3Model::find($form3_id);
             if (!$form3) {
-                DB::rollBack();
-                return response()->json([
-                    'status' => 404,
-                    'message' => 'Data Form3 tidak ditemukan.',
-                    'data' => null
-                ], 404);
+                throw new \Exception('Data Form3 tidak ditemukan.');
             }
 
             $asesor = DataAsesorModel::where('user_id', $user->user_id)
@@ -1032,12 +1032,7 @@ class Form3Controller extends BaseController
                 ->first();
 
             if (!$asesor) {
-                DB::rollBack();
-                return response()->json([
-                    'status' => 404,
-                    'message' => 'Data no_reg asesor tidak ditemukan.',
-                    'data' => null
-                ], 404);
+                throw new \Exception('Data no_reg asesor tidak ditemukan.');
             }
 
             $form3->asesor_name = $user->nama;
@@ -1045,6 +1040,9 @@ class Form3Controller extends BaseController
             $form3->no_reg = $asesor->no_reg;
             $form3->save();
 
+            /** =======================================
+             * 2️⃣ Update Progres dan buat Track
+             * ======================================= */
             $progres = KompetensiProgres::where('form_id', $form3->form_3_id)->first();
             if ($progres) {
                 $progres->status = 'Completed';
@@ -1061,10 +1059,70 @@ class Form3Controller extends BaseController
                 ]);
             }
 
-            // Commit jika semua berhasil
+            /** =======================================
+             * 3️⃣ Ambil data form 1 terkait dan validasi
+             * ======================================= */
+            $form_1_id = $this->formService->getParentFormIdByFormIdAndAsesiId(
+                $form3->form_3_id,
+                $form3->user_id
+            );
+
+            $form1Data = BidangModel::where('form_1_id', $form_1_id)->first();
+            if (!$form1Data) {
+                throw new \Exception('Data form 1 tidak ditemukan.');
+            }
+
+            /** =======================================
+             * 4️⃣ Cek apakah interview sudah ada
+             * ======================================= */
+            $existingInterview = InterviewModel::where('user_id', $form1Data->asesi_id)
+                ->where('pk_id', $form1Data->pk_id)
+                ->where('form_1_id', $form_1_id)
+                ->first();
+
+            if ($existingInterview) {
+                Log::warning("Interview sudah ada untuk asesi_id={$form1Data->asesi_id}, pk_id={$form1Data->pk_id}, form_1_id={$form_1_id}");
+                throw new \Exception('Interview untuk kombinasi Asesi, PK, dan Form 1 ini sudah ada.');
+            }
+
+            /** =======================================
+             * 5️⃣ Buat Interview baru
+             * ======================================= */
+            $interview = new InterviewModel();
+            $interview->asesi_name = $form1Data->asesi_name;
+            $interview->user_id = $form1Data->asesi_id;
+            $interview->date = null;
+            $interview->time = null;
+            $interview->place = null;
+            $interview->form_1_id = $form_1_id;
+            $interview->asesor_id = $form1Data->asesor_id;
+            $interview->asesor_name = $form1Data->asesor_name;
+            $interview->status = 'InAssessment';
+            $interview->pk_id = $form1Data->pk_id;
+            $interview->save();
+
+            Log::info("✅ Interview baru dibuat: " . json_encode($interview->toArray()));
+
+            /** =======================================
+             * 6️⃣ Buat progres & track interview
+             * ======================================= */
+            $this->formService->createProgresDanTrack(
+                $interview->interview_id,
+                'intv_pra_asesmen',
+                'InAssessment',
+                $form1Data->asesi_id,
+                $form1Data->form_1_id,
+                'Konsultasi Pra asesmen sudah dapat diajukan.'
+            );
+
+            /** =======================================
+             * 7️⃣ Commit transaksi (baru kirim notifikasi setelah ini)
+             * ======================================= */
             DB::commit();
 
-            // ✅ Kirim notifikasi ke Asesi
+            /** =======================================
+             * 8️⃣ Kirim notifikasi ke Asesi
+             * ======================================= */
             $userAsesi = DaftarUser::where('user_id', $form3->user_id)->first();
             if ($userAsesi) {
                 $title = 'Form 3 Disetujui';
@@ -1074,13 +1132,16 @@ class Form3Controller extends BaseController
 
             return response()->json([
                 'status' => 200,
-                'message' => 'Form3 berhasil diperbarui dan progres ditandai Completed.',
-                'data' => $form3
+                'message' => 'Form3 berhasil diperbarui dan semua proses telah disimpan dengan aman.',
+                'data' => [
+                    'form3' => $form3,
+                    'interview' => $interview
+                ]
             ]);
         } catch (\Exception $e) {
-            // Rollback jika ada error
             DB::rollBack();
 
+            Log::error("❌ Gagal memperbarui Form3: {$e->getMessage()}");
             return response()->json([
                 'status' => 500,
                 'message' => 'Terjadi kesalahan saat memperbarui data.',
@@ -1088,6 +1149,8 @@ class Form3Controller extends BaseController
             ], 500);
         }
     }
+
+
 
 
 }

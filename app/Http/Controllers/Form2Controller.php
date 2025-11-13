@@ -459,7 +459,7 @@ class Form2Controller extends Controller
                     'InAssessment',
                     $form1Data->asesi_id,
                     $form1Data->form_1_id,
-                    'Form 3 sudah dapat diisi.'
+                    'Form 3 sudah dapat disetujui oleh Asesi.'
                 );
             } else {
                 Log::info("Form 3 sudah ada, tidak membuat ulang.");

@@ -83,8 +83,8 @@ class ProgressController extends Controller
     public function getProgresByAsesi(Request $request)
     {
         try {
-            $asesi_id = $request->query('asesi_id'); 
-            $pk_id    = $request->query('pk_id'); 
+            $asesi_id = $request->query('asesi_id');
+            $pk_id    = $request->query('pk_id');
 
             if (!$asesi_id || !$pk_id) {
                 return response()->json([
@@ -94,8 +94,9 @@ class ProgressController extends Controller
                 ], 400);
             }
 
-            // Ambil satu data bidang
-            $item = BidangModel::where('pk_id', $pk_id)
+            // 🔹 Ambil data bidang + user (email, no_telp)
+            $item = BidangModel::with(['asesiUser:user_id,email,no_telp'])
+                ->where('pk_id', $pk_id)
                 ->where('asesi_id', $asesi_id)
                 ->select([
                     'form_1_id',
@@ -116,14 +117,18 @@ class ProgressController extends Controller
                 ], 200);
             }
 
-            // Ambil progres utama (status + tracks)
+            // 🔹 Tambahkan data kontak asesi jika ada
+            $email = $item->asesiUser->email ?? null;
+            $no_telp = $item->asesiUser->no_telp ?? null;
+
+            // 🔹 Ambil progres utama
             $progresUtama = \App\Models\KompetensiProgres::where('form_id', $item->form_1_id)
                 ->select('id', 'form_id', 'status', 'user_id')
                 ->first();
 
             if ($progresUtama) {
                 $item->status_utama = $progresUtama->status;
-                $item->pk_id = $pk_id; // tambahkan pk_id agar konsisten
+                $item->pk_id = $pk_id;
 
                 // Ambil tracks untuk form utama
                 $tracksUtama = \DB::table('kompetensi_tracks')
@@ -138,36 +143,43 @@ class ProgressController extends Controller
                 $item->pk_id = $pk_id;
             }
 
-            // Ambil progres anak + tracks
+            // 🔹 Ambil progres anak + tracks
             $progres = \App\Models\KompetensiProgres::where('parent_form_id', $item->form_1_id)
                 ->select('id', 'form_id', 'status', 'user_id', 'parent_form_id')
                 ->get()
                 ->map(function ($prog) use ($pk_id) {
-                    // Tambahkan pk_id
                     $prog->pk_id = $pk_id;
+                    $prog->form_type = \App\Models\KompetensiTrack::where('progres_id', $prog->id)->value('form_type');
 
-                    // Ambil form_type
-                    $form_type = \App\Models\KompetensiTrack::where('progres_id', $prog->id)
-                        ->value('form_type');
-                    $prog->form_type = $form_type;
-
-                    // Ambil tracks untuk progres ini
-                    $tracks = \DB::table('kompetensi_tracks')
+                    $prog->tracks = \DB::table('kompetensi_tracks')
                         ->where('progres_id', $prog->id)
                         ->orderBy('activity_time', 'asc')
                         ->get();
-
-                    $prog->tracks = $tracks;
 
                     return $prog;
                 });
 
             $item->progres = $progres;
 
+            // ✅ Tambahkan ke data output
+            $responseData = [
+                'form_1_id' => $item->form_1_id,
+                'asesi_name' => $item->asesi_name,
+                'asesi_id' => $item->asesi_id,
+                'asesor_name' => $item->asesor_name,
+                'asesor_id' => $item->asesor_id,
+                'pk_id' => $pk_id,
+                'email' => $email,
+                'no_telp' => $no_telp,
+                'status_utama' => $item->status_utama,
+                'tracks_utama' => $item->tracks_utama,
+                'progres' => $item->progres,
+            ];
+
             return response()->json([
                 'status' => 'SUCCESS',
                 'message' => 'Data progres berhasil diambil.',
-                'data' => $item,
+                'data' => $responseData,
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -177,6 +189,7 @@ class ProgressController extends Controller
             ], 500);
         }
     }
+
 
 
 

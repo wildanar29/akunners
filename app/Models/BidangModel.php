@@ -100,5 +100,9 @@ class BidangModel extends Model
         return $this->hasOne(PkProgressModel::class, 'form_1_id', 'form_1_id');
     }
 
+    public function asesiUser()
+    {
+        return $this->belongsTo(\App\Models\DaftarUser::class, 'asesi_id', 'user_id');
+    }
 
 }  
