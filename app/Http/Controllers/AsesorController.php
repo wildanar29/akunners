@@ -870,30 +870,39 @@ class AsesorController extends Controller
 
 		// ✅ Update status KompetensiProgres menjadi "Approved"
 		$id = $request->form_2_id;
+		$form2 = Form2::find($id);
 		$pk_id = $request->pk_id;
 
-		$progres = KompetensiProgres::where('form_id', $id)->first();
+		$this->formService->updateProgresDanTrack(
+			$id,                // form_id
+			'form_2',           // form_type
+			'Approved',         // status
+			$form2->user_jawab_form_2_id ?? null, // user_id   
+			'Form 2 telah disetujui dan dinilai oleh asesor.' // description
+		);
 
-		if ($progres) {
-			$progres->update([
-				'status' => 'Approved',
-				'updated_at' => Carbon::now(),
-			]);
+		// $progres = KompetensiProgres::where('form_id', $id)->first();
 
-			Log::info('Status KompetensiProgres berhasil diupdate ke Approved', [
-				'id' => $id,
-				'pk_id' => $pk_id ?? null
-			]);
+		// if ($progres) {
+		// 	$progres->update([
+		// 		'status' => 'Approved',
+		// 		'updated_at' => Carbon::now(),
+		// 	]);
 
-			// Tambahkan ke KompetensiTrack
-			KompetensiTrack::create([
-				'progres_id'    => $progres->id,
-				'form_type'     => 'form_2',
-				'activity'      => 'Approved',
-				'activity_time' => Carbon::now(),
-				'description'   => 'Form 2 telah disetujui dan dinilai oleh asesor.',
-			]);
-		}
+		// 	Log::info('Status KompetensiProgres berhasil diupdate ke Approved', [
+		// 		'id' => $id,
+		// 		'pk_id' => $pk_id ?? null
+		// 	]);
+
+		// 	// Tambahkan ke KompetensiTrack
+		// 	KompetensiTrack::create([
+		// 		'progres_id'    => $progres->id,
+		// 		'form_type'     => 'form_2',
+		// 		'activity'      => 'Approved',
+		// 		'activity_time' => Carbon::now(),
+		// 		'description'   => 'Form 2 telah disetujui dan dinilai oleh asesor.',
+		// 	]);
+		// }
 
 		$this->kirimNotifikasiKeAsesiSetelahDinilai($progres);
 
