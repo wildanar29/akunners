@@ -663,13 +663,17 @@ class Form5Controller extends BaseController
 		// 	'description' => 'Pengajuan konsultasi pra asesmen disetujui oleh Asesor.',
 		// ]);
 
-		$this->formService->updateProgresDanTrack(
+		Log::info('Memperbarui progres dan track untuk interview_id: ' . $request->interview_id);
+		Log::info($interview->user_id);
+		$test = $this->formService->updateProgresDanTrack(
 			formId: $request->interview_id,
 			formType: 'intv_pra_asesmen',
 			status: 'Approved',
 			userId: $interview->user_id, // atau masukkan user_id yang sesuai
 			description: 'Pengajuan konsultasi pra asesmen disetujui oleh Asesor.'
 		);
+
+		Log::info('Hasil updateProgresDanTrack:', ['result' => $test]);
 
 		
 
@@ -685,14 +689,14 @@ class Form5Controller extends BaseController
 
 		$form5 = $form5Result['form5'];
 
-		// Hanya proses jika Form5 baru dibuat
+		// // Hanya proses jika Form5 baru dibuat
 		if (!$form5Result['exists']) {
 			$this->initJawabanKosongForm5($form5->form_5_id, $interview->pk_id ?? null);
 			$this->kirimNotifikasiApprovalKePengaju($interview);
 
 			$newProgres = KompetensiProgres::create([
 				'form_id' => $form5->form_5_id,
-				'parent_form_id' => $progres->parent_form_id ?? null,
+				'parent_form_id' => $interview->form_1_id ?? null,
 				'user_id' => $form5->asesi_id,
 				'status' => 'InAssessment',
 			]);
