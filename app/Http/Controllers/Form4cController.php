@@ -140,7 +140,7 @@ class Form4cController extends BaseController
                     throw new \Exception("Choice data not found for question_choice_id: {$item['question_choice_id']}");
                 }
 
-                // Simpan
+                // Simpan jawaban
                 JawabanForm4c::create([
                     'form_1_id' => $request->form_1_id,
                     'user_id' => $request->asesi_id,
@@ -152,18 +152,23 @@ class Form4cController extends BaseController
                 ]);
             }
 
-            
-
             DB::commit();
 
+            // 🔥 Jika ada duplikat, tetap kembalikan skor (tidak mengubah perilaku sebelumnya)
             if (!empty($duplikatIds)) {
+
+                // Hitung skor setelah commit
+                $summary = $this->hitungNilai4c($request->form_1_id, $request->asesi_id);
+
                 return response()->json([
                     'status' => false,
                     'message' => 'Beberapa pertanyaan sudah pernah dijawab dan tidak disimpan ulang.',
                     'duplikat_pertanyaan_ids' => $duplikatIds,
+                    'result' => $summary,  // ← Tambahan
                 ], 409);
             }
 
+            // Update progres dan kirim notifikasi
             $form_4c_id = $this->formService->getFormIdsByParentFormIdAndType($request->form_1_id, 'Form_4c');
 
             $this->formService->updateProgresDanTrack(
@@ -176,16 +181,19 @@ class Form4cController extends BaseController
 
             $form1 = $this->formService->getParentDataByFormId($request->form_1_id);
 
-            // Kirim notifikasi ke asesor
             $this->formService->kirimNotifikasiKeUser(
                 DaftarUser::find($form1->asesor_id),
                 'Form 4C Submitted',
                 'Form 4C telah di-submit oleh Asesi.'
             );
 
+            // 🔥 Tambahan: Hitung skor setelah semua selesai
+            $summary = $this->hitungNilai4c($request->form_1_id, $request->asesi_id);
+
             return response()->json([
                 'status' => true,
                 'message' => 'Semua jawaban berhasil disimpan.',
+                'data' => $summary,  // ← Tambahan
             ]);
 
         } catch (\Exception $e) {
@@ -198,6 +206,30 @@ class Form4cController extends BaseController
             ], 500);
         }
     }
+
+
+    /**
+     * 🔥 Fungsi tambahan untuk menghitung skor 4C
+     * Tidak mengubah query existing
+     */
+    private function hitungNilai4c($form1Id, $userId)
+    {
+        $jawaban = \App\Models\JawabanForm4c::where('form_1_id', $form1Id)
+            ->where('user_id', $userId)
+            ->get();
+
+        $total = $jawaban->count();
+        $benar = $jawaban->where('is_correct', 1)->count();
+
+        return [
+            'total_jawaban' => $total,
+            'jawaban_benar' => $benar,
+            'jawaban_salah' => $total - $benar,
+            'skor' => $benar, // Jika setiap jawaban benar = 1 poin
+            'persentase' => $total > 0 ? round(($benar / $total) * 100, 2) . '' : '0',
+        ];
+    }
+
 
     public function getSoalDanJawabanForm4c(Request $request)
     {
