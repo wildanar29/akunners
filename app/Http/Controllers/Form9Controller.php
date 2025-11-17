@@ -214,7 +214,6 @@ class Form9Controller extends BaseController
     {
         /**
          * 🔥 NORMALISASI INPUT SUBJECT MENJADI LOWERCASE
-         * contoh: Asesi → asesi, ASESoR → asesor
          */
         if ($request->has('subject')) {
             $request->merge([
@@ -251,29 +250,40 @@ class Form9Controller extends BaseController
         $subject = $data['subject'];
 
         try {
-            // 🔍 Cek duplikasi jawaban subjek yang sama
+
+            // 🔍 CEK apakah subjek ini sudah mengisi sebelumnya
             $alreadyFilled = \DB::table('form9_answers as a')
                 ->join('form9_questions as q', 'a.question_id', '=', 'q.question_id')
                 ->where('a.form_9_id', $form9Id)
                 ->where('q.subject', $subject)
                 ->exists();
 
+            /**
+             * 🔥 Jika sudah ada → HAPUS jawaban lama (update mode)
+             */
             if ($alreadyFilled) {
-                return response()->json([
-                    'success' => false,
-                    'message' => ucfirst($subject) . ' sudah mengisi Form 9 sebelumnya.'
-                ], 409);
+                \DB::table('form9_answers as a')
+                    ->join('form9_questions as q', 'a.question_id', '=', 'q.question_id')
+                    ->where('a.form_9_id', $form9Id)
+                    ->where('q.subject', $subject)
+                    ->delete();
             }
 
-            // 💾 Simpan jawaban
+            /**
+             * 💾 INSERT jawaban baru (baik insert awal atau update)
+             */
             $this->processAnswersBySubject($form9Id, $data['answers'], $subject);
 
-            // 🔔 Update status atau kirim notifikasi
+            /**
+             * 🔔 Trigger event/notifikasi setelah simpan
+             */
             $this->afterAnswerSaved($form9Id, $subject);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Jawaban berhasil disimpan'
+                'message' => $alreadyFilled
+                    ? 'Jawaban berhasil diperbarui'
+                    : 'Jawaban berhasil disimpan'
             ], 200);
 
         } catch (\Exception $e) {
