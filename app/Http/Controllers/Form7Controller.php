@@ -167,13 +167,15 @@ class Form7Controller extends BaseController
                     $iuk->soalForm7->each(function ($soal) {
                         if ($soal->jawabanForm7 && $soal->jawabanForm7->count() > 0) {
                             // Simpan sebagai single object
-                            $soal->jawabanForm7 = $soal->jawabanForm7->first();
+                            $soal->jawaban_form_7 = $soal->jawabanForm7->first();
                         } else {
-                            $soal->jawabanForm7 = null;
+                            $soal->jawaban_form_7 = null;
                         }
 
                         // 🔥 Hapus relasi aslinya agar tidak muncul lagi di JSON
-                        $soal->unsetRelation('jawabanForm7');
+                        $soal->setRelation('jawabanForm7', null); // hapus relasi lama
+                        unset($soal->jawabanForm7);              // hapus output JSON lama
+
                     });
                 });
             });

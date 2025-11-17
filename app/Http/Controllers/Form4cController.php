@@ -248,11 +248,12 @@ class Form4cController extends BaseController
             ], 422);
         }
 
-        $groupNo = $request->input('group_no');
-        $form1Id = $request->input('form_1_id');
-        $userId = $request->input('user_id');
+        $pkId      = $request->input('pk_id');
+        $groupNo   = $request->input('group_no');
+        $form1Id   = $request->input('form_1_id');
+        $userId    = $request->input('user_id');
 
-        // Ambil data IUK beserta pertanyaan Form 4C dan question + pilihan
+        // Ambil IUK + pertanyaan
         $iukList = \App\Models\IukModel::whereRaw('FIND_IN_SET(?, group_no)', [$groupNo])
             ->orderByRaw('CAST(no_iuk AS UNSIGNED)')
             ->with([
@@ -262,23 +263,21 @@ class Form4cController extends BaseController
                     ]);
                 }
             ])
-            ->where('pk_id', $request->pk_id)
-            // tambahkan iuk_name ke daftar kolom yang diambil
+            ->where('pk_id', $pkId)
             ->get(['iuk_form3_id', 'no_iuk', 'group_no', 'iuk_name']);
 
-        // Ambil jawaban dari user
+        // Ambil jawaban user
         $jawabanMap = \App\Models\JawabanForm4c::where('form_1_id', $form1Id)
             ->where('user_id', $userId)
             ->get()
             ->keyBy('pertanyaan_form4c_id');
 
-        // Susun response
+        // Susun response data
         $data = $iukList->map(function ($iuk) use ($jawabanMap) {
             return [
                 'iuk_form3_id' => $iuk->iuk_form3_id,
                 'no_iuk' => $iuk->no_iuk,
-                'iuk_desc' => $iuk->iuk_name, // ← tambahkan ini
-                // 'group_no' => $iuk->group_no,
+                'iuk_desc' => $iuk->iuk_name,
                 'pertanyaan_form4c' => $iuk->pertanyaanForm4c->map(function ($pertanyaan) use ($jawabanMap) {
                     $jawaban = $jawabanMap->get($pertanyaan->id);
 
@@ -311,12 +310,42 @@ class Form4cController extends BaseController
             ];
         });
 
+        // ============================
+        //   HITUNG SCORE FORM 4C
+        // ============================
+
+        // Hitung total pertanyaan dari hasil iukList
+        $totalPertanyaan = $data->sum(function ($iuk) {
+            return $iuk['pertanyaan_form4c']->count();
+        });
+
+        // Hitung jawaban benar di database
+        $jawabanBenar = $jawabanMap->where('is_correct', 1)->count();
+        $jawabanSalah = $jawabanMap->where('is_correct', 0)->count();
+
+        // Hitung persentase
+        $persentase = $totalPertanyaan > 0
+            ? round(($jawabanBenar / $totalPertanyaan) * 100, 2)
+            : 0;
+
+        // Siapkan score
+        $score = [
+            'total_pertanyaan' => $totalPertanyaan,
+            'jawaban_benar' => $jawabanBenar,
+            'jawaban_salah' => $jawabanSalah,
+            'skor' => $jawabanBenar,
+            'persentase' => $persentase
+        ];
+
+        // RETURN
         return response()->json([
             'status' => true,
             'message' => 'Data soal dan jawaban berhasil diambil',
             'data' => $data,
+            'score' => $score,   // <-- ditambahkan di luar data
         ]);
     }
+
 
 
     public function ApproveForm4cByAsesi(Request $request, $form4cId)
