@@ -53,24 +53,25 @@ class Form9Controller extends BaseController
     public function getQuestionsBySubject(Request $request)
     {
         try {
-            // Ambil input subject dan pk_id
-            $subject = $request->input('subject');
+            // Ambil input subject dan pk_id, lalu normalisasi ke lowercase
+            $subject = strtolower($request->input('subject'));
             $pkId = $request->input('pk_id');
 
             // Query ke model dengan relasi subQuestions
             $questions = Form9Question::with([
-                'subQuestions' => function ($query) {
-                    $query->orderBy('order_no', 'asc');
-                }
-            ])
-            ->when($subject, function ($query, $subject) {
-                $query->where('subject', $subject);
-            })
-            ->when($pkId, function ($query, $pkId) {
-                $query->where('pk_id', $pkId);
-            })
-            ->orderBy('order_no', 'asc')
-            ->get();
+                    'subQuestions' => function ($query) {
+                        $query->orderBy('order_no', 'asc');
+                    }
+                ])
+                ->when($subject, function ($query, $subject) {
+                    // Bandingkan dalam lowercase supaya konsisten
+                    $query->whereRaw('LOWER(subject) = ?', [$subject]);
+                })
+                ->when($pkId, function ($query, $pkId) {
+                    $query->where('pk_id', $pkId);
+                })
+                ->orderBy('order_no', 'asc')
+                ->get();
 
             // Kalau tidak ada hasil
             if ($questions->isEmpty()) {
@@ -89,27 +90,25 @@ class Form9Controller extends BaseController
 
                 return [
                     'question_id' => $q->question_id,
-                    'pk_id' => $q->pk_id,
-                    'section' => $q->section,
+                    'pk_id'       => $q->pk_id,
+                    'section'     => $q->section,
                     'sub_section' => $q->sub_section,
                     'question_text' => $q->question_text,
-                    'criteria' => $q->criteria,
-                    'order_no' => $q->order_no,
-                    'subject' => $q->subject,
-                    'has_sub_questions' => (bool) $hasSub,
+                    'criteria'    => $q->criteria,
+                    'order_no'    => $q->order_no,
+                    'subject'     => $q->subject,
+                    'has_sub_questions' => $hasSub,
 
-                    // ✅ Tambahkan daftar sub_questions agar bisa dikirim di request JSON
                     'sub_questions' => $q->subQuestions->map(function ($sq) {
                         return [
                             'sub_question_id' => $sq->sub_question_id,
-                            'sub_label' => $sq->sub_label,
-                            'order_no' => $sq->order_no,
+                            'sub_label'       => $sq->sub_label,
+                            'order_no'        => $sq->order_no,
                         ];
                     })->values(),
                 ];
             });
 
-            // Response sukses
             return response()->json([
                 'success' => true,
                 'data' => $result
@@ -125,7 +124,6 @@ class Form9Controller extends BaseController
             ], 500);
         }
     }
-
 
 
     public function getQuestionsAndAnswersByFormId($form9Id)
@@ -214,18 +212,28 @@ class Form9Controller extends BaseController
 
     public function saveOrUpdateAnswers(Request $request, $form9Id)
     {
+        /**
+         * 🔥 NORMALISASI INPUT SUBJECT MENJADI LOWERCASE
+         * contoh: Asesi → asesi, ASESoR → asesor
+         */
+        if ($request->has('subject')) {
+            $request->merge([
+                'subject' => strtolower($request->input('subject'))
+            ]);
+        }
+
         $validator = Validator::make($request->all(), [
             'subject' => 'required|string|in:asesor,asesi',
             'answers' => 'required|array',
 
-            // ✅ Validasi untuk pertanyaan utama
+            // Validasi pertanyaan utama
             'answers.*.question_id' => 'required|integer|exists:form9_questions,question_id',
             'answers.*.answer_text' => 'nullable|string',
 
-            // ✅ Tambahan: is_checked khusus untuk asesi (opsional)
+            // Opsional: checkbox khusus asesi
             'answers.*.is_checked' => 'nullable|boolean',
 
-            // ✅ Validasi untuk sub pertanyaan
+            // Validasi sub pertanyaan
             'answers.*.sub_questions' => 'nullable|array',
             'answers.*.sub_questions.*.sub_question_id' => 'required|integer|exists:form9_sub_questions,sub_question_id',
             'answers.*.sub_questions.*.answer_text' => 'nullable|string',
@@ -243,7 +251,7 @@ class Form9Controller extends BaseController
         $subject = $data['subject'];
 
         try {
-            // ✅ Cek apakah subject sudah pernah mengisi Form 9 ini
+            // 🔍 Cek duplikasi jawaban subjek yang sama
             $alreadyFilled = \DB::table('form9_answers as a')
                 ->join('form9_questions as q', 'a.question_id', '=', 'q.question_id')
                 ->where('a.form_9_id', $form9Id)
@@ -254,13 +262,13 @@ class Form9Controller extends BaseController
                 return response()->json([
                     'success' => false,
                     'message' => ucfirst($subject) . ' sudah mengisi Form 9 sebelumnya.'
-                ], 409); // HTTP 409: Conflict
+                ], 409);
             }
 
-            // ✅ Jika belum pernah isi, lanjut proses penyimpanan
+            // 💾 Simpan jawaban
             $this->processAnswersBySubject($form9Id, $data['answers'], $subject);
 
-            // ✅ Setelah simpan, update status & kirim notifikasi
+            // 🔔 Update status atau kirim notifikasi
             $this->afterAnswerSaved($form9Id, $subject);
 
             return response()->json([
