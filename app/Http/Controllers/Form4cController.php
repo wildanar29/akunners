@@ -226,7 +226,7 @@ class Form4cController extends BaseController
             'jawaban_benar' => $benar,
             'jawaban_salah' => $total - $benar,
             'skor' => $benar, // Jika setiap jawaban benar = 1 poin
-            'persentase' => $total > 0 ? round(($benar / $total) * 100, 2) . '' : '0',
+            'nilai' => $total > 0 ? round(($benar / $total) * 100, 2) . '' : '0',
         ];
     }
 
