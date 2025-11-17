@@ -46,7 +46,7 @@ class UsersController extends Controller
 			];
 
 			if (in_array($roleId, [2])) {
-				$rules['no_reg'] = 'required|string';
+				$rules['no_reg'] = 'nullable|string';
 				$rules['valid_from'] = 'required|date';
 				$rules['valid_until'] = 'required|date|after_or_equal:valid_from';
 			}
