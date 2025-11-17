@@ -39,10 +39,11 @@ namespace App\Docs;
  *                 property="data",
  *                 type="object",
  *                 description="Hasil perhitungan nilai Form 4C",
- *                 @OA\Property(property="total_jawaban", type="integer", example=12),
- *                 @OA\Property(property="jawaban_benar", type="integer", example=9),
- *                 @OA\Property(property="jawaban_salah", type="integer", example=3),
- *                 @OA\Property(property="skor", type="integer", example=9)
+ *                 @OA\Property(property="total_jawaban", type="integer", example=21),
+ *                 @OA\Property(property="jawaban_benar", type="integer", example=20),
+ *                 @OA\Property(property="jawaban_salah", type="integer", example=1),
+ *                 @OA\Property(property="skor", type="integer", example=20),
+ *                 @OA\Property(property="persentase", type="string", example="95.24")
  *             )
  *         )
  *     ),
@@ -62,10 +63,11 @@ namespace App\Docs;
  *                 property="result",
  *                 type="object",
  *                 description="Penilaian meskipun sebagian jawaban duplikat",
- *                 @OA\Property(property="total_jawaban", type="integer", example=12),
- *                 @OA\Property(property="jawaban_benar", type="integer", example=9),
- *                 @OA\Property(property="jawaban_salah", type="integer", example=3),
- *                 @OA\Property(property="skor", type="integer", example=9)
+ *                 @OA\Property(property="total_jawaban", type="integer", example=21),
+ *                 @OA\Property(property="jawaban_benar", type="integer", example=20),
+ *                 @OA\Property(property="jawaban_salah", type="integer", example=1),
+ *                 @OA\Property(property="skor", type="integer", example=20),
+ *                 @OA\Property(property="persentase", type="string", example="95.24")
  *             )
  *         )
  *     ),
