@@ -811,6 +811,11 @@ class FormService
 		}
 	}
 
+	public function getForm4bDataFromForm4bId($id)
+	{
+		return Form4b::find($id);
+	}
+
 	public function checkForm4Completion($pkId, $asesiId, $asesorId)
 	{
 		try {
