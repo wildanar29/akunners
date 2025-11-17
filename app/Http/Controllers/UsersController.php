@@ -75,7 +75,7 @@ class UsersController extends Controller
 				'role_name' => $roleName
 			];
 
-			if (in_array($roleId, [2, 3])) {
+			if (in_array($roleId, [2])) {
 				$data['no_reg'] = $requestData['no_reg'];
 				$data['valid_from'] = $requestData['valid_from'];
 				$data['valid_until'] = $requestData['valid_until'];
