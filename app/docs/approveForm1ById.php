@@ -8,8 +8,7 @@ namespace App\Docs;
  *     tags={"FORM 1 (PENGAJUAN ASESMEN)"},
  *     summary="Menyetujui Form 1 oleh asesor yang ditugaskan",
  *     operationId="approveForm1ById",
- *     description="Asesor menyetujui Form 1 yang berstatus 'Assigned'. Setelah disetujui, status berubah menjadi 'InAssessment', Form 2 otomatis dibuat, progres & track diperbarui, serta dokumen opsional dapat divalidasi. 
- *     Khusus dokumen sertifikat, dapat mengirimkan lebih dari satu (array).",
+ *     description="Asesor menyetujui Form 1 yang berstatus 'Assigned'. Setelah disetujui, status berubah menjadi 'InAssessment', Form 2 otomatis dibuat, progres & track diperbarui, serta dokumen opsional dapat divalidasi. Dokumen sertifikat mendukung multi-item (array).",
  *     security={{"bearerAuth":{}}},
  *
  *     @OA\Parameter(
@@ -52,7 +51,7 @@ namespace App\Docs;
  *                 property="sip",
  *                 type="object",
  *                 nullable=true,
- *                 @OA\Property(property="id", type="integer",example=14),
+ *                 @OA\Property(property="id", type="integer", example=14),
  *                 @OA\Property(property="valid", type="boolean", example=true),
  *                 @OA\Property(property="authentic", type="boolean", example=false),
  *                 @OA\Property(property="current", type="boolean", example=true),
@@ -89,7 +88,7 @@ namespace App\Docs;
  *
  *     @OA\Response(
  *         response=200,
- *         description="Form 1 berhasil disetujui",
+ *         description="Form 1 berhasil disetujui dan dokumen diperbarui",
  *         @OA\JsonContent(
  *             type="object",
  *             @OA\Property(property="status", type="integer", example=200),
@@ -116,7 +115,7 @@ namespace App\Docs;
  *                             "current": true,
  *                             "sufficient": true
  *                         },
- *                         "sertifikat": {
+ *                         "sertifikat": [
  *                             {
  *                                 "id": 101,
  *                                 "valid": true,
@@ -130,7 +129,7 @@ namespace App\Docs;
  *                                 "id": 103,
  *                                 "sufficient": true
  *                             }
- *                         }
+ *                         ]
  *                     }
  *                 )
  *             )
