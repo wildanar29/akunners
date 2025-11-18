@@ -295,7 +295,7 @@ class Form12Controller extends BaseController
                 $this->formService->updateProgresDanTrack(
                     $form12Id,
                     'form_12',
-                    'Approved',
+                    'Completed',
                     $form12->asesi_id,
                     'Form form_12 telah di-approve oleh Asesi'
                 );
@@ -303,7 +303,7 @@ class Form12Controller extends BaseController
                 // Kirim notifikasi ke asesor
                 $this->formService->kirimNotifikasiKeUser(
                     DaftarUser::find($form1->asesor_id),
-                    'Form form_12 Approved',
+                    'Form form_12 Completed',
                     'Form form_12 telah di-approve oleh Asesi.'
                 );
             }
