@@ -317,14 +317,34 @@ class AsesorController extends Controller
 			foreach ($dokumenTypes as $type => $modelClass) {
 				$docData = $request->input($type);
 
-				// Abaikan jika dokumen bernilai null atau tidak punya ID
+				// Abaikan jika kosong
 				if ($this->isEmptyDocument($docData)) {
 					Log::debug("Dokumen {$type} diabaikan (null atau kosong)");
 					continue;
 				}
 
+				// 🟦 Jika sertifikat berisi array multiple
+				if ($type === 'sertifikat' && is_array($docData)) {
+
+					// Jika format adalah array of arrays: [ {...}, {...} ]
+					if (isset($docData[0])) {
+						$results[$type] = [];
+
+						foreach ($docData as $singleCert) {
+							// skip jika item kosong/null
+							if ($this->isEmptyDocument($singleCert)) continue;
+
+							$results[$type][] = $this->processDocument($singleCert, $modelClass, $type);
+						}
+
+						continue;
+					}
+				}
+
+				// 🟦 untuk selain sertifikat atau sertifikat single
 				$results[$type] = $this->processDocument($docData, $modelClass, $type);
 			}
+
 
 			if (!empty($results)) {
 				Log::info('Beberapa dokumen berhasil diperbarui bersamaan dengan approval', $results);
