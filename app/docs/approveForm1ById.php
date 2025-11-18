@@ -8,10 +8,8 @@ namespace App\Docs;
  *     tags={"FORM 1 (PENGAJUAN ASESMEN)"},
  *     summary="Menyetujui Form 1 oleh asesor yang ditugaskan",
  *     operationId="approveForm1ById",
- *     description="Endpoint ini digunakan oleh asesor untuk menyetujui Form 1 yang berstatus 'Assigned'. 
- *     Setelah disetujui, status Form 1 akan berubah menjadi 'InAssessment', Form 2 otomatis dibuat, 
- *     progres dan track akan diperbarui, serta dokumen opsional (Ijazah, STR, SIP, SPK, dan Sertifikat Pendukung) 
- *     dapat diperbarui dengan status validasinya. Setiap dokumen menggunakan field `id` sebagai pengenal universal.",
+ *     description="Asesor menyetujui Form 1 yang berstatus 'Assigned'. Setelah disetujui, status berubah menjadi 'InAssessment', Form 2 otomatis dibuat, progres & track diperbarui, serta dokumen opsional dapat divalidasi. 
+ *     Khusus dokumen sertifikat, dapat mengirimkan lebih dari satu (array).",
  *     security={{"bearerAuth":{}}},
  *
  *     @OA\Parameter(
@@ -24,7 +22,7 @@ namespace App\Docs;
  *
  *     @OA\RequestBody(
  *         required=false,
- *         description="Data validasi dokumen opsional yang dapat diperbarui bersamaan dengan approval",
+ *         description="Data validasi dokumen tambahan. Sertifikat mendukung multiple item.",
  *         @OA\JsonContent(
  *             type="object",
  *
@@ -32,7 +30,7 @@ namespace App\Docs;
  *                 property="ijazah",
  *                 type="object",
  *                 nullable=true,
- *                 @OA\Property(property="id", type="integer", example=45, description="ID dokumen Ijazah"),
+ *                 @OA\Property(property="id", type="integer", example=45),
  *                 @OA\Property(property="valid", type="boolean", example=true),
  *                 @OA\Property(property="authentic", type="boolean", example=true),
  *                 @OA\Property(property="current", type="boolean", example=false),
@@ -43,7 +41,7 @@ namespace App\Docs;
  *                 property="str",
  *                 type="object",
  *                 nullable=true,
- *                 @OA\Property(property="id", type="integer", example=21, description="ID dokumen STR"),
+ *                 @OA\Property(property="id", type="integer", example=21),
  *                 @OA\Property(property="valid", type="boolean", example=true),
  *                 @OA\Property(property="authentic", type="boolean", example=true),
  *                 @OA\Property(property="current", type="boolean", example=true),
@@ -54,7 +52,7 @@ namespace App\Docs;
  *                 property="sip",
  *                 type="object",
  *                 nullable=true,
- *                 @OA\Property(property="id", type="integer", example=14, description="ID dokumen SIP"),
+ *                 @OA\Property(property="id", type="integer",example=14),
  *                 @OA\Property(property="valid", type="boolean", example=true),
  *                 @OA\Property(property="authentic", type="boolean", example=false),
  *                 @OA\Property(property="current", type="boolean", example=true),
@@ -65,7 +63,7 @@ namespace App\Docs;
  *                 property="spk",
  *                 type="object",
  *                 nullable=true,
- *                 @OA\Property(property="id", type="integer", example=8, description="ID dokumen SPK"),
+ *                 @OA\Property(property="id", type="integer", example=8),
  *                 @OA\Property(property="valid", type="boolean", example=true),
  *                 @OA\Property(property="authentic", type="boolean", example=true),
  *                 @OA\Property(property="current", type="boolean", example=true),
@@ -74,21 +72,24 @@ namespace App\Docs;
  *
  *             @OA\Property(
  *                 property="sertifikat",
- *                 type="object",
+ *                 type="array",
  *                 nullable=true,
- *                 description="Sertifikat pendukung tambahan seperti pelatihan, workshop, seminar, dll.",
- *                 @OA\Property(property="id", type="integer", example=33, description="ID sertifikat pendukung"),
- *                 @OA\Property(property="valid", type="boolean", example=true),
- *                 @OA\Property(property="authentic", type="boolean", example=true),
- *                 @OA\Property(property="current", type="boolean", example=true),
- *                 @OA\Property(property="sufficient", type="boolean", example=true)
+ *                 description="List sertifikat pendukung (bisa lebih dari satu).",
+ *                 @OA\Items(
+ *                     type="object",
+ *                     @OA\Property(property="id", type="integer", example=101),
+ *                     @OA\Property(property="valid", type="boolean", example=true),
+ *                     @OA\Property(property="authentic", type="boolean", example=true),
+ *                     @OA\Property(property="current", type="boolean", example=true),
+ *                     @OA\Property(property="sufficient", type="boolean", example=true)
+ *                 )
  *             )
  *         )
  *     ),
  *
  *     @OA\Response(
  *         response=200,
- *         description="Form 1 berhasil disetujui dan Form 2 dimulai",
+ *         description="Form 1 berhasil disetujui",
  *         @OA\JsonContent(
  *             type="object",
  *             @OA\Property(property="status", type="integer", example=200),
@@ -116,11 +117,19 @@ namespace App\Docs;
  *                             "sufficient": true
  *                         },
  *                         "sertifikat": {
- *                             "id": 33,
- *                             "valid": true,
- *                             "authentic": true,
- *                             "current": true,
- *                             "sufficient": true
+ *                             {
+ *                                 "id": 101,
+ *                                 "valid": true,
+ *                                 "authentic": true
+ *                             },
+ *                             {
+ *                                 "id": 102,
+ *                                 "valid": false
+ *                             },
+ *                             {
+ *                                 "id": 103,
+ *                                 "sufficient": true
+ *                             }
  *                         }
  *                     }
  *                 )
