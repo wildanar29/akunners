@@ -20,7 +20,7 @@ $router->get('/', function () use ($router) {
 });
 
 $router->post('/documents/update-status', 'DocumentApprovalController@updateAllDocuments');
-
+$router->post('test/notification', 'ExampleController@testNotificationAkunners');
 // MASTER DATA
 $router->get('/get-educations', 'MasterController@getEducations');
 $router->get('/get-kompetensi-pk', 'MasterController@getKompetensiPk');

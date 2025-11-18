@@ -478,65 +478,65 @@ class BidangController extends Controller
 
 
    public function getAllForm1(Request $request)
-{
-	try {
-		$status = $request->query('status'); // Ambil dari query string
+	{
+		try {
+			$status = $request->query('status'); // Ambil dari query string
 
-		$allowedStatus = [
-			'Submitted',
-			'Assigned',
-			'Process',
-			'Approved',
-			'Process',
-			'Completed',
-			'Rejected',
-			'InAssessment',
-			'Verified',
-			'Certified',
-		];
+			$allowedStatus = [
+				'Submitted',
+				'Assigned',
+				'Process',
+				'Approved',
+				'Process',
+				'Completed',
+				'Rejected',
+				'InAssessment',
+				'Verified',
+				'Certified',
+			];
 
-		if ($status && !in_array($status, $allowedStatus)) {
+			if ($status && !in_array($status, $allowedStatus)) {
+				return response()->json([
+					'status' => 'ERR',
+					'message' => 'Status tidak valid.',
+					'data' => null
+				], 400);
+			}
+
+			$form1Data = $status
+				? BidangModel::where('status', $status)->get()
+				: BidangModel::all();
+
+			// Tambahkan foto dari DaftarUser berdasarkan user_id
+			$form1Data = $form1Data->map(function ($item) {
+				$user = DaftarUser::find($item->asesi_id);
+
+				Log::info('Mencari foto untuk user_id: ' . ($item->asesi_id ?? 'null'), [
+					'user_found' => $user ? true : false,
+					'foto' => $user ? $user->foto : 'null'
+				]);
+
+				$item->foto = $user && $user->foto
+					? url('storage/foto_nurse/' . basename($user->foto))
+					: null;
+
+				return $item;
+			});
+
+			return response()->json([
+				'status' => 'OK',
+				'message' => 'Data berhasil diambil.',
+				'data' => $form1Data,
+			], 200);
+
+		} catch (\Exception $e) {
 			return response()->json([
 				'status' => 'ERR',
-				'message' => 'Status tidak valid.',
+				'message' => 'Terjadi kesalahan: ' . $e->getMessage(),
 				'data' => null
-			], 400);
+			], 500);
 		}
-
-		$form1Data = $status
-			? BidangModel::where('status', $status)->get()
-			: BidangModel::all();
-
-		// Tambahkan foto dari DaftarUser berdasarkan user_id
-		$form1Data = $form1Data->map(function ($item) {
-			$user = DaftarUser::find($item->asesi_id);
-
-			Log::info('Mencari foto untuk user_id: ' . ($item->asesi_id ?? 'null'), [
-				'user_found' => $user ? true : false,
-				'foto' => $user ? $user->foto : 'null'
-			]);
-
-			$item->foto = $user && $user->foto
-				? url('storage/foto_nurse/' . basename($user->foto))
-				: null;
-
-			return $item;
-		});
-
-		return response()->json([
-			'status' => 'OK',
-			'message' => 'Data berhasil diambil.',
-			'data' => $form1Data,
-		], 200);
-
-	} catch (\Exception $e) {
-		return response()->json([
-			'status' => 'ERR',
-			'message' => 'Terjadi kesalahan: ' . $e->getMessage(),
-			'data' => null
-		], 500);
 	}
-}
 
 
 
