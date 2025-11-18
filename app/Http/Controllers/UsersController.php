@@ -312,7 +312,7 @@ class UsersController extends Controller
 			$validator = Validator::make($request->all(), [
 				'nik' => 'required',
 				'password' => 'required',
-				'device_token' => 'sometimes|string|nullable' // Player ID opsional, bisa null
+				'device_token' => 'sometimes|string|nullable'
 			]);
 
 			if ($validator->fails()) {
@@ -320,35 +320,43 @@ class UsersController extends Controller
 					'status' => 400,
 					'message' => 'Data validation failed. Please check your input.',
 					'errors' => $validator->errors(),
-					'solution' => 'Ensure all required fields are filled. NIK, password, and Player ID cannot be empty.'
+					'solution' => 'Ensure all required fields are filled.'
 				], 400);
 			}
 
-			// Cari pengguna berdasarkan NIK
+			// Cari user
 			$user = DaftarUser::where('nik', $request->nik)->first();
 
 			if (!$user) {
 				return response()->json([
 					'status' => 404,
 					'message' => 'User not found.',
-					'details' => "An account with NIK '{$request->nik}' is not registered in the system.",
-					'solution' => 'Check your NIK again or ensure you have registered.'
+					'details' => "NIK '{$request->nik}' tidak terdaftar."
 				], 404);
 			}
 
-			// Periksa password
+			// Cek password
 			if (!Hash::check($request->password, $user->password)) {
 				return response()->json([
 					'status' => 401,
 					'message' => 'Incorrect password.',
-					'details' => 'The password you entered does not match the data in the database.',
-					'solution' => 'Ensure you enter the correct password. If forgotten, contact the admin to reset your password.'
+					'details' => 'Password salah.'
 				], 401);
 			}
 
-			// Ambil nama role
-			$role = Role::where('role_id', $user->current_role_id)->first();
-			$roleName = $role ? $role->role_name : null;
+			/**
+			 * =========================================
+			 * 🔥 AMBIL SEMUA ROLE YANG DIMILIKI USER
+			 * =========================================
+			 */
+			$allRoles = $user->roles()
+				->select('roles.role_id', 'roles.role_name')
+				->get();
+
+			// Role aktif (current_role_id)
+			$currentRole = Role::where('role_id', $user->current_role_id)->first();
+			$currentRoleName = $currentRole ? $currentRole->role_name : null;
+
 
 			// Ambil history jabatan terbaru
 			$latestHistory = DB::table('history_jabatan_user')
@@ -359,7 +367,7 @@ class UsersController extends Controller
 			$working_unit_id = $latestHistory->working_unit_id ?? null;
 			$jabatan_id = $latestHistory->jabatan_id ?? null;
 
-			// Ambil nama working unit dan area kerja
+			// Ambil working unit + area kerja
 			$workingUnit = DB::table('working_unit')
 				->join('working_area', 'working_unit.working_area_id', '=', 'working_area.working_area_id')
 				->where('working_unit.working_unit_id', $working_unit_id)
@@ -375,22 +383,19 @@ class UsersController extends Controller
 				->where('jabatan_id', $jabatan_id)
 				->select('nama_jabatan')
 				->first();
-			$nama_jabatan = $jabatan ? $jabatan->nama_jabatan : null;
 
-			// Generate JWT token
+			// Generate token
 			$token = JWTAuth::fromUser($user);
 
-			// Simpan token ke database
+			// Simpan token & device token
 			$user->token = $token;
 
-			// Simpan atau perbarui device_token hanya jika ada device_token baru
 			if ($request->filled('device_token')) {
 				$user->device_token = $request->device_token;
 			}
 
 			$user->save();
 
-			// Berhasil login
 			return response()->json([
 				'status' => 200,
 				'message' => 'Login successful.',
@@ -398,21 +403,31 @@ class UsersController extends Controller
 					'name' => $user->nama,
 					'nik' => $user->nik,
 					'user_id' => $user->user_id,
+
+					/**
+					 * =============================
+					 * 🔥 Tambahan: Semua Role User
+					 * =============================
+					 */
+					'roles' => $allRoles, // <= INI BAGIAN TAMBAHAN
+
 					'current_role' => [
 						'role_id' => $user->current_role_id,
-						'role_name' => $roleName
+						'role_name' => $currentRoleName
 					],
-					'role_name' => $roleName,
+
 					'working_unit' => $workingUnit ? [
 						'working_unit_id' => $working_unit_id,
 						'working_unit_name' => $workingUnit->working_unit_name,
 						'working_area_id' => $workingUnit->working_area_id,
 						'working_area_name' => $workingUnit->working_area_name
 					] : null,
+
 					'jabatan' => [
 						'jabatan_id' => $jabatan_id,
-						'nama_jabatan' => $nama_jabatan
+						'nama_jabatan' => $jabatan->nama_jabatan ?? null
 					],
+
 					'token' => $token,
 				]
 			], 200);
@@ -421,11 +436,11 @@ class UsersController extends Controller
 			return response()->json([
 				'status' => 500,
 				'message' => 'An error occurred on the server.',
-				'details' => $e->getMessage(),
-				'solution' => 'Please contact the system administrator for further assistance.'
+				'details' => $e->getMessage()
 			], 500);
 		}
 	}
+
 	
 
     public function newPassword(Request $request)
