@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Models\StrModel;
 use App\Models\SipModel;
+use App\Models\SertifikatModel;
 use App\Models\SpkModel;
 use Illuminate\Support\Facades\DB; 
 use App\Models\BidangModel;
@@ -410,12 +411,13 @@ class AsesorController extends Controller
 		}
 		// Validasi dinamis
 		$validator = Validator::make($docData, [
-			"{$type}_id" => "required|integer|exists:users_{$type}_file,{$type}_id",
+			"{$type}_id" => "required|integer|exists:{$tableName},{$type}_id",
 			'valid'      => 'nullable|boolean',
 			'authentic'  => 'nullable|boolean',
 			'current'    => 'nullable|boolean',
 			'sufficient' => 'nullable|boolean',
 		]);
+
 
 		if ($validator->fails()) {
 			return [
