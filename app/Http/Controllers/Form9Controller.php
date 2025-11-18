@@ -304,6 +304,7 @@ class Form9Controller extends BaseController
         $form9 = Form9::with(['asesi', 'asesor', 'answers'])
             ->where('form_9_id', $form9Id)
             ->first();
+        Log::info($form9);
 
         // Jika tidak ditemukan
         if (!$form9) {
