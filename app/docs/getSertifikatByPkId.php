@@ -6,7 +6,7 @@ namespace App\Docs;
  *     path="/sertifikat/get/{pk_id}",
  *     summary="Ambil detail sertifikat berdasarkan pk_id",
  *     description="Mengambil detail sertifikat berdasarkan pk_id dan user yang sedang login",
- *     tags={"Sertifikat"},
+ *     tags={"HASIL ASSESSMENT"},
  *
  *     @OA\Parameter(
  *         name="pk_id",
