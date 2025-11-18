@@ -313,6 +313,7 @@ class Form9Controller extends BaseController
         }
 
         // Ambil data form1 berdasarkan form9
+        Log::info("Mengambil form1Id dari form9Id: {$form9Id} dan asesi_id: {$form9->asesi_id}");
         $form1Id = $this->formService->getParentFormIdByFormIdAndAsesiId($form9Id, $form9->asesi_id);
         $form1   = $this->formService->getParentDataByFormId($form1Id);
 
@@ -383,10 +384,10 @@ class Form9Controller extends BaseController
      */
     private function afterAnswerSaved($form9Id, $subject)
     {
-        \Log::info("afterAnswerSaved dipanggil", [
-            'form9Id' => $form9Id,
-            'subject' => $subject
-        ]);
+        // \Log::info("afterAnswerSaved dipanggil", [
+        //     'form9Id' => $form9Id,
+        //     'subject' => $subject
+        // ]);
 
         // Cek apakah formService tersedia
         if (!$this->formService) {
@@ -396,17 +397,17 @@ class Form9Controller extends BaseController
 
         // Ambil form induk dari form_9
         $form1Id = $this->formService->getParentFormIdByFormId($form9Id);
-        \Log::info("Hasil getParentFormIdByFormId", ['form1Id' => $form1Id]);
+        // \Log::info("Hasil getParentFormIdByFormId", ['form1Id' => $form1Id]);
 
         $form1 = $this->formService->getParentDataByFormId($form1Id);
-        \Log::info("Hasil getParentDataByFormId", ['form1' => $form1]);
+        // \Log::info("Hasil getParentDataByFormId", ['form1' => $form1]);
 
         // Ambil status form_9 saat ini
         $form9Status = $this->formService
             ->getStatusByParentFormIdAndType($form1Id, 'form_9')
             ->first();
 
-        \Log::info("Status form_9 sebelum update", ['status' => $form9Status]);
+        // \Log::info("Status form_9 sebelum update", ['status' => $form9Status]);
 
         // ✅ Tentukan status baru berdasarkan subject
         if ($subject === 'asesi') {
@@ -429,7 +430,7 @@ class Form9Controller extends BaseController
             $newStatus // status baru sesuai subject
         );
 
-        Log::info($form1->asesi_id);
+        // Log::info($form1->asesi_id);
         // Update progres dan track
         $this->formService->updateProgresDanTrack(
             $form9Id,
@@ -462,11 +463,11 @@ class Form9Controller extends BaseController
             );
         }
 
-        \Log::info("afterAnswerSaved selesai", [
-            'form9Id' => $form9Id,
-            'statusBaru' => $newStatus,
-            'subject' => $subject
-        ]);
+        // \Log::info("afterAnswerSaved selesai", [
+        //     'form9Id' => $form9Id,
+        //     'statusBaru' => $newStatus,
+        //     'subject' => $subject
+        // ]);
     }
 
 
