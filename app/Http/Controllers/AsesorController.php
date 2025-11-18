@@ -402,7 +402,12 @@ class AsesorController extends Controller
 		if (isset($docData['id']) && !isset($docData["{$type}_id"])) {
 			$docData["{$type}_id"] = $docData['id'];
 		}
+		$tableName = "users_{$type}_file";
 
+		// Jika tipe sertifikat memakai tabel nama khusus
+		if ($type === 'sertifikat') {
+			$tableName = 'users_sertifikat_pendukung';
+		}
 		// Validasi dinamis
 		$validator = Validator::make($docData, [
 			"{$type}_id" => "required|integer|exists:users_{$type}_file,{$type}_id",
