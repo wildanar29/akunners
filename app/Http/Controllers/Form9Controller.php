@@ -385,10 +385,10 @@ class Form9Controller extends BaseController
      */
     private function afterAnswerSaved($form9Id, $subject)
     {
-        // \Log::info("afterAnswerSaved dipanggil", [
-        //     'form9Id' => $form9Id,
-        //     'subject' => $subject
-        // ]);
+
+        $form9 = Form9::with(['asesi', 'asesor', 'answers'])
+            ->where('form_9_id', $form9Id)
+            ->first();
 
         // Cek apakah formService tersedia
         if (!$this->formService) {
@@ -396,11 +396,13 @@ class Form9Controller extends BaseController
             return;
         }
 
+        $form1Id = $this->formService->getParentFormIdByFormIdAndAsesiId($form9Id, $form9->asesi_id);
+        $form1   = $this->formService->getParentDataByFormId($form1Id);
         // Ambil form induk dari form_9
-        $form1Id = $this->formService->getParentFormIdByFormId($form9Id);
+        // $form1Id = $this->formService->getParentFormIdByFormId($form9Id);
         // \Log::info("Hasil getParentFormIdByFormId", ['form1Id' => $form1Id]);
 
-        $form1 = $this->formService->getParentDataByFormId($form1Id);
+        // $form1 = $this->formService->getParentDataByFormId($form1Id);
         // \Log::info("Hasil getParentDataByFormId", ['form1' => $form1]);
 
         // Ambil status form_9 saat ini
