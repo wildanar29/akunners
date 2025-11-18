@@ -230,6 +230,56 @@ class CertificateController extends Controller
         ]);
     }
 
+    public function getSertifikatByPkId($pk_id)
+    {
+        // Ambil user yang sedang login
+        $userId = auth()->id();
+
+        // Validasi pk_id
+        $validator = Validator::make(
+            ['pk_id' => $pk_id],
+            ['pk_id' => 'required|integer|exists:kompetensi_pk,pk_id']
+        );
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validasi gagal',
+                'errors'  => $validator->errors(),
+            ], 422);
+        }
+
+        // Ambil 1 data sertifikat (bukan array)
+        $sertifikat = SertifikatPk::where('asesi_id', $userId)
+            ->where('pk_id', $pk_id)
+            ->first();
+
+        if (!$sertifikat) {
+            return response()->json([
+                'message' => 'Tidak ada sertifikat untuk pk_id ini'
+            ], 404);
+        }
+
+        // Format object data
+        $data = [
+            'id'              => $sertifikat->id,
+            'form_1_id'       => $sertifikat->form_1_id,
+            'pk_id'           => $sertifikat->pk_id,
+            'nomor_urut'      => $sertifikat->nomor_urut,
+            'nomor_surat'     => $sertifikat->nomor_surat,
+            'nama'            => $sertifikat->nama,
+            'gelar'           => $sertifikat->gelar,
+            'status'          => $sertifikat->status,
+            'tanggal_mulai'   => $sertifikat->tanggal_mulai,
+            'tanggal_selesai' => $sertifikat->tanggal_selesai,
+            'preview_url'     => url("sertifikat/view/{$sertifikat->form_1_id}"),
+        ];
+
+        return response()->json([
+            'message' => 'Detail sertifikat berhasil diambil',
+            'data'    => $data,
+        ]);
+    }
+
 
     public function getListSertifikat(Request $request)
     {
