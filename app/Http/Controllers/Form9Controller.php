@@ -273,7 +273,7 @@ class Form9Controller extends BaseController
              * 💾 INSERT jawaban baru (baik insert awal atau update)
              */
             $this->processAnswersBySubject($form9Id, $data['answers'], $subject);
-
+            
             /**
              * 🔔 Trigger event/notifikasi setelah simpan
              */
@@ -316,6 +316,7 @@ class Form9Controller extends BaseController
         Log::info("Mengambil form1Id dari form9Id: {$form9Id} dan asesi_id: {$form9->asesi_id}");
         $form1Id = $this->formService->getParentFormIdByFormIdAndAsesiId($form9Id, $form9->asesi_id);
         $form1   = $this->formService->getParentDataByFormId($form1Id);
+        Log::info("Ditemukan form1:", ['form1' => $form1]);
 
         // Tentukan user_id berdasarkan subject
         $userId = null;
