@@ -377,7 +377,7 @@ class Form4bController extends BaseController
                     'form_4b',
                     'Completed',
                     $dataForm4b->asesi_id,
-                    'Form 4B telah di-approve oleh Asesor'
+                    'Form 4B telah di-approve oleh Asesi'
                 );
 
                 Log::info('Form 4B approved successfully.');
