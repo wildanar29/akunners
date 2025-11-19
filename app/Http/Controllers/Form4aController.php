@@ -281,7 +281,10 @@ class Form4aController extends BaseController
                             'group_no' => $iuk->group_no,
                             'poin_form4' => $buildTree(null),
                             'jawaban' => [
-                                'pencapaian' => isset($jawaban) ? (int) $jawaban->pencapaian : null,
+                                'pencapaian' => isset($jawaban)
+                                    ? (bool) $jawaban->pencapaian
+                                    : null,
+
                                 'nilai' => $jawaban->nilai ?? null,
                                 'catatan' => $jawaban->catatan ?? null,
                             ],
