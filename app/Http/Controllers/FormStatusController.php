@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\PkStatusModel;
 use App\Models\PkProgressModel;
+use Illuminate\Support\Facades\Log;
 use App\Models\BidangModel;
 
         /**
@@ -94,18 +95,19 @@ class FormStatusController extends Controller
     {
         try {
             $asesi_id = $request->query('asesi_id');
+            $pk_id = $request->query('pk_id');
 
-            if (!$asesi_id) {
+            if (!$asesi_id || !$pk_id) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Parameter asesi_id wajib diisi.',
+                    'message' => 'Parameter asesi_id dan pk_id wajib diisi.',
                     'status_code' => 400,
                     'data' => null,
                 ], 400);
             }
 
-            // Ambil satu data bidang berdasarkan asesi_id
             $item = BidangModel::where('asesi_id', $asesi_id)
+                ->where('pk_id', $pk_id)
                 ->select([
                     'pk_id',
                     'form_1_id',
@@ -118,6 +120,13 @@ class FormStatusController extends Controller
                 ])
                 ->first();
 
+            // Log data yang ditemukan
+            \Log::info('🔍 FormStatus Debug: Data BidangModel ditemukan', [
+                'asesi_id' => $asesi_id,
+                'pk_id' => $pk_id,
+                'form_1_id' => $item->form_1_id ?? null,
+            ]);
+
             if (!$item) {
                 return response()->json([
                     'success' => false,
@@ -127,31 +136,109 @@ class FormStatusController extends Controller
                 ], 200);
             }
 
-            // 🔹 Ambil semua daftar form_type dari KompetensiTrack (unik)
             $defaultForms = \App\Models\KompetensiTrack::distinct()
                 ->pluck('form_type')
-                ->filter() // buang null
+                ->filter()
                 ->values()
                 ->toArray();
 
-            // 🔹 Inisialisasi semua form dengan null
             $status = array_fill_keys($defaultForms, null);
 
-            // Ambil semua progres terkait form_1_id
-            $allProgres = \App\Models\KompetensiProgres::where('form_id', $item->form_1_id)
-                ->orWhere('parent_form_id', $item->form_1_id)
-                ->select('id', 'status')
-                ->get();
+            // Ambil progres berdasarkan form_1_id
+            $allProgres = \App\Models\KompetensiProgres::where(function ($q) use ($item) {
+                // parent sejati: form_id sama dengan form_1_id DAN parent_form_id null
+                $q->where(function ($q2) use ($item) {
+                    $q2->where('form_id', $item->form_1_id)
+                    ->whereNull('parent_form_id');
+                })
+                // atau child: parent_form_id sama dengan form_1_id
+                ->orWhere('parent_form_id', $item->form_1_id);
+            })
+            ->select('id', 'form_id', 'parent_form_id', 'status', 'created_at')
+            // urutkan supaya parent (parent_form_id IS NULL) muncul dulu
+            ->orderByRaw('CASE WHEN parent_form_id IS NULL THEN 0 ELSE 1 END')
+            ->orderBy('id')
+            ->get();
+
+
+
+            \Log::info('📝 FormStatus Debug: Daftar progres ditemukan', [
+                'total_progres' => $allProgres->count(),
+                'form_1_id' => $item->form_1_id,
+                'data' => $allProgres
+            ]);
 
             foreach ($allProgres as $prog) {
-                // Ambil form_type dari KompetensiTrack
+
                 $form_type = \App\Models\KompetensiTrack::where('progres_id', $prog->id)
                     ->value('form_type');
 
-                if ($form_type && array_key_exists($form_type, $status)) {
-                    $status[$form_type] = $prog->status;
+                // Log awal proses
+                Log::info('➡️ Memproses progres', [
+                    'progres_id' => $prog->id,
+                    'form_id' => $prog->form_id,
+                    'parent_form_id' => $prog->parent_form_id,
+                    'item_form_1_id' => $item->form_1_id,
+                    'status' => $prog->status,
+                    'form_type_ditemukan' => $form_type,
+                ]);
+
+                // 1. Diagnosis form_id tidak cocok
+                if ($prog->form_id != $item->form_1_id) {
+                    Log::warning('⚠️ form_id berbeda dari form_1_id utama', [
+                        'progres_id' => $prog->id,
+                        'form_id_progres' => $prog->form_id,
+                        'form_1_id_bidang' => $item->form_1_id,
+                    ]);
                 }
+
+                // 2. Diagnosis parent_form_id tidak cocok
+                if ($prog->parent_form_id && $prog->parent_form_id != $item->form_1_id) {
+                    Log::warning('⚠️ parent_form_id berbeda dari form_1_id utama', [
+                        'progres_id' => $prog->id,
+                        'parent_form_id_progres' => $prog->parent_form_id,
+                        'form_1_id_bidang' => $item->form_1_id,
+                    ]);
+                }
+
+                // 3. Diagnosis jika form_type tidak ditemukan
+                if (!$form_type) {
+                    Log::error('❌ form_type TIDAK ditemukan untuk progres', [
+                        'progres_id' => $prog->id,
+                    ]);
+                    continue;
+                }
+
+                // 4. Diagnosis jika form_type tidak ada di defaultForms
+                if (!array_key_exists($form_type, $status)) {
+                    Log::error('❌ form_type tidak dikenal / tidak ada di defaultForms', [
+                        'form_type' => $form_type,
+                        'defaultForms' => $defaultForms,
+                    ]);
+                    continue;
+                }
+
+                // 5. Diagnosis jika status sudah diisi sebelumnya → ditimpa
+                if ($status[$form_type] !== null) {
+                    Log::warning('⚠️ Status tertimpa oleh progres lain', [
+                        'form_type' => $form_type,
+                        'status_lama' => $status[$form_type],
+                        'status_baru' => $prog->status,
+                        'progres_id_terbaru' => $prog->id,
+                    ]);
+                }
+
+                // Simpan status
+                $status[$form_type] = $prog->status;
+
+                Log::info('✅ Status berhasil dimapping', [
+                    'form_type' => $form_type,
+                    'status' => $prog->status,
+                    'sumber_form' =>
+                        $prog->form_id == $item->form_1_id ? 'form_id' : 'parent_form_id',
+                ]);
             }
+
 
             return response()->json([
                 'success' => true,
@@ -161,6 +248,12 @@ class FormStatusController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
+
+            Log::error('❌ Error getFormStatusByAsesi', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while retrieving data.',
@@ -170,4 +263,5 @@ class FormStatusController extends Controller
             ], 500);
         }
     }
+
 }
