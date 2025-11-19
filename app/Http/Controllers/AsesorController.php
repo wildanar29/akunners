@@ -932,7 +932,7 @@ class AsesorController extends Controller
 		// 	]);
 		// }
 
-		$this->kirimNotifikasiKeAsesiSetelahDinilai($progres);
+		$this->kirimNotifikasiKeAsesiSetelahDinilai($form2);
 
 		return response()->json([
 			'status' => 200,
@@ -944,20 +944,20 @@ class AsesorController extends Controller
 
 	private function kirimNotifikasiKeAsesiSetelahDinilai($formData)
 	{
-		if (!$formData || empty($formData->user_id)) {
+		if (!$formData || empty($formData->user_jawab_form_2_id)) {
 			Log::warning('Gagal kirim notifikasi: asesi_id kosong');
 			return;
 		}
 
-		$asesi = DaftarUser::where('user_id', $formData->user_id)->first();
+		$asesi = DaftarUser::where('user_id', $formData->user_jawab_form_2_id)->first();
 
 		if (!$asesi) {
-			Log::warning('User asesi tidak ditemukan', ['user_id' => $formData->user_id]);
+			Log::warning('User asesi tidak ditemukan', ['user_id' => $formData->user_jawab_form_2_id]);
 			return;
 		}
 
 		if (empty($asesi->device_token)) {
-			Log::warning("User asesi tidak memiliki device_token", ['user_id' => $asesi->user_id]);
+			Log::warning("User asesi tidak memiliki device_token", ['user_id' => $asesi->user_jawab_form_2_id]);
 			return;
 		}
 
