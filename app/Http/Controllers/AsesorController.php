@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Models\StrModel;
 use App\Models\SipModel;
+use App\Models\Form2;
 use App\Models\SertifikatModel;
 use App\Models\SpkModel;
 use Illuminate\Support\Facades\DB; 
