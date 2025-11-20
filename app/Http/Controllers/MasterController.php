@@ -72,45 +72,95 @@ class MasterController extends Controller
             ->get();
 
         if ($data->isEmpty()) {
-            $html = "<p>Tidak ada data elemen asesmen.</p>";
+            $html = "<p style='font-family: Arial; font-size: 14px;'>Tidak ada data elemen asesmen.</p>";
 
             return response($html, 200)
                 ->header('Content-Type', 'text/html');
         }
 
+        // HTML Responsif
         $html = '
         <html>
         <head>
             <meta charset="UTF-8">
             <title>Elemen Asesmen</title>
+
+            <!-- Wajib agar responsif di mobile -->
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    font-size: 14px;
+                    margin: 10px;
+                }
+
+                /* Agar tabel bisa discroll pada layar kecil */
+                .table-responsive {
+                    width: 100%;
+                    overflow-x: auto;
+                }
+
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    min-width: 400px; /* agar tidak terlalu kecil di mobile */
+                }
+
+                th, td {
+                    border: 1px solid #ddd;
+                    padding: 8px;
+                    vertical-align: top;
+                }
+
+                th {
+                    background: #f0f0f0;
+                    text-align: center;
+                }
+
+                tr:nth-child(even) {
+                    background: #fafafa;
+                }
+
+                /* Penyesuaian untuk layar kecil */
+                @media (max-width: 480px) {
+                    body {
+                        font-size: 12px;
+                    }
+                    th, td {
+                        padding: 6px;
+                    }
+                }
+            </style>
         </head>
+
         <body>
-            <table border="1" cellpadding="6" cellspacing="0" 
-                style="border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 13px;">
-                <thead style="background-color: #f0f0f0;">
-                    <tr>
-                        <th style="width: 5%; text-align: center;">No</th>
-                        <th style="width: 95%;">Isi Elemen</th>
-                    </tr>
-                </thead>
-                <tbody>';
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">No</th>
+                            <th>Isi Elemen</th>
+                        </tr>
+                    </thead>
+                    <tbody>';
 
         foreach ($data as $row) {
             $html .= '
-                <tr>
-                    <td style="text-align: center;">' . htmlspecialchars($row->no_elemen_form_3) . '</td>
-                    <td>' . nl2br(htmlspecialchars($row->isi_elemen)) . '</td>
-                </tr>';
+                        <tr>
+                            <td style="text-align: center;">' . htmlspecialchars($row->no_elemen_form_3) . '</td>
+                            <td>' . nl2br(htmlspecialchars($row->isi_elemen)) . '</td>
+                        </tr>';
         }
 
         $html .= '
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+            </div>
         </body>
         </html>';
 
         return response($html, 200)
-                ->header('Content-Type', 'text/html');
+            ->header('Content-Type', 'text/html');
     }
-
 }
