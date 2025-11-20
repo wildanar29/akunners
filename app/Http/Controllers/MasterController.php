@@ -104,13 +104,15 @@ class MasterController extends Controller
                 table {
                     width: 100%;
                     border-collapse: collapse;
-                    min-width: 400px; /* agar tidak terlalu kecil di mobile */
+                    min-width: 400px; /* membuat tabel tidak terlalu kecil */
                 }
 
                 th, td {
                     border: 1px solid #ddd;
                     padding: 8px;
                     vertical-align: top;
+                    word-wrap: break-word;
+                    white-space: normal;
                 }
 
                 th {
@@ -122,7 +124,22 @@ class MasterController extends Controller
                     background: #fafafa;
                 }
 
-                /* Penyesuaian untuk layar kecil */
+                /* Kolom No lebih kecil */
+                th:first-child, td:first-child {
+                    width: 40px;
+                }
+
+                /* Penyesuaian untuk layar sangat kecil (HP ≤ 400px) */
+                @media (max-width: 400px) {
+                    table {
+                        min-width: 100% !important; /* agar tidak terpotong */
+                    }
+                    th:first-child, td:first-child {
+                        width: 30px !important;
+                    }
+                }
+
+                /* Penyesuaian untuk layar umum HP */
                 @media (max-width: 480px) {
                     body {
                         font-size: 12px;
@@ -139,7 +156,7 @@ class MasterController extends Controller
                 <table>
                     <thead>
                         <tr>
-                            <th style="width: 50px;">No</th>
+                            <th>No</th>
                             <th>Isi Elemen</th>
                         </tr>
                     </thead>
@@ -163,4 +180,5 @@ class MasterController extends Controller
         return response($html, 200)
             ->header('Content-Type', 'text/html');
     }
+
 }
