@@ -345,6 +345,78 @@ class Form2Controller extends Controller
         }
     }
 
+    public function HitungNilaiAsesi(Request $request)
+    {
+        // Validasi sama seperti fungsi utama
+        $validator = Validator::make($request->all(), [
+            'form_2_id' => 'required|integer|exists:form_2,form_2_id',
+            'jawaban' => 'required|array',
+            'jawaban.*.no_id' => 'required|integer|exists:soal_form_2,no_id',
+            'jawaban.*.k' => 'boolean',
+            'jawaban.*.bk' => 'boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Validasi gagal.',
+                'data'    => $validator->errors(),
+            ], 422);
+        }
+
+        try {
+
+            // Ambil total soal dari database (tidak ada perubahan data)
+            $total_soal = SoalForm2Model::count();
+
+            if ($total_soal == 0) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Total soal form 2 tidak ditemukan.',
+                ], 404);
+            }
+
+            // Hitung K & BK dari input request (tidak menyimpan)
+            $k_count = 0;
+            $bk_count = 0;
+
+            foreach ($request->jawaban as $jawaban) {
+                if (!empty($jawaban['k']) && $jawaban['k'] == true) {
+                    $k_count++;
+                }
+                if (!empty($jawaban['bk']) && $jawaban['bk'] == true) {
+                    $bk_count++;
+                }
+            }
+
+            // Hitung nilai
+            $penilaian_asesi = ($k_count / $total_soal) * 100;
+
+            // Tentukan lulus / tidak
+            $is_pass = $penilaian_asesi >= 80;
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Perhitungan nilai berhasil.',
+                'data' => [
+                    'total_soal'       => $total_soal,
+                    'total_k'          => $k_count,
+                    'total_bk'         => $bk_count,
+                    'penilaian_asesi'  => $penilaian_asesi,
+                    'is_pass'          => $is_pass,
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Terjadi kesalahan saat menghitung nilai.',
+                'data'    => ['error' => $e->getMessage()],
+            ], 500);
+        }
+    }
+
+
     public function JawabanAsesi(Request $request)
     {
         $validator = Validator::make($request->all(), [

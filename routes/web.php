@@ -203,6 +203,7 @@ $router->get('/soal-form2', 'Form2Controller@getSoals');
 $router->get('/soal-form2/{no_elemen}', 'Form2Controller@getSoalsByNoElemen');
 $router->get('/soal-form2-id/{no_id}', 'Form2Controller@getSoalsByNoId');
 //Jawaban dan Penilaian Form 2
+$router->post('/kalkulasi-jawaban-asesi', 'Form2Controller@HitungNilaiAsesi');
 $router->post('/jawaban-asesi', 'Form2Controller@JawabanAsesi');
 $router->get('/get-jawaban-form2/{user_jawab_form_2_id}', 'Form2Controller@getDataSoalJawaban');
 $router->put('/penilaian-asesor', 'Form2Controller@inputPenilaianAsesor');
