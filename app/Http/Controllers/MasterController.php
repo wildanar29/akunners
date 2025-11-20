@@ -72,39 +72,45 @@ class MasterController extends Controller
             ->get();
 
         if ($data->isEmpty()) {
-            return response()->json([
-                'status'  => 'SUCCESS',
-                'message' => 'Tidak ada data elemen asesmen.',
-                'data'    => '<p>Tidak ada data elemen asesmen.</p>'
-            ], 200);
+            $html = "<p>Tidak ada data elemen asesmen.</p>";
+
+            return response($html, 200)
+                ->header('Content-Type', 'text/html');
         }
 
-        // Tambahkan style agar kolom No kecil & baris lebih padat
         $html = '
-        <table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 13px;">
-            <thead style="background-color: #f0f0f0;">
-                <tr>
-                    <th style="width: 5%; text-align: center;">No</th>
-                    <th style="width: 95%;">Isi Elemen</th>
-                </tr>
-            </thead>
-            <tbody>';
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Elemen Asesmen</title>
+        </head>
+        <body>
+            <table border="1" cellpadding="6" cellspacing="0" 
+                style="border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 13px;">
+                <thead style="background-color: #f0f0f0;">
+                    <tr>
+                        <th style="width: 5%; text-align: center;">No</th>
+                        <th style="width: 95%;">Isi Elemen</th>
+                    </tr>
+                </thead>
+                <tbody>';
 
         foreach ($data as $row) {
-            $html .= '<tr>
-                        <td style="text-align: center;">' . htmlspecialchars($row->no_elemen_form_3) . '</td>
-                        <td>' . nl2br(htmlspecialchars($row->isi_elemen)) . '</td>
-                    </tr>';
+            $html .= '
+                <tr>
+                    <td style="text-align: center;">' . htmlspecialchars($row->no_elemen_form_3) . '</td>
+                    <td>' . nl2br(htmlspecialchars($row->isi_elemen)) . '</td>
+                </tr>';
         }
 
-        $html .= '</tbody></table>';
+        $html .= '
+                </tbody>
+            </table>
+        </body>
+        </html>';
 
-        return response()->json([
-            'status'  => 'SUCCESS',
-            'message' => 'Elemen berhasil diambil',
-            'data'    => $html
-        ], 200);
+        return response($html, 200)
+                ->header('Content-Type', 'text/html');
     }
-
 
 }
