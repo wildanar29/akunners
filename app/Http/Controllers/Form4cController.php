@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Log;
 use App\Service\OneSignalService;
 use App\Service\FormService;
 use App\Models\DataAsesorModel;
+use App\Models\Form4cAttemptSummary;
 use App\Models\JawabanForm4c;
 use App\Models\DaftarUser;
 use App\Models\ElemenForm3;
@@ -117,15 +118,35 @@ class Form4cController extends BaseController
             ], 422);
         }
 
+        // 🔴 DITAMBAHKAN — Ambil attempt terakhir
+        $lastAttempt = JawabanForm4c::where('form_1_id', $request->form_1_id)
+            ->where('user_id', $request->asesi_id)
+            ->max('attempt');
+
+        $currentAttempt = $lastAttempt ? $lastAttempt + 1 : 1;
+
+        // 🔴 DITAMBAHKAN — Batasi maksimum attempt 3 kali
+        if ($currentAttempt > 3) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Anda sudah mencapai batas maksimum 3 kali attempt. Jawaban tidak dapat disimpan lagi.',
+                'attempt_terakhir' => $lastAttempt
+            ], 403);
+        }
+
         DB::beginTransaction();
 
         try {
             $duplikatIds = [];
 
             foreach ($request->jawaban as $item) {
+
+                // 🔵 DIUBAH — Hilangkan pengecekan duplikasi antar attempt.
+                // Sekarang jawaban boleh disimpan ulang jika attempt berbeda.
                 $exists = JawabanForm4c::where('form_1_id', $request->form_1_id)
                     ->where('user_id', $request->asesi_id)
                     ->where('pertanyaan_form4c_id', $item['pertanyaan_form4c_id'])
+                    ->where('attempt', $currentAttempt) // 🔴 DITAMBAHKAN
                     ->exists();
 
                 if ($exists) {
@@ -140,7 +161,7 @@ class Form4cController extends BaseController
                     throw new \Exception("Choice data not found for question_choice_id: {$item['question_choice_id']}");
                 }
 
-                // Simpan jawaban
+                // 🔵 DIUBAH — Tambah kolom 'attempt'
                 JawabanForm4c::create([
                     'form_1_id' => $request->form_1_id,
                     'user_id' => $request->asesi_id,
@@ -149,22 +170,35 @@ class Form4cController extends BaseController
                     'catatan' => $item['catatan'] ?? null,
                     'choice_label' => $questionChoice->choice->choice_label,
                     'is_correct' => $questionChoice->is_correct,
+                    'attempt' => $currentAttempt, // 🔴 DITAMBAHKAN
                 ]);
             }
 
             DB::commit();
 
-            // 🔥 Jika ada duplikat, tetap kembalikan skor (tidak mengubah perilaku sebelumnya)
+            $summary = $this->hitungNilai4c($request->form_1_id, $request->asesi_id);
+
+            // 🔴 Simpan summary attempt
+            Form4cAttemptSummary::create([
+                'form_1_id' => $request->form_1_id,
+                'user_id' => $request->asesi_id,
+                'attempt' => $currentAttempt,
+                'tanggal_attempt' => Carbon::now(),
+                'total_jawaban' => $summary['total_jawaban'],
+                'jawaban_benar' => $summary['jawaban_benar'],
+                'jawaban_salah' => $summary['jawaban_salah'],
+                'nilai' => $summary['nilai'],
+                'skor' => $summary['skor'],
+            ]);
+
+            // Jika ada duplikat dalam ATTEMPT YANG SAMA
             if (!empty($duplikatIds)) {
-
-                // Hitung skor setelah commit
-                $summary = $this->hitungNilai4c($request->form_1_id, $request->asesi_id);
-
                 return response()->json([
                     'status' => false,
-                    'message' => 'Beberapa pertanyaan sudah pernah dijawab dan tidak disimpan ulang.',
+                    'message' => 'Beberapa pertanyaan pada attempt ini sudah ada dan tidak disimpan ulang.',
                     'duplikat_pertanyaan_ids' => $duplikatIds,
-                    'result' => $summary,  // ← Tambahan
+                    'result' => $summary,
+                    'attempt' => $currentAttempt,
                 ], 409);
             }
 
@@ -187,13 +221,11 @@ class Form4cController extends BaseController
                 'Form 4C telah di-submit oleh Asesi.'
             );
 
-            // 🔥 Tambahan: Hitung skor setelah semua selesai
-            $summary = $this->hitungNilai4c($request->form_1_id, $request->asesi_id);
-
             return response()->json([
                 'status' => true,
                 'message' => 'Semua jawaban berhasil disimpan.',
-                'data' => $summary,  // ← Tambahan
+                'data' => $summary,
+                'attempt' => $currentAttempt,
             ]);
 
         } catch (\Exception $e) {
@@ -207,6 +239,27 @@ class Form4cController extends BaseController
         }
     }
 
+    public function getRiwayatAttempt4c($form1Id, $asesiId)
+    {
+        $riwayat = Form4cAttemptSummary::where('form_1_id', $form1Id)
+            ->where('user_id', $asesiId)
+            ->orderBy('attempt', 'asc')
+            ->get();
+
+        if ($riwayat->isEmpty()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Belum ada riwayat attempt untuk Form 4C ini.',
+                'data' => []
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Riwayat attempt Form 4C berhasil diambil.',
+            'data' => $riwayat
+        ]);
+    }
 
     /**
      * 🔥 Fungsi tambahan untuk menghitung skor 4C
@@ -214,8 +267,15 @@ class Form4cController extends BaseController
      */
     private function hitungNilai4c($form1Id, $userId)
     {
+        // Ambil attempt terbesar (default 1, jika re-attempt akan >1)
+        $lastAttempt = \App\Models\JawabanForm4c::where('form_1_id', $form1Id)
+            ->where('user_id', $userId)
+            ->max('attempt');
+
+        // Ambil jawaban berdasarkan attempt terbesar
         $jawaban = \App\Models\JawabanForm4c::where('form_1_id', $form1Id)
             ->where('user_id', $userId)
+            ->where('attempt', $lastAttempt)
             ->get();
 
         $total = $jawaban->count();
@@ -225,10 +285,12 @@ class Form4cController extends BaseController
             'total_jawaban' => $total,
             'jawaban_benar' => $benar,
             'jawaban_salah' => $total - $benar,
-            'skor' => $benar, // Jika setiap jawaban benar = 1 poin
+            'skor' => $benar,
             'nilai' => $total > 0 ? round(($benar / $total) * 100, 2) . '' : '0',
+            'attempt' => $lastAttempt, // opsional, jika ingin tahu attempt mana yang dinilai
         ];
     }
+
 
 
     public function getSoalDanJawabanForm4c(Request $request)
@@ -267,8 +329,13 @@ class Form4cController extends BaseController
             ->get(['iuk_form3_id', 'no_iuk', 'group_no', 'iuk_name']);
 
         // Ambil jawaban user
+        $lastAttempt = \App\Models\JawabanForm4c::where('form_1_id', $form1Id)
+            ->where('user_id', $userId)
+            ->max('attempt'); // nilai terbesar, default = 1
+
         $jawabanMap = \App\Models\JawabanForm4c::where('form_1_id', $form1Id)
             ->where('user_id', $userId)
+            ->where('attempt', $lastAttempt)
             ->get()
             ->keyBy('pertanyaan_form4c_id');
 
@@ -345,8 +412,6 @@ class Form4cController extends BaseController
             'score' => $score,   // <-- ditambahkan di luar data
         ]);
     }
-
-
 
     public function ApproveForm4cByAsesi(Request $request, $form4cId)
     {
@@ -496,7 +561,4 @@ class Form4cController extends BaseController
             ], 500);
         }
     }
-
-
-
 }

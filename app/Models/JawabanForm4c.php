@@ -16,6 +16,7 @@ class JawabanForm4c extends Model
         'catatan',
         'choice_label',
         'is_correct',
+        'attempt'
     ];
 
 

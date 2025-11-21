@@ -279,13 +279,20 @@ class Form7Controller extends BaseController
                 continue;
             }
 
+            $lastAttempt = JawabanForm4c::where('form_1_id', $form1Id)
+                ->whereIn('pertanyaan_form4c_id', $pertanyaanForm4cIds)
+                ->max('attempt');
             // 4. Hitung total & benar
+            // Hitung total berdasarkan attempt terakhir
             $total = JawabanForm4c::whereIn('pertanyaan_form4c_id', $pertanyaanForm4cIds)
                 ->where('form_1_id', $form1Id)
+                ->where('attempt', $lastAttempt) // 🔴 DITAMBAHKAN
                 ->count();
 
+            // Hitung jawaban benar berdasarkan attempt terakhir
             $benar = JawabanForm4c::whereIn('pertanyaan_form4c_id', $pertanyaanForm4cIds)
                 ->where('form_1_id', $form1Id)
+                ->where('attempt', $lastAttempt) // 🔴 DITAMBAHKAN
                 ->where('is_correct', 1)
                 ->count();
 

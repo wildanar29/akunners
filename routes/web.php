@@ -239,6 +239,7 @@ $router->get('/form4c/soal', 'Form4cController@getAllPertanyaanForm4c');
 $router->post('/form4c/jawaban', 'Form4cController@storeJawabanForm4c');
 $router->get('/form4c/soal-jawaban', 'Form4cController@getSoalDanJawabanForm4c');
 $router->post('/form4c/{form4cId}/approve-asesi', 'Form4cController@ApproveForm4cByAsesi');
+$router->get('/form4c/riwayat/{form1Id}/{asesiId}', 'Form4cController@getRiwayatAttempt4c');
 
 // FORM 4D
 $router->get('/form4d/soal', 'Form4dController@getSoalForm4dByPkId');
