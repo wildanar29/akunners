@@ -347,7 +347,7 @@ class Form2Controller extends Controller
 
     public function HitungNilaiAsesi(Request $request)
     {
-        // Validasi sama seperti fungsi utama
+        // Validasi input
         $validator = Validator::make($request->all(), [
             'form_2_id' => 'required|integer|exists:form_2,form_2_id',
             'jawaban' => 'required|array',
@@ -366,8 +366,18 @@ class Form2Controller extends Controller
 
         try {
 
-            // Ambil total soal dari database (tidak ada perubahan data)
-            $total_soal = SoalForm2Model::count();
+            // ⛔ FIX: form2 harus diambil dulu
+            $form2 = Form2::where('form_2_id', $request->form_2_id)->first();
+
+            if (!$form2) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Data form_2 tidak ditemukan.',
+                ], 404);
+            }
+
+            // Ambil total soal berdasarkan pk_id
+            $total_soal = SoalForm2Model::where('pk_id', $form2->pk_id)->count();
 
             if ($total_soal == 0) {
                 return response()->json([
@@ -376,7 +386,7 @@ class Form2Controller extends Controller
                 ], 404);
             }
 
-            // Hitung K & BK dari input request (tidak menyimpan)
+            // Hitung K & BK dari request (tanpa save ke DB)
             $k_count = 0;
             $bk_count = 0;
 
@@ -389,10 +399,10 @@ class Form2Controller extends Controller
                 }
             }
 
-            // Hitung nilai
+            // Hitung nilai persentase
             $penilaian_asesi = ($k_count / $total_soal) * 100;
 
-            // Tentukan lulus / tidak
+            // Tentukan kelulusan
             $is_pass = $penilaian_asesi >= 80;
 
             return response()->json([
@@ -415,6 +425,7 @@ class Form2Controller extends Controller
             ], 500);
         }
     }
+
 
 
     public function JawabanAsesi(Request $request)
@@ -465,7 +476,7 @@ class Form2Controller extends Controller
                 );
             }
 
-            $total_soal = SoalForm2Model::count();
+            $total_soal = SoalForm2Model::where('pk_id', $form2->pk_id)->count();
             $jawabanUser = JawabanForm2Model::where('user_jawab_form_2_id', $form2->user_jawab_form_2_id)->get();
 
             $k_count = $jawabanUser->where('k', true)->count();
