@@ -114,24 +114,30 @@ class Form4cController extends BaseController
             return response()->json([
                 'status' => false,
                 'message' => 'Validasi gagal',
-                'errors' => $validator->errors(),
+                'data' => [
+                    'is_passed' => false,
+                    'errors' => $validator->errors(),
+                ],
             ], 422);
         }
 
-        // 🔴 DITAMBAHKAN — Ambil attempt terakhir
+        // Ambil attempt terakhir
         $lastAttempt = JawabanForm4c::where('form_1_id', $request->form_1_id)
             ->where('user_id', $request->asesi_id)
             ->max('attempt');
 
         $currentAttempt = $lastAttempt ? $lastAttempt + 1 : 1;
 
-        // 🔴 DITAMBAHKAN — Batasi maksimum attempt 3 kali
+        // Batasi maksimum attempt 3 kali
         if ($currentAttempt > 3) {
             return response()->json([
                 'status' => false,
                 'message' => 'Anda sudah mencapai batas maksimum 3 kali attempt. Jawaban tidak dapat disimpan lagi.',
-                'attempt_terakhir' => $lastAttempt
-            ], 403);
+                'data' => [
+                    'is_passed' => false,
+                    'attempt_terakhir' => $lastAttempt,
+                ],
+            ], 200);
         }
 
         DB::beginTransaction();
@@ -141,12 +147,10 @@ class Form4cController extends BaseController
 
             foreach ($request->jawaban as $item) {
 
-                // 🔵 DIUBAH — Hilangkan pengecekan duplikasi antar attempt.
-                // Sekarang jawaban boleh disimpan ulang jika attempt berbeda.
                 $exists = JawabanForm4c::where('form_1_id', $request->form_1_id)
                     ->where('user_id', $request->asesi_id)
                     ->where('pertanyaan_form4c_id', $item['pertanyaan_form4c_id'])
-                    ->where('attempt', $currentAttempt) // 🔴 DITAMBAHKAN
+                    ->where('attempt', $currentAttempt)
                     ->exists();
 
                 if ($exists) {
@@ -154,14 +158,12 @@ class Form4cController extends BaseController
                     continue;
                 }
 
-                // Ambil data relasi
                 $questionChoice = \App\Models\QuestionChoice::with('choice')->find($item['question_choice_id']);
 
                 if (!$questionChoice || !$questionChoice->choice) {
                     throw new \Exception("Choice data not found for question_choice_id: {$item['question_choice_id']}");
                 }
 
-                // 🔵 DIUBAH — Tambah kolom 'attempt'
                 JawabanForm4c::create([
                     'form_1_id' => $request->form_1_id,
                     'user_id' => $request->asesi_id,
@@ -170,7 +172,7 @@ class Form4cController extends BaseController
                     'catatan' => $item['catatan'] ?? null,
                     'choice_label' => $questionChoice->choice->choice_label,
                     'is_correct' => $questionChoice->is_correct,
-                    'attempt' => $currentAttempt, // 🔴 DITAMBAHKAN
+                    'attempt' => $currentAttempt,
                 ]);
             }
 
@@ -178,7 +180,7 @@ class Form4cController extends BaseController
 
             $summary = $this->hitungNilai4c($request->form_1_id, $request->asesi_id);
 
-            // 🔴 Simpan summary attempt
+            // Simpan summary attempt
             Form4cAttemptSummary::create([
                 'form_1_id' => $request->form_1_id,
                 'user_id' => $request->asesi_id,
@@ -191,14 +193,17 @@ class Form4cController extends BaseController
                 'skor' => $summary['skor'],
             ]);
 
-            // Jika ada duplikat dalam ATTEMPT YANG SAMA
+            // Jika ada duplikat (masih attempt yang sama)
             if (!empty($duplikatIds)) {
                 return response()->json([
                     'status' => false,
                     'message' => 'Beberapa pertanyaan pada attempt ini sudah ada dan tidak disimpan ulang.',
-                    'duplikat_pertanyaan_ids' => $duplikatIds,
-                    'result' => $summary,
-                    'attempt' => $currentAttempt,
+                    'data' => [
+                        'is_passed' => $summary['is_passed'] ?? true,
+                        'duplikat_pertanyaan_ids' => $duplikatIds,
+                        'summary' => $summary,
+                        'attempt' => $currentAttempt,
+                    ],
                 ], 409);
             }
 
@@ -224,8 +229,11 @@ class Form4cController extends BaseController
             return response()->json([
                 'status' => true,
                 'message' => 'Semua jawaban berhasil disimpan.',
-                'data' => $summary,
-                'attempt' => $currentAttempt,
+                'data' => [
+                    'is_passed' => $summary['is_passed'] ?? false,
+                    'summary' => $summary,
+                    'attempt' => $currentAttempt,
+                ],
             ]);
 
         } catch (\Exception $e) {
@@ -233,11 +241,15 @@ class Form4cController extends BaseController
 
             return response()->json([
                 'status' => false,
-                'message' => 'Gagal menyimpan jawaban',
-                'error' => $e->getMessage(),
+                'message' => 'Gagal menyimpan jawaban.',
+                'data' => [
+                    'is_passed' => false,
+                    'error' => $e->getMessage(),
+                ],
             ], 500);
         }
     }
+
 
     public function getRiwayatAttempt4c($form1Id, $asesiId)
     {
