@@ -279,12 +279,12 @@ class Form4cController extends BaseController
      */
     private function hitungNilai4c($form1Id, $userId)
     {
-        // Ambil attempt terbesar (default 1, jika re-attempt akan >1)
+        // Ambil attempt terbesar
         $lastAttempt = \App\Models\JawabanForm4c::where('form_1_id', $form1Id)
             ->where('user_id', $userId)
             ->max('attempt');
 
-        // Ambil jawaban berdasarkan attempt terbesar
+        // Ambil jawaban attempt tersebut
         $jawaban = \App\Models\JawabanForm4c::where('form_1_id', $form1Id)
             ->where('user_id', $userId)
             ->where('attempt', $lastAttempt)
@@ -292,16 +292,25 @@ class Form4cController extends BaseController
 
         $total = $jawaban->count();
         $benar = $jawaban->where('is_correct', 1)->count();
+        $salah = $total - $benar;
+
+        // Hitung nilai dalam persentase
+        $nilai = $total > 0 ? round(($benar / $total) * 100, 2) : 0;
+
+        // Tentukan kelulusan (nilai >= 80)
+        $isPassed = $nilai >= 80;
 
         return [
             'total_jawaban' => $total,
             'jawaban_benar' => $benar,
-            'jawaban_salah' => $total - $benar,
-            // 'skor' => $benar,
-            'nilai' => $total > 0 ? round(($benar / $total) * 100, 2) . '' : '0',
-            'attempt' => $lastAttempt, // opsional, jika ingin tahu attempt mana yang dinilai
+            'jawaban_salah' => $salah,
+            'skor' => $benar,
+            'nilai' => $nilai,
+            'is_passed' => $isPassed,
+            'attempt' => $lastAttempt,
         ];
     }
+
 
 
 
@@ -393,30 +402,16 @@ class Form4cController extends BaseController
         //   HITUNG SCORE FORM 4C
         // ============================
 
-        $totalPertanyaan = $data->sum(function ($iuk) {
-            return $iuk['pertanyaan_form4c']->count();
-        });
+        $summary = $this->hitungNilai4c($form1Id, $userId);
 
-        $jawabanBenar = $jawabanMap->where('is_correct', 1)->count();
-        $jawabanSalah = $jawabanMap->where('is_correct', 0)->count();
-
-        $persentase = $totalPertanyaan > 0
-            ? round(($jawabanBenar / $totalPertanyaan) * 100, 2)
-            : 0;
-
-        // ============
-        // is_passed berdasarkan nilai ≥ 80
-        // ============
-        $isPassed = $persentase >= 80;
-
-        // Score output
+        // Score output sesuai format lama (TIDAK DIUBAH)
         $score = [
-            'total_pertanyaan' => $totalPertanyaan,
-            'jawaban_benar' => $jawabanBenar,
-            'jawaban_salah' => $jawabanSalah,
-            'skor' => $jawabanBenar,
-            'persentase' => $persentase,
-            'is_passed' => $isPassed
+            'total_jawaban' => $summary['total_jawaban'],
+            'jawaban_benar' => $summary['jawaban_benar'],
+            'jawaban_salah' => $summary['jawaban_salah'],
+            'skor' => $summary['skor'],
+            'persentase' => $summary['nilai'],
+            'is_passed' => $summary['is_passed']
         ];
 
         return response()->json([
