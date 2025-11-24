@@ -294,7 +294,7 @@ class Form4cController extends BaseController
         $benar = $jawaban->where('is_correct', 1)->count();
         $salah = $total - $benar;
 
-        // Hitung nilai dalam persentase
+        // Hitung nilai dalam nilai
         $nilai = $total > 0 ? round(($benar / $total) * 100, 2) : 0;
 
         // Tentukan kelulusan (nilai >= 80)
@@ -410,7 +410,7 @@ class Form4cController extends BaseController
             'jawaban_benar' => $summary['jawaban_benar'],
             'jawaban_salah' => $summary['jawaban_salah'],
             'skor' => $summary['skor'],
-            'persentase' => $summary['nilai'],
+            'nilai' => $summary['nilai'],
             'is_passed' => $summary['is_passed']
         ];
 
