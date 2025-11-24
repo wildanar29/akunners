@@ -266,8 +266,8 @@ class Form6Controller extends BaseController
             $form6Status = $this->formService->getStatusByParentFormIdAndType($form1Id, 'form_6')->first();
 
             if ($form6Status === 'Submitted') {
-                $updatedForm6 = $this->formService->updateForm6($request->form_6_id, null, null, null, null, null, null, Carbon::now(), null, 'Approved');
-                $updateProgres = $this->formService->updateProgresDanTrack($request->form_6_id, 'form_6', 'Approved', Auth::id(), 'Form 6 telah di-approve oleh Asesi');
+                $updatedForm6 = $this->formService->updateForm6($request->form_6_id, null, null, null, null, null, null, Carbon::now(), null, 'Completed');
+                $updateProgres = $this->formService->updateProgresDanTrack($request->form_6_id, 'form_6', 'Completed', Auth::id(), 'Form 6 telah di-approve oleh Asesi');
                 $this->formService->KirimNotifikasiKeUser($userAsesor, 'Form 6 Approved', 'Form 6 telah di-approve oleh Asesi.');
             }
             DB::commit();

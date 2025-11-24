@@ -570,14 +570,14 @@ class Form7Controller extends BaseController
                     null, // asesiName
                     null, // asesorId
                     null, // asesorName
-                    'Approved' // status
+                    'Completed' // status
                 );
 
                 // Update progres & track sesuai form_type turunan
                 $this->formService->updateProgresDanTrack(
                     $form7Id,
                     'form_7',
-                    'Approved',
+                    'Completed',
                     $form7->asesi_id,
                     'Form form_7 telah di-approve oleh Asesi'
                 );

@@ -416,7 +416,7 @@ class Form9Controller extends BaseController
         if ($subject === 'asesi') {
             $newStatus = 'Submitted';
         } else {
-            $newStatus = 'Approved';
+            $newStatus = 'Completed';
         }
 
         // Update status Form 9

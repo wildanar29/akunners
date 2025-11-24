@@ -904,7 +904,7 @@ class AsesorController extends Controller
 		$this->formService->updateProgresDanTrack(
 			$id,                // form_id
 			'form_2',           // form_type
-			'Approved',         // status
+			'Completed',         // status
 			$form2->user_jawab_form_2_id ?? null, // user_id   
 			'Form 2 telah disetujui dan dinilai oleh asesor.' // description
 		);

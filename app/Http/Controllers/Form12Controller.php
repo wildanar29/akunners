@@ -288,7 +288,7 @@ class Form12Controller extends BaseController
                     null, // asesiName
                     null, // asesorId
                     null, // asesorName
-                    'Approved' // status
+                    'Completed' // status
                 );
 
                 // Update progres & track

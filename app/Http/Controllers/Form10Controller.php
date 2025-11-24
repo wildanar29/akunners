@@ -482,14 +482,14 @@ class Form10Controller extends BaseController
                     null, // asesiName
                     null, // asesorId
                     null, // asesorName
-                    'Approved' // status
+                    'Completed' // status
                 );
 
                 // Update progres & track sesuai form_type turunan
                 $this->formService->updateProgresDanTrack(
                     $form10Id,
                     $form10->form_type,
-                    'Approved',
+                    'Completed',
                     Auth::id(),
                     'Form ' . $form10->form_type . ' telah di-approve oleh Asesi'
                 );

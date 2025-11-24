@@ -629,7 +629,7 @@ class Form5Controller extends BaseController
 
 		switch ($request->action) {
 			case 'Approved':
-				$updateData['status'] = 'Approved';
+				$updateData['status'] = 'Completed';
 				break;
 			case 'Rejected':
 				$updateData['status'] = 'Rejected';
@@ -668,7 +668,7 @@ class Form5Controller extends BaseController
 		$test = $this->formService->updateProgresDanTrack(
 			formId: $request->interview_id,
 			formType: 'intv_pra_asesmen',
-			status: 'Approved',
+			status: 'Completed',
 			userId: $interview->user_id, // atau masukkan user_id yang sesuai
 			description: 'Pengajuan konsultasi pra asesmen disetujui oleh Asesor.'
 		);
