@@ -343,7 +343,7 @@ class Form4cController extends BaseController
         // Ambil jawaban user
         $lastAttempt = \App\Models\JawabanForm4c::where('form_1_id', $form1Id)
             ->where('user_id', $userId)
-            ->max('attempt'); // nilai terbesar, default = 1
+            ->max('attempt');
 
         $jawabanMap = \App\Models\JawabanForm4c::where('form_1_id', $form1Id)
             ->where('user_id', $userId)
@@ -393,30 +393,32 @@ class Form4cController extends BaseController
         //   HITUNG SCORE FORM 4C
         // ============================
 
-        // Hitung total pertanyaan dari hasil iukList
         $totalPertanyaan = $data->sum(function ($iuk) {
             return $iuk['pertanyaan_form4c']->count();
         });
 
-        // Hitung jawaban benar di database
         $jawabanBenar = $jawabanMap->where('is_correct', 1)->count();
         $jawabanSalah = $jawabanMap->where('is_correct', 0)->count();
 
-        // Hitung persentase
         $persentase = $totalPertanyaan > 0
             ? round(($jawabanBenar / $totalPertanyaan) * 100, 2)
             : 0;
 
-        // Siapkan score
+        // ============
+        // is_passed berdasarkan nilai ≥ 80
+        // ============
+        $isPassed = $persentase >= 80;
+
+        // Score output
         $score = [
             'total_pertanyaan' => $totalPertanyaan,
             'jawaban_benar' => $jawabanBenar,
             'jawaban_salah' => $jawabanSalah,
             'skor' => $jawabanBenar,
-            'persentase' => $persentase
+            'persentase' => $persentase,
+            'is_passed' => $isPassed
         ];
 
-        // RETURN
         return response()->json([
             'status' => true,
             'message' => 'Data soal dan jawaban berhasil diambil',
@@ -426,6 +428,8 @@ class Form4cController extends BaseController
             ]
         ]);
     }
+
+
 
     public function ApproveForm4cByAsesi(Request $request, $form4cId)
     {
