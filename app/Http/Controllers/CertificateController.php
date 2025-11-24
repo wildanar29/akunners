@@ -166,7 +166,6 @@ class CertificateController extends Controller
             ->header('Content-Disposition', 'attachment; filename="' . basename($sertifikat->file_path) . '"');
     }
 
-
     public function viewSertifikatByFormId($form_1_id)
     {
         // Cari sertifikat berdasarkan form_1_id
