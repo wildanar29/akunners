@@ -420,8 +420,10 @@ class Form4cController extends BaseController
         return response()->json([
             'status' => true,
             'message' => 'Data soal dan jawaban berhasil diambil',
-            'data' => $data,
-            'score' => $score,   // <-- ditambahkan di luar data
+            'data' => [
+                'items' => $data,
+                'score' => $score
+            ]
         ]);
     }
 
