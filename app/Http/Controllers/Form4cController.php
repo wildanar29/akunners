@@ -297,7 +297,7 @@ class Form4cController extends BaseController
             'total_jawaban' => $total,
             'jawaban_benar' => $benar,
             'jawaban_salah' => $total - $benar,
-            'skor' => $benar,
+            // 'skor' => $benar,
             'nilai' => $total > 0 ? round(($benar / $total) * 100, 2) . '' : '0',
             'attempt' => $lastAttempt, // opsional, jika ingin tahu attempt mana yang dinilai
         ];
