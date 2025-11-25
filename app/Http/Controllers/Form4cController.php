@@ -295,7 +295,7 @@ class Form4cController extends BaseController
         $salah = $total - $benar;
 
         // Hitung nilai dalam nilai
-        $nilai = $total > 0 ? round(($benar / $total) * 100, 2) : 0;
+        $nilai = $total > 0 ? intval(($benar / $total) * 100) : 0;
 
         // Tentukan kelulusan (nilai >= 80)
         $isPassed = $nilai >= 80;
