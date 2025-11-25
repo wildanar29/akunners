@@ -48,23 +48,74 @@ class Form10Controller extends BaseController
         try {
             $query = DaftarTilik::query();
 
-            // Filter berdasarkan pk_id jika dikirim
+            // Filter pk_id
             if ($request->has('pk_id')) {
                 $query->where('pk_id', $request->input('pk_id'));
             }
 
-            // Filter berdasarkan form_number jika dikirim
+            // Filter form_number
             if ($request->has('form_number')) {
                 $query->where('form_number', 'like', '%' . $request->input('form_number') . '%');
             }
 
-            // Urutkan data jika parameter sort_by dikirim
+            // Sorting
             if ($request->has('sort_by')) {
                 $sortOrder = $request->input('sort_order', 'asc');
                 $query->orderBy($request->input('sort_by'), $sortOrder);
             }
 
             $data = $query->get();
+
+            // ---------------------------------------------------
+            // 🔥 Ambil status progres per form_type (sekali saja)
+            // ---------------------------------------------------
+            $asesi_id = $request->input('asesi_id');
+            $pk_id    = $request->input('pk_id');
+
+            $statusMap = [];
+
+            if ($asesi_id && $pk_id) {
+
+                // --- Ambil form_1_id ---
+                $formInfo = BidangModel::where('asesi_id', $asesi_id)
+                    ->where('pk_id', $pk_id)
+                    ->select('form_1_id')
+                    ->first();
+                
+                if ($formInfo) {
+
+                    $form1Id = $formInfo->form_1_id;
+
+                    // --- Ambil semua progres utama & anak ---
+                    $allProgres = \App\Models\KompetensiProgres::where(function ($q) use ($form1Id) {
+                            $q->where('form_id', $form1Id)
+                            ->whereNull('parent_form_id');
+                        })
+                        ->orWhere('parent_form_id', $form1Id)
+                        ->select('id', 'status')
+                        ->get();
+
+                    // --- Buat mapping: form_type → status ---
+                    foreach ($allProgres as $prog) {
+
+                        $form_type = \App\Models\KompetensiTrack::where('progres_id', $prog->id)
+                            ->value('form_type');
+
+                        if ($form_type) {
+                            $statusMap[$form_type] = $prog->status;
+                        }
+                    }
+                }
+            }
+
+            // ---------------------------------------------------
+            // 🔥 Tempelkan status ke setiap daftar tilik
+            // ---------------------------------------------------
+            foreach ($data as $row) {
+
+                // form_number pada tabel = form_type pada progres
+                $row->status = $statusMap[$row->form_number] ?? null;
+            }
 
             return response()->json([
                 'success' => true,
@@ -79,6 +130,44 @@ class Form10Controller extends BaseController
             ], 500);
         }
     }
+
+
+    // public function getAll(Request $request)
+    // {
+    //     try {
+    //         $query = DaftarTilik::query();
+
+    //         // Filter berdasarkan pk_id jika dikirim
+    //         if ($request->has('pk_id')) {
+    //             $query->where('pk_id', $request->input('pk_id'));
+    //         }
+
+    //         // Filter berdasarkan form_number jika dikirim
+    //         if ($request->has('form_number')) {
+    //             $query->where('form_number', 'like', '%' . $request->input('form_number') . '%');
+    //         }
+
+    //         // Urutkan data jika parameter sort_by dikirim
+    //         if ($request->has('sort_by')) {
+    //             $sortOrder = $request->input('sort_order', 'asc');
+    //             $query->orderBy($request->input('sort_by'), $sortOrder);
+    //         }
+
+    //         $data = $query->get();
+
+    //         return response()->json([
+    //             'success' => true,
+    //             'data' => $data,
+    //         ], 200);
+
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Gagal mengambil data daftar_tilik.',
+    //             'error' => $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
 
     public function getSoalList($form10Id)
     {
