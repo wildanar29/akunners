@@ -616,7 +616,7 @@ class Form7Controller extends BaseController
                     'InAssessment',
                     $form1->asesi_id,
                     $form1->form_1_id,
-                    'Form 12 sudah dapat diisi.'
+                    'Form 12 sudah dapat diisi oleh Asesor.'
                 );
             } else {
                 Log::info("Form 12 sudah ada, tidak membuat ulang.");

@@ -1127,7 +1127,7 @@ class Form5Controller extends BaseController
 							'InAssessment',
 							$form1Data->asesi_id,
 							$form1Data->form_1_id,
-							'Form 4A sudah dapat diisi.'
+							'Form 4A sudah dapat diisi oleh Asesor.'
 						);
 					} else {
 						Log::info("Form 4a sudah ada, tidak membuat ulang.");
@@ -1158,7 +1158,7 @@ class Form5Controller extends BaseController
 							'InAssessment',
 							$form1Data->asesi_id,
 							$form1Data->form_1_id,
-							'Form 4B sudah dapat diisi.'
+							'Form 4B sudah dapat diisi oleh Asesor.'
 						);
 					} else {
 						Log::info("Form 4b sudah ada, tidak membuat ulang.");
@@ -1188,7 +1188,7 @@ class Form5Controller extends BaseController
 							'InAssessment',
 							$form1Data->asesi_id,
 							$form1Data->form_1_id,
-							'Form 4C sudah dapat diisi.'
+							'Form 4C sudah dapat diisi oleh Asesi.'
 						);
 					} else {
 						Log::info("Form 4c sudah ada, tidak membuat ulang.");
@@ -1218,7 +1218,7 @@ class Form5Controller extends BaseController
 							'InAssessment',
 							$form1Data->asesi_id,
 							$form1Data->form_1_id,
-							'Form 4D sudah dapat diisi.'
+							'Form 4D sudah dapat diisi oleh Asesor.'
 						);
 					} else {
 						Log::info("Form 4d sudah ada, tidak membuat ulang.");
@@ -1248,7 +1248,7 @@ class Form5Controller extends BaseController
 							'InAssessment',
 							$form1Data->asesi_id,
 							$form1Data->form_1_id,
-							'Form 6 sudah dapat diisi.'
+							'Form 6 sudah dapat diisi oleh Asesor.'
 						);
 					} else {
 						Log::info("Form 6 sudah ada, tidak membuat ulang.");
@@ -1278,7 +1278,7 @@ class Form5Controller extends BaseController
 							'InAssessment',
 							$form1Data->asesi_id,
 							$form1Data->form_1_id,
-							'Form 7 sudah dapat diisi.'
+							'Form 7 sudah dapat diisi oleh Asesor.'
 						);
 					} else {
 						Log::info("Form 7 sudah ada, tidak membuat ulang.");
@@ -1324,7 +1324,7 @@ class Form5Controller extends BaseController
 										'InAssessment',
 										$form1Data->asesi_id,
 										$form1Data->form_1_id,
-										"Form {$formType} sudah dapat diisi."
+										"Form {$formType} sudah dapat diisi oleh Asesor."
 									);
 								}
 							} else {

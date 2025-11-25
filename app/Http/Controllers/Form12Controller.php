@@ -332,7 +332,7 @@ class Form12Controller extends BaseController
                     'InAssessment',
                     $form1->asesi_id,
                     $form1->form_1_id,
-                    'Form 9 sudah dapat diisi.'
+                    'Form 9 sudah dapat diisi Asesi.'
                 );
 
                 // ===== INIT JAWABAN FORM 9 =====
