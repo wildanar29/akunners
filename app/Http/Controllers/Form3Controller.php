@@ -58,7 +58,7 @@ class Form3Controller extends BaseController
             ->orderByRaw('CAST(no_spo AS UNSIGNED) ASC')
             ->get();
 
-        // Ambil data elemen beserta relasi KUK dan IUK
+        // Ambil data Elemen + relasi KUK + IUK
         $elemenList = \App\Models\ElemenForm3::with(['kukForm3.iukForm3'])
             ->where('pk_id', $pk_id)
             ->orderByRaw('CAST(no_elemen_form_3 AS UNSIGNED) ASC')
@@ -72,7 +72,7 @@ class Form3Controller extends BaseController
             ], 404);
         }
 
-        // Mapping nilai group_no ke Metode Asesmen dan Perangkat Asesmen
+        // Mapping nilai group_no ke Metode & Perangkat
         $metodeMap = [
             '4A' => 'Observasi',
             '4B' => 'Uji Lisan',
@@ -87,53 +87,95 @@ class Form3Controller extends BaseController
             '4D' => 'Daftar Checklist EMR',
         ];
 
-        // Buat HTML tampilan SPO + Rencana Asesmen
+        // HTML WebView Responsive
         $html = '<!DOCTYPE html>
-        <html lang="id">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Rencana Asesmen</title>
-            <style>
-                body {
-                    font-family: Arial, sans-serif;
-                }
-                h2, h3 {
-                    text-align: center;
-                    margin-bottom: 15px;
-                }
-                table {
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin-bottom: 30px;
-                }
-                th, td {
-                    border: 1px solid #000;
-                    padding: 8px;
-                    vertical-align: middle;
-                }
-                th {
-                    background-color: #e2e2e2;
-                    text-align: center;
-                }
-                td.center {
-                    text-align: center;
-                }
-                .elemen-header {
-                    background-color: #d9d9d9;
-                    font-weight: bold;
-                    padding: 8px;
-                }
-                ul {
-                    margin: 0;
-                    padding-left: 20px;
-                }
-            </style>
-        </head>
-        <body>
-        <h2>STANDAR PROSEDUR OPERASIONAL (SPO)</h2>';
+    <html lang="id">
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
-        // === Tabel SPO ===
+    <title>Rencana Asesmen</title>
+
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            margin: 15px;
+            background: #f7f7f7;
+            color: #333;
+        }
+
+        h2 {
+            text-align: center;
+            margin: 20px 0 10px;
+            font-size: 20px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .card {
+            background: #fff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-top: 10px;
+            margin-bottom: 25px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 650px;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            font-size: 14px;
+        }
+
+        th {
+            background: #eaeaea;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        td.center {
+            text-align: center;
+        }
+
+        .elemen-header {
+            background: #dcdcdc;
+            font-weight: bold;
+            font-size: 14px;
+            text-align: left;
+        }
+
+        @media (max-width: 480px) {
+            h2 {
+                font-size: 18px;
+            }
+            th, td {
+                font-size: 13px;
+                padding: 8px;
+            }
+        }
+    </style>
+
+    </head>
+    <body>
+
+    <h2>STANDAR PROSEDUR OPERASIONAL (SPO)</h2>
+    <div class="card">
+    <div class="table-responsive">';
+
+        // === TABEL SPO ===
         if ($spoList->isNotEmpty()) {
             $html .= '<table>
                         <thead>
@@ -158,31 +200,36 @@ class Form3Controller extends BaseController
             $html .= '<p style="text-align:center;"><em>Tidak ada data SPO untuk pk_id ini.</em></p>';
         }
 
-        // === Tabel Rencana Asesmen ===
+        $html .= '</div></div>'; // end card SPO
+
+        // === RENCANA ASESMEN ===
         $html .= '<h2>RENCANA ASESMEN</h2>';
 
         foreach ($elemenList as $elemen) {
-            $html .= '<div class="elemen-section">';
-            $html .= '<table>';
-            $html .= '<thead>
-                        <tr>
-                            <th colspan="4" class="elemen-header">Elemen: ' .
-                                htmlspecialchars($elemen->no_elemen_form_3 . ' - ' . $elemen->isi_elemen) .
-                            '</th>
-                        </tr>
-                        <tr>
-                            <th style="width: 25%">Kriteria Unjuk Kerja (KUK)</th>
-                            <th style="width: 25%">Indikator Unjuk Kerja (IUK)</th>
-                            <th style="width: 25%">Metode Asesmen</th>
-                            <th style="width: 25%">Perangkat Asesmen</th>
-                        </tr>
-                    </thead>
-                    <tbody>';
+
+            $html .= '<div class="card">';
+            $html .= '<div class="table-responsive">';
+            $html .= '<table>
+                        <thead>
+                            <tr>
+                                <th colspan="4" class="elemen-header">
+                                    Elemen: ' . htmlspecialchars($elemen->no_elemen_form_3 . ' - ' . $elemen->isi_elemen) . '
+                                </th>
+                            </tr>
+                            <tr>
+                                <th style="width: 25%">Kriteria Unjuk Kerja (KUK)</th>
+                                <th style="width: 25%">Indikator Unjuk Kerja (IUK)</th>
+                                <th style="width: 25%">Metode Asesmen</th>
+                                <th style="width: 25%">Perangkat Asesmen</th>
+                            </tr>
+                        </thead>
+                        <tbody>';
 
             foreach ($elemen->kukForm3 as $kuk) {
                 $rowspan = max(count($kuk->iukForm3), 1);
 
                 if ($rowspan > 0) {
+
                     $html .= '<tr>
                         <td class="center" rowspan="' . $rowspan . '">' .
                             htmlspecialchars($kuk->no_kuk . ' - ' . $kuk->kuk_name) .
@@ -199,6 +246,7 @@ class Form3Controller extends BaseController
                                 <td class="center">' . htmlspecialchars($perangkat) . '</td>
                                 </tr>';
                     }
+
                 } else {
                     $html .= '<tr>
                         <td class="center">' . htmlspecialchars($kuk->no_kuk . ' - ' . $kuk->kuk_name) . '</td>
@@ -207,7 +255,7 @@ class Form3Controller extends BaseController
                 }
             }
 
-            $html .= '</tbody></table></div>';
+            $html .= '</tbody></table></div></div>';
         }
 
         $html .= '</body></html>';
@@ -218,6 +266,7 @@ class Form3Controller extends BaseController
             'data' => $html
         ]);
     }
+
 
 
 
