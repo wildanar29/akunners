@@ -449,7 +449,7 @@ class Form2Controller extends Controller
         $user = auth()->user();
         $form2 = Form2::where('form_2_id', $request->form_2_id)->first();
         $asesiId = $form2 ? $form2->user_jawab_form_2_id : null;
-        $form1 = $this->formService->getParentFormIdByFormIdAndAsesiId($request->form_2_id, $asesiId);
+        $form1 = $this->formService->getParentFormIdByFormIdAndAsesiId($request->form_2_id, $asesiId, 'form_2');
         $form = $this->formService->getParentDataByFormId($form1);
 
         if (!$form) {
@@ -516,7 +516,7 @@ class Form2Controller extends Controller
 
             $form2 = Form2::where('form_2_id', $request->form_2_id)->first();
             $asesiId = $form2 ? $form2->user_jawab_form_2_id : null;
-            $parentFormId = $this->formService->getParentFormIdByFormIdAndAsesiId($request->form_2_id, $asesiId);
+            $parentFormId = $this->formService->getParentFormIdByFormIdAndAsesiId($request->form_2_id, $asesiId, 'form_2');
             $form1Data = $this->formService->getParentDataByFormId($parentFormId);
             $isForm3Exist = $this->formService->isFormExistSingle(
                 $form1Data->asesi_id,

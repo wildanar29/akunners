@@ -195,14 +195,29 @@ class FormService
 		return $progres?->parent_form_id; // gunakan null-safe operator jika data tidak ditemukan
 	}
 
-	function getParentFormIdByFormIdAndAsesiId($formId, $asesiId)
+	// function getParentFormIdByFormIdAndAsesiId($formId, $asesiId, $form_type = null)
+	// {
+	// 	$progres = KompetensiProgres::where('form_id', $formId)
+	// 				->where('user_id', $asesiId)
+	// 				->first();
+
+	// 	return $progres?->parent_form_id; // pakai null-safe operator biar aman
+	// }
+
+	function getParentFormIdByFormIdAndAsesiId($formId, $asesiId, $formType = null)
 	{
 		$progres = KompetensiProgres::where('form_id', $formId)
-					->where('user_id', $asesiId)
-					->first();
+			->where('user_id', $asesiId)
+			->when($formType, function ($query) use ($formType) {
+				$query->whereHas('trackSingle', function ($trackQuery) use ($formType) {
+					$trackQuery->where('form_type', $formType);
+				});
+			})
+			->first();
 
-		return $progres?->parent_form_id; // pakai null-safe operator biar aman
+		return $progres?->parent_form_id;
 	}
+
 
 
 
@@ -220,6 +235,16 @@ class FormService
 	function getForm4cDataFromForm4cId($form4cId)
 	{
 		return Form4c::find($form4cId);
+	}
+
+	function getForm4aDataFromForm4aId($form4bId)
+	{
+		return Form4b::find($form4bId);
+	}
+
+	function getForm4dDataFromForm4dId($form4dId)
+	{
+		return Form4d::find($form4dId);
 	}
 
     function createProgresDanTrack($formId, $formType, $status, $userId, $parentFormId = null, $description)

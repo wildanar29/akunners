@@ -251,8 +251,7 @@ class Form4dController extends BaseController
             }
 
             // Ambil Form 1 ID dari service (berdasarkan form4d + asesi_id)
-            $form1Id = $this->formService->getParentFormIdByFormIdAndAsesiId($form4dId, $form4d->asesi_id);
-
+            $form1Id = $this->formService->getParentFormIdByFormIdAndAsesiId($form4dId, $form4d->asesi_id, 'form_4d');
             // Normalisasi $dataForm4d jika service mengembalikan Collection
             $dataForm4d = $this->formService->getForm4dDataFromForm4dId($form4dId);
             if ($dataForm4d instanceof \Illuminate\Support\Collection) {
@@ -343,14 +342,14 @@ class Form4dController extends BaseController
                         null, // asesiName
                         null, // asesorId
                         null, // asesorName
-                        'Process'
+                        'Submitted'
                     );
 
                     // Update progres & track
                     $this->formService->updateProgresDanTrack(
                         $form7Id,
                         'form_7',
-                        'Process',
+                        'Submitted',
                         $dataForm4d->asesi_id,
                         'Form form_7 telah di-approve oleh Asesi'
                     );

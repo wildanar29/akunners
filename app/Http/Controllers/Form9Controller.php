@@ -314,7 +314,7 @@ class Form9Controller extends BaseController
 
         // Ambil data form1 berdasarkan form9
         Log::info("Mengambil form1Id dari form9Id: {$form9Id} dan asesi_id: {$form9->asesi_id}");
-        $form1Id = $this->formService->getParentFormIdByFormIdAndAsesiId($form9Id, $form9->asesi_id);
+        $form1Id = $this->formService->getParentFormIdByFormIdAndAsesiId($form9Id, $form9->asesi_id, 'form_9');
         $form1   = $this->formService->getParentDataByFormId($form1Id);
         Log::info("Ditemukan form1:", ['form1' => $form1]);
 
@@ -396,7 +396,7 @@ class Form9Controller extends BaseController
             return;
         }
 
-        $form1Id = $this->formService->getParentFormIdByFormIdAndAsesiId($form9Id, $form9->asesi_id);
+        $form1Id = $this->formService->getParentFormIdByFormIdAndAsesiId($form9Id, $form9->asesi_id, 'form_9');
         $form1   = $this->formService->getParentDataByFormId($form1Id);
         // Ambil form induk dari form_9
         // $form1Id = $this->formService->getParentFormIdByFormId($form9Id);

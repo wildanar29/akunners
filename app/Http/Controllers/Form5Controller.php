@@ -882,7 +882,7 @@ class Form5Controller extends BaseController
 			// Ambil data Form 5 dan relasi ke KompetensiProgres
 			$form5 = Form5::find($form5Id);
 			$asesiId = $form5 ? $form5->asesi_id : null;
-			$parentFormId = $this->formService->getParentFormIdByFormIdAndAsesiId($form5Id, $asesiId);
+			$parentFormId = $this->formService->getParentFormIdByFormIdAndAsesiId($form5Id, $asesiId, 'form_5');
 			// $progres = KompetensiProgres::where('form_id', $form5->form_5_id)->first();
 			if ($form5) {
 				Log::info('masuk ke update status Form5', ['form_5_id' => $form5Id]);
@@ -1026,7 +1026,7 @@ class Form5Controller extends BaseController
 
 			$form5   = Form5::find($formId);
 			$asesiId = $form5 ? $form5->asesi_id : null;
-			$parentFormId = $this->formService->getParentFormIdByFormIdAndAsesiId($formId, $asesiId);
+			$parentFormId = $this->formService->getParentFormIdByFormIdAndAsesiId($formId, $asesiId, 'form_5');
 			Log::info("approveKompetensiProgres: Mencari progres untuk form_id={$formId}, asesi_id={$asesiId}, parent_form_id={$parentFormId}");
 			$query = KompetensiProgres::where('form_id', $formId)
 				->when($asesiId, function ($q) use ($asesiId) {

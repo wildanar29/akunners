@@ -34,6 +34,7 @@ class Form4cController extends BaseController
 {
 
 	protected $formService;
+    // protected $form1Id;
 
     public function __construct(FormService $formService)
     {
@@ -221,7 +222,7 @@ class Form4cController extends BaseController
             $form1 = $this->formService->getParentDataByFormId($request->form_1_id);
 
             $this->formService->kirimNotifikasiKeUser(
-                DaftarUser::find($form1->asesor_id),
+                DaftarUser::find($form1->asesi_id),
                 'Form 4C Submitted',
                 'Form 4C telah di-submit oleh Asesi.'
             );
@@ -452,8 +453,8 @@ class Form4cController extends BaseController
                 ], 404);
             }
 
-            $form1Id = $this->formService->getParentFormIdByFormIdAndAsesiId($form4cId, $form4c->asesi_id);
-
+            $form1Id = $this->formService->getParentFormIdByFormIdAndAsesiId($form4cId, $form4c->asesi_id, 'form_4c');
+            // Log::info("Approving Form 4C ID: {$form4cId} for Form 1 ID: {$form1Id}");
             // Normalisasi $dataForm4c -> ambil single row jika service mengembalikan Collection
             $dataForm4c = $this->formService->getForm4cDataFromForm4cId($form4cId);
             if ($dataForm4c instanceof \Illuminate\Support\Collection) {
@@ -491,7 +492,7 @@ class Form4cController extends BaseController
                 Log::info('Form 4C approved successfully.');
 
                 $this->formService->kirimNotifikasiKeUser(
-                    DaftarUser::find($form1->asesor_id),
+                    DaftarUser::find($form1->asesi_id),
                     'Form 4C sudah di Approved',
                     'Form 4C telah di-approve oleh Asesor.'
                 );
@@ -551,7 +552,7 @@ class Form4cController extends BaseController
 
                     // Notifikasi
                     $this->formService->kirimNotifikasiKeUser(
-                        DaftarUser::find($form1->asesor_id),
+                        DaftarUser::find($form1->asesi_id),
                         'Form form_7 Process',
                         'Form form_7 telah di-InAssessment oleh Asesi.'
                     );

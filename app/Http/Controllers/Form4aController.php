@@ -360,8 +360,7 @@ class Form4aController extends BaseController
             }
 
             // Ambil ID Form 1 berdasarkan form4a + asesi_id
-            $form1Id = $this->formService->getParentFormIdByFormIdAndAsesiId($form4aId, $form4a->asesi_id);
-
+            $form1Id = $this->formService->getParentFormIdByFormIdAndAsesiId($form4aId, $form4a->asesi_id, 'form_4a');
             // Normalisasi hasil service agar bukan Collection
             $dataForm4a = $this->formService->getForm4aDataFromForm4aId($form4aId);
             if ($dataForm4a instanceof \Illuminate\Support\Collection) {

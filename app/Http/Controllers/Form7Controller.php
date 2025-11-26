@@ -551,7 +551,8 @@ class Form7Controller extends BaseController
 
             // Ambil form induk (form_1) berdasarkan relasi
             // $form1Id = $this->formService->getParentFormIdByFormId($form7Id);
-            $form1Id = $this->formService->getParentFormIdByFormIdAndAsesiId($form7Id, $form7->asesi_id);
+            $form1Id = $this->formService->getParentFormIdByFormIdAndAsesiId($form7Id, $form7->asesi_id, 'form_7');
+            Log::info("Form 7 ID: {$form7Id}, Form 1 ID: {$form1Id}");
             $form1   = $this->formService->getParentDataByFormId($form1Id);
 
             // Ambil status form 7 sesuai form_type yang dimiliki
