@@ -274,7 +274,7 @@ class Form3Controller extends BaseController
         $no_elemen = $request->query('no_elemen');
         $pk_id = $request->query('pk_id');
 
-        // Validasi: pk_id wajib
+        // Validasi pk_id wajib
         if (!$pk_id) {
             return response()->json([
                 'status' => 'error',
@@ -284,9 +284,10 @@ class Form3Controller extends BaseController
         }
 
         // Ambil data dengan relasi
-        $query = TypeForm3_B::with(['iukForm3.kukForm3.elemenForm3.kompetensiPk'])->orderBy('id', 'asc');
+        $query = TypeForm3_B::with(['iukForm3.kukForm3.elemenForm3.kompetensiPk'])
+            ->orderBy('id', 'asc');
 
-        // Filter berdasarkan elemen jika diberikan
+        // Filter berdasarkan elemen
         if ($no_elemen) {
             $query->whereHas('iukForm3.kukForm3.elemenForm3', function ($q) use ($no_elemen) {
                 $q->where('no_elemen_form_3', $no_elemen);
@@ -300,21 +301,23 @@ class Form3Controller extends BaseController
 
         $data = $query->get();
 
-        // Mengelompokkan data berdasarkan Elemen, KUK, dan IUK
+        // Mengelompokkan data
         $elemen_group = [];
+
         foreach ($data as $item) {
-            $elemen_key = ($item->iukForm3->kukForm3->elemenForm3->no_elemen_form_3 ?? '-') . ' : ' . 
+            $elemen_key = ($item->iukForm3->kukForm3->elemenForm3->no_elemen_form_3 ?? '-') . ' : ' .
                         ($item->iukForm3->kukForm3->elemenForm3->isi_elemen ?? '-');
 
-            $kuk_key = ($item->iukForm3->kukForm3->no_kuk ?? '-') . ' : ' . 
+            $kuk_key = ($item->iukForm3->kukForm3->no_kuk ?? '-') . ' : ' .
                     ($item->iukForm3->kukForm3->kuk_name ?? '-');
 
-            $iuk_key = ($item->iukForm3->no_iuk ?? '-') . ' : ' . 
+            $iuk_key = ($item->iukForm3->no_iuk ?? '-') . ' : ' .
                     ($item->iukForm3->iuk_name ?? '-');
 
-            // Konversi indikator_pencapaian ke format bullet list
+            // Konversi indikator pencapaian menjadi <ul>
             $indikator_pencapaian = trim($item->indikator_pencapaian ?? '-');
             $indikator_list = "<ul>";
+
             foreach (explode("\n", $indikator_pencapaian) as $line) {
                 $line = trim($line);
                 if (!empty($line)) {
@@ -322,6 +325,7 @@ class Form3Controller extends BaseController
                     $indikator_list .= "<li>{$line}</li>";
                 }
             }
+
             $indikator_list .= "</ul>";
 
             $elemen_group[$elemen_key][$kuk_key][$iuk_key][] = [
@@ -331,7 +335,7 @@ class Form3Controller extends BaseController
             ];
         }
 
-        // Buat tampilan HTML
+        // Bangun HTML
         $html = '<!DOCTYPE html>
         <html lang="id">
         <head>
@@ -339,7 +343,7 @@ class Form3Controller extends BaseController
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Form 3 B</title>
             <style>
-                table { width: 100%; max-width: 100%; border-collapse: collapse; overflow-x: auto; display: block;}
+                table { width: 100%; max-width: 100%; border-collapse: collapse; overflow-x: auto; display: block; }
                 th, td { border: 2px solid black; padding: 8px; text-align: left; }
                 th { background-color: #f2f2f2; text-align: center; }
                 ul { margin: 0; padding-left: 20px; }
@@ -396,13 +400,12 @@ class Form3Controller extends BaseController
 
         $html .= '</body></html>';
 
-        // Return JSON
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Berhasil menampilkan Form 3B',
-            'data' => $html
+        // === RETURN HTML LANGSUNG ===
+        return response($html, 200, [
+            'Content-Type' => 'text/html'
         ]);
     }
+
 
 
     public function getAllDataFormC(Request $request)
@@ -410,7 +413,7 @@ class Form3Controller extends BaseController
         $no_elemen = $request->query('no_elemen');
         $pk_id = $request->query('pk_id');
 
-        // Validasi: pk_id wajib
+        // Validasi pk_id
         if (!$pk_id) {
             return response()->json([
                 'status' => 'ERROR',
@@ -419,25 +422,27 @@ class Form3Controller extends BaseController
             ], 400);
         }
 
-        // Ambil data dengan relasi
-        $query = TypeForm3_C::with(['iukForm3.kukForm3.elemenForm3.kompetensiPk'])->orderBy('id', 'asc');
+        // Ambil data
+        $query = TypeForm3_C::with(['iukForm3.kukForm3.elemenForm3.kompetensiPk'])
+            ->orderBy('id', 'asc');
 
-        // Filter berdasarkan elemen jika diberikan
+        // Filter elemen
         if ($no_elemen) {
             $query->whereHas('iukForm3.kukForm3.elemenForm3', function ($q) use ($no_elemen) {
                 $q->where('no_elemen_form_3', $no_elemen);
             });
         }
 
-        // Filter berdasarkan pk_id
+        // Filter pk_id
         $query->whereHas('iukForm3.kukForm3.elemenForm3.kompetensiPk', function ($q) use ($pk_id) {
             $q->where('pk_id', $pk_id);
         });
 
         $data = $query->get();
 
-        // Mengelompokkan data berdasarkan Elemen, KUK, dan IUK
+        // Grouping data
         $elemen_group = [];
+
         foreach ($data as $item) {
             $elemen_key = ($item->iukForm3->kukForm3->elemenForm3->no_elemen_form_3 ?? '-') . ' : ' .
                         ($item->iukForm3->kukForm3->elemenForm3->isi_elemen ?? '-');
@@ -485,7 +490,7 @@ class Form3Controller extends BaseController
             ];
         }
 
-        // Buat tampilan HTML
+        // Generate HTML
         $html = '<!DOCTYPE html>
         <html lang="id">
         <head>
@@ -499,10 +504,7 @@ class Form3Controller extends BaseController
                 ul { margin: 0; padding-left: 20px; }
                 .elemen-header { background-color: #d9d9d9; font-weight: bold; text-align: left; padding: 10px; }
                 @media (max-width: 600px) {
-                    th, td {
-                        padding: 5px;
-                        font-size: 12px;
-                    }
+                    th, td { padding: 5px; font-size: 12px; }
                 }
             </style>
         </head>
@@ -550,13 +552,12 @@ class Form3Controller extends BaseController
 
         $html .= '</body></html>';
 
-        // Kembalikan JSON response
-        return response()->json([
-            'status' => 'OK',
-            'message' => 'Data berhasil diambil.',
-            'data' => $html
+        // === RETURN HTML LANGSUNG (BUKAN JSON) ===
+        return response($html, 200, [
+            'Content-Type' => 'text/html'
         ]);
     }
+
 
 
     public function getAllDataFormA(Request $request)
@@ -669,13 +670,12 @@ class Form3Controller extends BaseController
 
         $html .= '</body></html>';
 
-        // Return JSON dengan HTML di dalam data
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Berhasil menampilkan Form 3A',
-            'data' => $html
+        // === RETURN HTML LANGSUNG (BUKAN JSON) ===
+        return response($html, 200, [
+            'Content-Type' => 'text/html'
         ]);
     }
+
 
 
     public function getAllDataFormD(Request $request)
@@ -724,9 +724,9 @@ class Form3Controller extends BaseController
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Form 3 D</title>
             <style>
-                h2 { text-align: left; }
+                h2 { text-align: left; font-family: Arial, sans-serif; }
                 table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                th, td { border: 1px solid #000; padding: 10px; text-align: left; }
+                th, td { border: 1px solid #000; padding: 10px; text-align: left; font-family: Arial, sans-serif; }
                 th { background-color: #f2f2f2; }
                 @media (max-width: 600px) {
                     th, td { padding: 5px; font-size: 12px; }
@@ -753,13 +753,12 @@ class Form3Controller extends BaseController
 
         $html .= '</tbody></table></body></html>';
 
-        // Return JSON
-        return response()->json([
-            'status' => 'OK',
-            'message' => 'Data berhasil diambil.',
-            'data' => $html
+        // === RETURN HTML LANGSUNG (BUKAN JSON) ===
+        return response($html, 200, [
+            'Content-Type' => 'text/html'
         ]);
     }
+
 
 
     public function Form3Input(Request $request, $user_id)

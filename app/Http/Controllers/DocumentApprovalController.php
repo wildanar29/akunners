@@ -112,7 +112,7 @@ class DocumentApprovalController extends Controller
 
     public function panduanForm2()
     {
-        // Buat konten HTML dengan gaya profesional dan penekanan aturan
+        // Buat konten HTML
         $html = '<!DOCTYPE html>
         <html lang="id">
         <head>
@@ -170,35 +170,40 @@ class DocumentApprovalController extends Controller
             </style>
         </head>
         <body>
+
             <h2>Panduan Penilaian Mandiri</h2>
             <hr>
+
             <p class="intro">
-                <strong>Perhatian:</strong> Panduan ini merupakan <u>aturan resmi</u> yang <strong>wajib diikuti oleh seluruh peserta asesmen</strong>.
-                Setiap peserta diharapkan membaca dengan seksama dan melaksanakan seluruh petunjuk berikut sesuai dengan ketentuan yang berlaku.
+                <strong>Perhatian:</strong> Panduan ini merupakan <u>aturan resmi</u> yang 
+                <strong>wajib diikuti oleh seluruh peserta asesmen</strong>.
+                Setiap peserta diharapkan membaca dengan seksama dan melaksanakan seluruh petunjuk berikut 
+                sesuai dengan ketentuan yang berlaku.
             </p>
 
             <h3>Petunjuk:</h3>
             <ol>
-                <li>Pelajari seluruh standar <strong>Kriteria Unjuk Kerja (KUK)</strong> pada Standar Kompetensi dan pahami dengan seksama.</li>
-                <li>Laksanakan penilaian mandiri secara jujur dan obyektif. Nilai kemampuan anda terhadap setiap pertanyaan, 
-                    kemudian tentukan apakah sudah <strong>Kompeten (K)</strong> atau <strong>Belum Kompeten (BK)</strong>.</li>
-                <li>Asesor akan menggunakan format ini pada saat <strong>konsultasi pra-asesmen</strong> untuk memvalidasi kesiapan anda, 
-                    termasuk memberikan pertanyaan kritikal yang relevan dengan unit kompetensi.</li>
-                <li>Setelah penilaian selesai, <strong>Asesor dan Asesi wajib menandatangani</strong> format asesmen mandiri sebagai bentuk pernyataan keabsahan data.</li>
+                <li>Pelajari seluruh standar <strong>Kriteria Unjuk Kerja (KUK)</strong> pada Standar Kompetensi.</li>
+                <li>Lakukan penilaian mandiri secara jujur dan obyektif. Tentukan apakah anda sudah 
+                    <strong>Kompeten (K)</strong> atau <strong>Belum Kompeten (BK)</strong>.</li>
+                <li>Asesor akan menggunakan format ini pada saat <strong>konsultasi pra-asesmen</strong> 
+                    untuk memvalidasi kesiapan anda.</li>
+                <li>Setelah penilaian selesai, <strong>Asesor dan Asesi wajib menandatangani</strong> 
+                    format penilaian mandiri sebagai bukti keabsahan.</li>
             </ol>
 
             <footer>
-                Dokumen ini menjadi bagian dari proses asesmen resmi dan tidak boleh diabaikan atau diubah tanpa persetujuan asesor.
+                Dokumen ini merupakan bagian dari proses asesmen resmi dan tidak boleh diubah tanpa persetujuan asesor.
             </footer>
+
         </body>
         </html>';
 
-        // Return dalam format JSON seperti fungsi sebelumnya
-        return response()->json([
-            'status' => 'OK',
-            'message' => 'Panduan penilaian mandiri berhasil ditampilkan.',
-            'data' => $html
+        // === RETURN SEPERTI getRencanaAsesmen() ===
+        return response($html, 200, [
+            'Content-Type' => 'text/html'
         ]);
     }
+
 
 }
