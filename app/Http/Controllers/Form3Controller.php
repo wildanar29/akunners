@@ -260,11 +260,10 @@ class Form3Controller extends BaseController
 
         $html .= '</body></html>';
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Berhasil menampilkan data SPO dan Rencana Asesmen.',
-            'data' => $html
+        return response($html, 200, [
+            'Content-Type' => 'text/html'
         ]);
+
     }
 
 

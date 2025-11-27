@@ -216,119 +216,6 @@ class Form7Controller extends BaseController
         ]);
     }
 
-    public function getKeputusanForm4cPerIuk($pkId, $form1Id)
-    {
-        // 1. Ambil asesi_id dari form 1
-        $form1Data = $this->formService->getParentDataByFormId($form1Id);
-        $asesiId = $form1Data->asesi_id ?? null;
-        $asesorId = $form1Data->asesor_id ?? null;
-
-        if (!$asesiId) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Asesi ID tidak ditemukan dari Form 1.'
-            ], 404);
-        }
-
-        // 2. Ambil semua soal form 7 untuk pkId (hanya sumber_form mengandung 4C)
-        $soalForm7List = SoalForm7::where('pk_id', $pkId)
-            ->whereRaw("LOWER(sumber_form) LIKE ?", ['%4c%'])
-            ->get();
-
-        if ($soalForm7List->isEmpty()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Tidak ada Soal Form7 dengan sumber_form 4C untuk pkId ini.'
-            ], 404);
-        }
-
-        $hasil = [];
-
-        foreach ($soalForm7List as $soal) {
-            $iukId = $soal->iuk_form3_id;
-
-            // 3. Ambil id pertanyaan_form4c
-            $pertanyaanForm4cIds = PertanyaanForm4c::where('iuk_form_3_id', $iukId)
-                ->pluck('id')
-                ->unique()
-                ->values()
-                ->toArray();
-
-            if (empty($pertanyaanForm4cIds)) {
-                $keputusan = 'BK';
-                $hasil[] = [
-                    'soal_form7_id' => $soal->id,
-                    'iuk_form3_id' => $iukId,
-                    'total' => 0,
-                    'benar' => 0,
-                    'persentase_benar' => 0,
-                    'keputusan' => $keputusan
-                ];
-
-                JawabanForm7::updateOrCreate(
-                    [
-                        'asesi_id' => $asesiId,
-                        'asesor_id' => $asesorId,
-                        'soal_form7_id' => $soal->id
-                    ],
-                    [
-                        'keputusan' => $keputusan
-                    ]
-                );
-
-                continue;
-            }
-
-            $lastAttempt = JawabanForm4c::where('form_1_id', $form1Id)
-                ->whereIn('pertanyaan_form4c_id', $pertanyaanForm4cIds)
-                ->max('attempt');
-            // 4. Hitung total & benar
-            // Hitung total berdasarkan attempt terakhir
-            $total = JawabanForm4c::whereIn('pertanyaan_form4c_id', $pertanyaanForm4cIds)
-                ->where('form_1_id', $form1Id)
-                ->where('attempt', $lastAttempt) // 🔴 DITAMBAHKAN
-                ->count();
-
-            // Hitung jawaban benar berdasarkan attempt terakhir
-            $benar = JawabanForm4c::whereIn('pertanyaan_form4c_id', $pertanyaanForm4cIds)
-                ->where('form_1_id', $form1Id)
-                ->where('attempt', $lastAttempt) // 🔴 DITAMBAHKAN
-                ->where('is_correct', 1)
-                ->count();
-
-            $persentase = $total > 0 ? round(($benar / $total) * 100, 2) : 0;
-
-            // Tentukan keputusan K / BK
-            $keputusan = $persentase >= 80 ? 'K' : 'BK';
-
-            $hasil[] = [
-                'soal_form7_id' => $soal->id,
-                'iuk_form3_id' => $iukId,
-                'total' => $total,
-                'benar' => $benar,
-                'persentase_benar' => $persentase,
-                'keputusan' => $keputusan
-            ];
-
-            // 5. Simpan ke JawabanForm7
-            JawabanForm7::updateOrCreate(
-                [
-                    'asesi_id' => $asesiId,
-                    'asesor_id' => $asesorId,
-                    'soal_form7_id' => $soal->id
-                ],
-                [
-                    'keputusan' => $keputusan
-                ]
-            );
-        }
-
-        return response()->json([
-            'status' => 'success',
-            'data' => $hasil
-        ]);
-    }
-
     public function getKeputusanForm4aPerIuk($pkId, $form1Id)
     {
         // 1. Ambil asesi_id dari Form 1
@@ -358,7 +245,13 @@ class Form7Controller extends BaseController
         $hasil = [];
 
         foreach ($soalForm7List as $soal) {
+
             $iukId = $soal->iuk_form3_id;
+
+            // ⭐ SESUAIKAN DENGAN MODEL
+            // karena primary key = iuk_form3_id
+            $iukData = IukModel::find($iukId);
+            $noIuk   = $iukData->no_iuk ?? null;
 
             // 3. Ambil jawaban form 4A untuk IUK ini
             $jawaban = JawabanForm4a::where('form_1_id', $form1Id)
@@ -373,12 +266,88 @@ class Form7Controller extends BaseController
 
             $hasil[] = [
                 'soal_form7_id' => $soal->id,
+                'iuk_form3_id'  => $iukId,
+                'no_iuk'        => $noIuk,       // ✔ sesuai model
+                'pencapaian'    => $jawaban->pencapaian ?? null,
+                'keputusan'     => $keputusan
+            ];
+
+            // 4. Simpan ke JawabanForm7
+            JawabanForm7::updateOrCreate(
+                [
+                    'asesi_id'      => $asesiId,
+                    'asesor_id'     => $asesorId,
+                    'soal_form7_id' => $soal->id
+                ],
+                [
+                    'keputusan' => $keputusan
+                ]
+            );
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data'   => $hasil
+        ]);
+    }
+
+
+
+    public function getKeputusanForm4bPerIuk($pkId, $form1Id)
+    {
+        // 1. Ambil asesi_id dan asesor_id dari Form 1
+        $form1Data = $this->formService->getParentDataByFormId($form1Id);
+        $asesiId = $form1Data->asesi_id ?? null;
+        $asesorId = $form1Data->asesor_id ?? null;
+
+        if (!$asesiId) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Asesi ID tidak ditemukan dari Form 1.'
+            ], 404);
+        }
+
+        // 2. Ambil semua soal form 7 dengan sumber_form mengandung 4B
+        $soalForm7List = SoalForm7::where('pk_id', $pkId)
+            ->whereRaw("LOWER(sumber_form) LIKE ?", ['%4b%'])
+            ->get();
+
+        if ($soalForm7List->isEmpty()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Tidak ada Soal Form7 dengan sumber_form 4B untuk pkId ini.'
+            ], 404);
+        }
+
+        $hasil = [];
+
+        foreach ($soalForm7List as $soal) {
+            $iukId = $soal->iuk_form3_id;
+
+            // 🔥 3. Ambil NO IUK dari IukModel
+            $iuk = IukModel::find($iukId);
+            $noIuk = $iuk->no_iuk ?? null;
+
+            // 4. Ambil jawaban form 4B untuk IUK ini
+            $jawaban = JawabanForm4b::where('form_1_id', $form1Id)
+                ->where('iuk_form3_id', $iukId)
+                ->first();
+
+            if (!$jawaban) {
+                $keputusan = 'BK';
+            } else {
+                $keputusan = $jawaban->pencapaian == 1 ? 'K' : 'BK';
+            }
+
+            $hasil[] = [
+                'soal_form7_id' => $soal->id,
                 'iuk_form3_id' => $iukId,
+                'no_iuk' => $noIuk,                 // 🔥 ditambahkan di hasil output
                 'pencapaian' => $jawaban->pencapaian ?? null,
                 'keputusan' => $keputusan
             ];
 
-            // 4. Simpan ke JawabanForm7
+            // 5. Simpan ke JawabanForm7
             JawabanForm7::updateOrCreate(
                 [
                     'asesi_id' => $asesiId,
@@ -397,9 +366,10 @@ class Form7Controller extends BaseController
         ]);
     }
 
-    public function getKeputusanForm4bPerIuk($pkId, $form1Id)
+
+    public function getKeputusanForm4cPerIuk($pkId, $form1Id)
     {
-        // 1. Ambil asesi_id dari Form 1
+        // 1. Ambil asesi_id dari form 1
         $form1Data = $this->formService->getParentDataByFormId($form1Id);
         $asesiId = $form1Data->asesi_id ?? null;
         $asesorId = $form1Data->asesor_id ?? null;
@@ -411,15 +381,15 @@ class Form7Controller extends BaseController
             ], 404);
         }
 
-        // 2. Ambil semua soal form 7 untuk pkId (hanya sumber_form mengandung 4B)
+        // 2. Ambil semua soal form 7 dengan sumber_form mengandung 4C
         $soalForm7List = SoalForm7::where('pk_id', $pkId)
-            ->whereRaw("LOWER(sumber_form) LIKE ?", ['%4b%'])
+            ->whereRaw("LOWER(sumber_form) LIKE ?", ['%4c%'])
             ->get();
 
         if ($soalForm7List->isEmpty()) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Tidak ada Soal Form7 dengan sumber_form 4B untuk pkId ini.'
+                'message' => 'Tidak ada Soal Form7 dengan sumber_form 4C untuk pkId ini.'
             ], 404);
         }
 
@@ -428,25 +398,82 @@ class Form7Controller extends BaseController
         foreach ($soalForm7List as $soal) {
             $iukId = $soal->iuk_form3_id;
 
-            // 3. Ambil jawaban form 4B untuk IUK ini
-            $jawaban = JawabanForm4b::where('form_1_id', $form1Id)
-                ->where('iuk_form3_id', $iukId)
-                ->first();
+            // ================================
+            // ★ Tambahkan pengambilan no_iuk ★
+            // ================================
+            $iuk = IukModel::find($iukId);
+            $noIuk = $iuk->no_iuk ?? null;
+            // ================================
 
-            if (!$jawaban) {
+
+            // 3. Ambil id pertanyaan_form4c
+            $pertanyaanForm4cIds = PertanyaanForm4c::where('iuk_form_3_id', $iukId)
+                ->pluck('id')
+                ->unique()
+                ->values()
+                ->toArray();
+
+            if (empty($pertanyaanForm4cIds)) {
                 $keputusan = 'BK';
-            } else {
-                $keputusan = $jawaban->pencapaian == 1 ? 'K' : 'BK';
+
+                $hasil[] = [
+                    'soal_form7_id' => $soal->id,
+                    'iuk_form3_id' => $iukId,
+                    'no_iuk' => $noIuk,         // ★ Ditambahkan
+                    'total' => 0,
+                    'benar' => 0,
+                    'persentase_benar' => 0,
+                    'keputusan' => $keputusan
+                ];
+
+                JawabanForm7::updateOrCreate(
+                    [
+                        'asesi_id' => $asesiId,
+                        'asesor_id' => $asesorId,
+                        'soal_form7_id' => $soal->id
+                    ],
+                    [
+                        'keputusan' => $keputusan
+                    ]
+                );
+
+                continue;
             }
 
+            // 4. Cari attempt terakhir
+            $lastAttempt = JawabanForm4c::where('form_1_id', $form1Id)
+                ->whereIn('pertanyaan_form4c_id', $pertanyaanForm4cIds)
+                ->max('attempt');
+
+            // 5. Hitung total & benar
+            $total = JawabanForm4c::whereIn('pertanyaan_form4c_id', $pertanyaanForm4cIds)
+                ->where('form_1_id', $form1Id)
+                ->where('attempt', $lastAttempt)
+                ->count();
+
+            $benar = JawabanForm4c::whereIn('pertanyaan_form4c_id', $pertanyaanForm4cIds)
+                ->where('form_1_id', $form1Id)
+                ->where('attempt', $lastAttempt)
+                ->where('is_correct', 1)
+                ->count();
+
+            $persentase = $total > 0 ? round(($benar / $total) * 100, 2) : 0;
+
+            // Tentukan keputusan
+            $keputusan = $persentase >= 80 ? 'K' : 'BK';
+
+            // Tambahkan hasil
             $hasil[] = [
                 'soal_form7_id' => $soal->id,
                 'iuk_form3_id' => $iukId,
-                'pencapaian' => $jawaban->pencapaian ?? null,
+                'no_iuk' => $noIuk,            // ★ Ditambahkan di sini
+                'total' => $total,
+                'benar' => $benar,
+                'persentase_benar' => $persentase,
                 'keputusan' => $keputusan
             ];
 
-            // 4. Simpan ke JawabanForm7
+            // 6. Simpan ke tabel Form7
             JawabanForm7::updateOrCreate(
                 [
                     'asesi_id' => $asesiId,
