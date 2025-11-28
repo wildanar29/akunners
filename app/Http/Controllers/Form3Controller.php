@@ -89,91 +89,91 @@ class Form3Controller extends BaseController
 
         // HTML WebView Responsive
         $html = '<!DOCTYPE html>
-    <html lang="id">
-    <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+        <html lang="id">
+        <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
-    <title>Rencana Asesmen</title>
+        <title>Rencana Asesmen</title>
 
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-            margin: 15px;
-            background: #f7f7f7;
-            color: #333;
-        }
+        <style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+                margin: 15px;
+                background: #f7f7f7;
+                color: #333;
+            }
 
-        h2 {
-            text-align: center;
-            margin: 20px 0 10px;
-            font-size: 20px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .card {
-            background: #fff;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-
-        .table-responsive {
-            width: 100%;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            margin-top: 10px;
-            margin-bottom: 25px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 650px;
-        }
-
-        th, td {
-            padding: 10px;
-            border: 1px solid #ddd;
-            font-size: 14px;
-        }
-
-        th {
-            background: #eaeaea;
-            font-weight: bold;
-            text-align: center;
-        }
-
-        td.center {
-            text-align: center;
-        }
-
-        .elemen-header {
-            background: #dcdcdc;
-            font-weight: bold;
-            font-size: 14px;
-            text-align: left;
-        }
-
-        @media (max-width: 480px) {
             h2 {
-                font-size: 18px;
+                text-align: center;
+                margin: 20px 0 10px;
+                font-size: 20px;
+                font-weight: 600;
+                text-transform: uppercase;
             }
+
+            .card {
+                background: #fff;
+                padding: 15px;
+                border-radius: 10px;
+                margin-bottom: 20px;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            }
+
+            .table-responsive {
+                width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                margin-top: 10px;
+                margin-bottom: 25px;
+            }
+
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                min-width: 650px;
+            }
+
             th, td {
-                font-size: 13px;
-                padding: 8px;
+                padding: 10px;
+                border: 1px solid #ddd;
+                font-size: 14px;
             }
-        }
-    </style>
 
-    </head>
-    <body>
+            th {
+                background: #eaeaea;
+                font-weight: bold;
+                text-align: center;
+            }
 
-    <h2>STANDAR PROSEDUR OPERASIONAL (SPO)</h2>
-    <div class="card">
-    <div class="table-responsive">';
+            td.center {
+                text-align: center;
+            }
+
+            .elemen-header {
+                background: #dcdcdc;
+                font-weight: bold;
+                font-size: 14px;
+                text-align: left;
+            }
+
+            @media (max-width: 480px) {
+                h2 {
+                    font-size: 18px;
+                }
+                th, td {
+                    font-size: 13px;
+                    padding: 8px;
+                }
+            }
+        </style>
+
+        </head>
+        <body>
+
+        <h2>STANDAR PROSEDUR OPERASIONAL (SPO)</h2>
+        <div class="card">
+        <div class="table-responsive">';
 
         // === TABEL SPO ===
         if ($spoList->isNotEmpty()) {
@@ -337,27 +337,27 @@ class Form3Controller extends BaseController
 
         // Bangun HTML
         $html = '<!DOCTYPE html>
-        <html lang="id">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Form 3 B</title>
-            <style>
-                table { width: 100%; max-width: 100%; border-collapse: collapse; overflow-x: auto; display: block; }
-                th, td { border: 2px solid black; padding: 8px; text-align: left; }
-                th { background-color: #f2f2f2; text-align: center; }
-                ul { margin: 0; padding-left: 20px; }
-                .elemen-header { background-color: #d9d9d9; font-weight: bold; text-align: left; padding: 10px; }
-                @media (max-width: 600px) {
-                    th, td {
-                        padding: 5px;
-                        font-size: 12px;
+            <html lang="id">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Form 3 B</title>
+                <style>
+                    table { width: 100%; max-width: 100%; border-collapse: collapse; overflow-x: auto; display: block; }
+                    th, td { border: 2px solid black; padding: 8px; text-align: left; }
+                    th { background-color: #f2f2f2; text-align: center; }
+                    ul { margin: 0; padding-left: 20px; }
+                    .elemen-header { background-color: #d9d9d9; font-weight: bold; text-align: left; padding: 10px; }
+                    @media (max-width: 600px) {
+                        th, td {
+                            padding: 5px;
+                            font-size: 12px;
+                        }
                     }
-                }
-            </style>
-        </head>
-        <body>
-        <h2>Form 3 B</h2>';
+                </style>
+            </head>
+            <body>
+            <h2>Form 3 B</h2>';
 
         foreach ($elemen_group as $elemen => $kuk_list) {
             $html .= '<table>
@@ -384,14 +384,19 @@ class Form3Controller extends BaseController
                     $html .= '<td rowspan="' . $rowspan_iuk . '">' . $iuk . '</td>';
 
                     foreach ($soal_list as $index => $soal) {
+                        $html .= '<tr>';
+
                         if ($index > 0) {
-                            $html .= '<tr>';
+                            // IUK sudah dibuat, maka kolom KUK & IUK sudah otomatis diset rowspan
                         }
-                        $html .= '<td>' . $soal['no_soal'] . '</td>
-                                <td>' . $soal['pertanyaan'] . '</td>
-                                <td>' . $soal['indikator_pencapaian'] . '</td>
-                            </tr>';
+
+                        $html .= '
+                            <td>' . $soal['no_soal'] . '</td>
+                            <td>' . $soal['pertanyaan'] . '</td>
+                            <td>' . $soal['indikator_pencapaian'] . '</td>
+                        </tr>';
                     }
+
                 }
             }
 
