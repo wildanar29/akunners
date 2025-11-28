@@ -341,7 +341,7 @@ class Form3Controller extends BaseController
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Form 3 B</title>
+                <title>Form 3 Baaa</title>
                 <style>
                     table { width: 100%; max-width: 100%; border-collapse: collapse; overflow-x: auto; display: block; }
                     th, td { border: 2px solid black; padding: 8px; text-align: left; }
@@ -384,19 +384,14 @@ class Form3Controller extends BaseController
                     $html .= '<td rowspan="' . $rowspan_iuk . '">' . $iuk . '</td>';
 
                     foreach ($soal_list as $index => $soal) {
-                        $html .= '<tr>';
-
                         if ($index > 0) {
-                            // IUK sudah dibuat, maka kolom KUK & IUK sudah otomatis diset rowspan
+                            $html .= '<tr>';
                         }
-
-                        $html .= '
-                            <td>' . $soal['no_soal'] . '</td>
-                            <td>' . $soal['pertanyaan'] . '</td>
-                            <td>' . $soal['indikator_pencapaian'] . '</td>
-                        </tr>';
+                        $html .= '<td>' . $soal['no_soal'] . '</td>
+                                <td>' . $soal['pertanyaan'] . '</td>
+                                <td>' . $soal['indikator_pencapaian'] . '</td>
+                            </tr>';
                     }
-
                 }
             }
 
