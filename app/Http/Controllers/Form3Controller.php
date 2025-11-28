@@ -357,7 +357,7 @@ class Form3Controller extends BaseController
                 </style>
             </head>
             <body>
-            <h2>Form 3 B</h2>';
+            <h2>Form 3 B ada</h2>';
 
         foreach ($elemen_group as $elemen => $kuk_list) {
             $html .= '<table>
