@@ -53,11 +53,7 @@ $router->get('/form5/asesi-approve', 'Form5Controller@approveKompetensiProgres')
 $router->get('/tracks-by-form', 'ProgressController@getTracksByFormId');
 // Bagian API Form 3
 
-//Ambil Kisi-Kisi Form3
-$router->get('/get-form3-a', action: 'Form3Controller@getAllDataFormA');
-$router->get('/get-form3-b', action: 'Form3Controller@getAllDataFormB');
-$router->get('/get-form3-c', action: 'Form3Controller@getAllDataFormC');
-$router->get('/get-form3-d', action: 'Form3Controller@getAllDataFormD');
+
 // baru
 $router->post('/approve-form3-asesi', action: 'Form3Controller@ApproveAsesiForm3');
 $router->put('/form3/update/{form3_id}', 'Form3Controller@UpdateAsesorForm3');
@@ -215,11 +211,13 @@ $router->get('/get-form2-by-no-reg', 'Form2Controller@getForm2ByNoReg');
 // Cukup Sampai Sini Form 2
 $router->get('/get-soal-jawab-form2', 'Form2Controller@getSoalDanJawaban');
 
-//Asesor Form3 Input Approved
+// Bagian API Form 3
 $router->get('/form3/data', 'Form3Controller@getRencanaAsesmen');
-
+$router->get('/get-form3-a', action: 'Form3Controller@getAllDataFormA');
+$router->get('/get-form3-b', action: 'Form3Controller@getAllDataFormB');
+$router->get('/get-form3-c', action: 'Form3Controller@getAllDataFormC');
+$router->get('/get-form3-d', action: 'Form3Controller@getAllDataFormD');
 $router->post('/input-form3/{user_id}', 'Form3Controller@Form3Input');
-
 $router->get('/form1', 'ProgressController@getForm1');
 
 // FORM 4A
