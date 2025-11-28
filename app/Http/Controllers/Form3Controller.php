@@ -343,7 +343,7 @@ class Form3Controller extends BaseController
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>Form 3 Baaa</title>
                 <style>
-                    table { width: 100%; max-width: 100%; border-collapse: collapse; overflow-x: auto; display: block; }
+                    table { width: 100%; max-width: 100%; border-collapse: collapse; overflow-x: auto; }
                     th, td { border: 2px solid black; padding: 8px; text-align: left; }
                     th { background-color: #f2f2f2; text-align: center; }
                     ul { margin: 0; padding-left: 20px; }
