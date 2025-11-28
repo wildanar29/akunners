@@ -341,9 +341,17 @@ class Form3Controller extends BaseController
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Form 3 Baaa</title>
+                <title>Form 3 B</title>
                 <style>
-                    table { width: 100%; max-width: 100%; border-collapse: collapse; overflow-x: auto; }
+                    table { 
+                        width: 100%; 
+                        border-collapse: collapse; 
+                    }
+                    .table-wrapper {
+                        width: 100%;
+                        overflow-x: auto;
+                    }
+
                     th, td { border: 2px solid black; padding: 8px; text-align: left; }
                     th { background-color: #f2f2f2; text-align: center; }
                     ul { margin: 0; padding-left: 20px; }
@@ -357,10 +365,10 @@ class Form3Controller extends BaseController
                 </style>
             </head>
             <body>
-            <h2>Form 3 B ada</h2>';
+            <h2>Form 3 B</h2>';
 
         foreach ($elemen_group as $elemen => $kuk_list) {
-            $html .= '<table>
+            $html .= '<div class="table-wrapper"><table>
                 <thead>
                     <tr>
                         <th colspan="5" class="elemen-header">Elemen: ' . $elemen . '</th>
@@ -395,7 +403,7 @@ class Form3Controller extends BaseController
                 }
             }
 
-            $html .= '</tbody></table><br>';
+            $html .= '</tbody></table></div><br>';
         }
 
         $html .= '</body></html>';
