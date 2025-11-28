@@ -271,10 +271,9 @@ class Form3Controller extends BaseController
 
     public function getAllDataFormB(Request $request)
     {
-        $no_elemen = $request->query('no_elemen');
         $pk_id = $request->query('pk_id');
 
-        // Validasi pk_id wajib
+        // Validasi parameter pk_id wajib
         if (!$pk_id) {
             return response()->json([
                 'status' => 'error',
@@ -283,132 +282,213 @@ class Form3Controller extends BaseController
             ], 400);
         }
 
-        // Ambil data dengan relasi
-        $query = TypeForm3_B::with(['iukForm3.kukForm3.elemenForm3.kompetensiPk'])
-            ->orderBy('id', 'asc');
+        // === Ambil data SPO berdasarkan pk_id ===
+        $spoList = \App\Models\Spo::where('pk_id', $pk_id)
+            ->orderByRaw('CAST(no_spo AS UNSIGNED) ASC')
+            ->get();
 
-        // Filter berdasarkan elemen
-        if ($no_elemen) {
-            $query->whereHas('iukForm3.kukForm3.elemenForm3', function ($q) use ($no_elemen) {
-                $q->where('no_elemen_form_3', $no_elemen);
-            });
+        // Ambil data Elemen + relasi KUK + IUK
+        $elemenList = \App\Models\ElemenForm3::with(['kukForm3.iukForm3'])
+            ->where('pk_id', $pk_id)
+            ->orderByRaw('CAST(no_elemen_form_3 AS UNSIGNED) ASC')
+            ->get();
+
+        if ($spoList->isEmpty() && $elemenList->isEmpty()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Data tidak ditemukan untuk pk_id tersebut.',
+                'data' => null
+            ], 404);
         }
 
-        // Filter berdasarkan pk_id
-        $query->whereHas('iukForm3.kukForm3.elemenForm3.kompetensiPk', function ($q) use ($pk_id) {
-            $q->where('pk_id', $pk_id);
-        });
+        // Mapping nilai group_no ke Metode & Perangkat
+        $metodeMap = [
+            '4A' => 'Observasi',
+            '4B' => 'Uji Lisan',
+            '4C' => 'Uji Tulis',
+            '4D' => 'Portofolio',
+        ];
 
-        $data = $query->get();
+        $perangkatMap = [
+            '4A' => 'Daftar Checklist',
+            '4B' => 'Daftar Pertanyaan Lisan',
+            '4C' => 'Daftar Pertanyaan Tulisan',
+            '4D' => 'Daftar Checklist EMR',
+        ];
 
-        // Mengelompokkan data
-        $elemen_group = [];
-
-        foreach ($data as $item) {
-            $elemen_key = ($item->iukForm3->kukForm3->elemenForm3->no_elemen_form_3 ?? '-') . ' : ' .
-                        ($item->iukForm3->kukForm3->elemenForm3->isi_elemen ?? '-');
-
-            $kuk_key = ($item->iukForm3->kukForm3->no_kuk ?? '-') . ' : ' .
-                    ($item->iukForm3->kukForm3->kuk_name ?? '-');
-
-            $iuk_key = ($item->iukForm3->no_iuk ?? '-') . ' : ' .
-                    ($item->iukForm3->iuk_name ?? '-');
-
-            // Konversi indikator pencapaian menjadi <ul>
-            $indikator_pencapaian = trim($item->indikator_pencapaian ?? '-');
-            $indikator_list = "<ul>";
-
-            foreach (explode("\n", $indikator_pencapaian) as $line) {
-                $line = trim($line);
-                if (!empty($line)) {
-                    $line = ltrim($line, '- ');
-                    $indikator_list .= "<li>{$line}</li>";
-                }
-            }
-
-            $indikator_list .= "</ul>";
-
-            $elemen_group[$elemen_key][$kuk_key][$iuk_key][] = [
-                'no_soal' => $item->no_soal ?? '-',
-                'pertanyaan' => $item->pertanyaan ?? '-',
-                'indikator_pencapaian' => $indikator_list
-            ];
-        }
-
-        // Bangun HTML
+        // HTML WebView Responsive
         $html = '<!DOCTYPE html>
-            <html lang="id">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Form 3 B</title>
-                <style>
-                    table { 
-                        width: 100%; 
-                        border-collapse: collapse; 
+        <html lang="id">
+        <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+        <title>Rencana Asesmen</title>
+
+        <style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+                margin: 15px;
+                background: #f7f7f7;
+                color: #333;
+            }
+
+            h2 {
+                text-align: center;
+                margin: 20px 0 10px;
+                font-size: 20px;
+                font-weight: 600;
+                text-transform: uppercase;
+            }
+
+            .card {
+                background: #fff;
+                padding: 15px;
+                border-radius: 10px;
+                margin-bottom: 20px;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            }
+
+            .table-responsive {
+                width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                margin-top: 10px;
+                margin-bottom: 25px;
+            }
+
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                min-width: 650px;
+            }
+
+            th, td {
+                padding: 10px;
+                border: 1px solid #ddd;
+                font-size: 14px;
+            }
+
+            th {
+                background: #eaeaea;
+                font-weight: bold;
+                text-align: center;
+            }
+
+            td.center {
+                text-align: center;
+            }
+
+            .elemen-header {
+                background: #dcdcdc;
+                font-weight: bold;
+                font-size: 14px;
+                text-align: left;
+            }
+
+            @media (max-width: 480px) {
+                h2 {
+                    font-size: 18px;
+                }
+                th, td {
+                    font-size: 13px;
+                    padding: 8px;
+                }
+            }
+        </style>
+
+        </head>
+        <body>
+
+        <h2>STANDAR PROSEDUR OPERASIONAL (SPO)</h2>
+        <div class="card">
+        <div class="table-responsive">';
+
+        // === TABEL SPO ===
+        if ($spoList->isNotEmpty()) {
+            $html .= '<table>
+                        <thead>
+                            <tr>
+                                <th style="width: 10%">No</th>
+                                <th style="width: 25%">Nomor SPO</th>
+                                <th style="width: 65%">Nama SPO</th>
+                            </tr>
+                        </thead>
+                        <tbody>';
+
+            foreach ($spoList as $index => $spo) {
+                $html .= '<tr>
+                            <td class="center">' . ($index + 1) . '</td>
+                            <td>' . htmlspecialchars($spo->no_spo) . '</td>
+                            <td>' . htmlspecialchars($spo->nama_spo) . '</td>
+                        </tr>';
+            }
+
+            $html .= '</tbody></table>';
+        } else {
+            $html .= '<p style="text-align:center;"><em>Tidak ada data SPO untuk pk_id ini.</em></p>';
+        }
+
+        $html .= '</div></div>'; // end card SPO
+
+        // === RENCANA ASESMEN ===
+        $html .= '<h2>RENCANA ASESMEN</h2>';
+
+        foreach ($elemenList as $elemen) {
+
+            $html .= '<div class="card">';
+            $html .= '<div class="table-responsive">';
+            $html .= '<table>
+                        <thead>
+                            <tr>
+                                <th colspan="4" class="elemen-header">
+                                    Elemen: ' . htmlspecialchars($elemen->no_elemen_form_3 . ' - ' . $elemen->isi_elemen) . '
+                                </th>
+                            </tr>
+                            <tr>
+                                <th style="width: 25%">Kriteria Unjuk Kerja (KUK)</th>
+                                <th style="width: 25%">Indikator Unjuk Kerja (IUK)</th>
+                                <th style="width: 25%">Metode Asesmen</th>
+                                <th style="width: 25%">Perangkat Asesmen</th>
+                            </tr>
+                        </thead>
+                        <tbody>';
+
+            foreach ($elemen->kukForm3 as $kuk) {
+                $rowspan = max(count($kuk->iukForm3), 1);
+
+                if ($rowspan > 0) {
+
+                    $html .= '<tr>
+                        <td class="center" rowspan="' . $rowspan . '">' .
+                            htmlspecialchars($kuk->no_kuk . ' - ' . $kuk->kuk_name) .
+                        '</td>';
+
+                    foreach ($kuk->iukForm3 as $index => $iuk) {
+                        if ($index > 0) $html .= '<tr>';
+
+                        $metode = $metodeMap[$iuk->group_no] ?? '-';
+                        $perangkat = $perangkatMap[$iuk->group_no] ?? '-';
+
+                        $html .= '<td>' . htmlspecialchars($iuk->no_iuk . ' - ' . $iuk->iuk_name) . '</td>
+                                <td class="center">' . htmlspecialchars($metode) . '</td>
+                                <td class="center">' . htmlspecialchars($perangkat) . '</td>
+                                </tr>';
                     }
-                    .table-wrapper {
-                        width: 100%;
-                        overflow-x: auto;
-                    }
 
-                    th, td { border: 2px solid black; padding: 8px; text-align: left; }
-                    th { background-color: #f2f2f2; text-align: center; }
-                    ul { margin: 0; padding-left: 20px; }
-                    .elemen-header { background-color: #d9d9d9; font-weight: bold; text-align: left; padding: 10px; }
-                    @media (max-width: 600px) {
-                        th, td {
-                            padding: 5px;
-                            font-size: 12px;
-                        }
-                    }
-                </style>
-            </head>
-            <body>
-            <h2>Form 3 B</h2>';
-
-        foreach ($elemen_group as $elemen => $kuk_list) {
-            $html .= '<div class="table-wrapper"><table>
-                <thead>
-                    <tr>
-                        <th colspan="5" class="elemen-header">Elemen: ' . $elemen . '</th>
-                    </tr>
-                    <tr>
-                        <th>KUK</th>
-                        <th>IUK</th>
-                        <th>No. Soal</th>
-                        <th>Pertanyaan</th>
-                        <th>Indikator Pencapaian</th>
-                    </tr>
-                </thead>
-                <tbody>';
-
-            foreach ($kuk_list as $kuk => $iuk_list) {
-                $rowspan_kuk = array_sum(array_map('count', $iuk_list));
-                $html .= '<tr><td rowspan="' . $rowspan_kuk . '">' . $kuk . '</td>';
-
-                foreach ($iuk_list as $iuk => $soal_list) {
-                    $rowspan_iuk = count($soal_list);
-                    $html .= '<td rowspan="' . $rowspan_iuk . '">' . $iuk . '</td>';
-
-                    foreach ($soal_list as $index => $soal) {
-                        if ($index > 0) {
-                            $html .= '<tr>';
-                        }
-                        $html .= '<td>' . $soal['no_soal'] . '</td>
-                                <td>' . $soal['pertanyaan'] . '</td>
-                                <td>' . $soal['indikator_pencapaian'] . '</td>
-                            </tr>';
-                    }
+                } else {
+                    $html .= '<tr>
+                        <td class="center">' . htmlspecialchars($kuk->no_kuk . ' - ' . $kuk->kuk_name) . '</td>
+                        <td colspan="3" class="center"><em>Tidak ada IUK terkait</em></td>
+                    </tr>';
                 }
             }
 
-            $html .= '</tbody></table></div><br>';
+            $html .= '</tbody></table></div></div>';
         }
 
         $html .= '</body></html>';
 
-        // === RETURN HTML LANGSUNG ===
         return response($html, 200, [
             'Content-Type' => 'text/html'
         ]);
