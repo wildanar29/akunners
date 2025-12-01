@@ -31,70 +31,133 @@ class CertificateController extends Controller
 
     public function generate(Request $request)
     {
+        Log::info("=== START GENERATE SERTIFIKAT ===");
+        Log::debug("Input request:", $request->all());
+
         $form_1_id = $request->input('form_1_id', null);
 
-        // Cek apakah sudah ada sertifikat untuk form_1_id ini
+        Log::debug("Form 1 ID diterima:", ['form_1_id' => $form_1_id]);
+
+        // Cek sertifikat existing
         $existing = SertifikatPk::where('form_1_id', $form_1_id)->first();
         if ($existing) {
+            Log::warning("Sertifikat sudah ada!", $existing->toArray());
+
             return response()->json([
                 'message' => 'Sertifikat untuk form ini sudah dibuat sebelumnya',
                 'data'    => $existing,
             ], 400);
         }
 
-        $data = [
-            'form_1_id' => $form_1_id,
-        ];
+        $data = ['form_1_id' => $form_1_id];
 
+        // Ambil Form 1
+        Log::info("Mengambil data Form1...");
         $form1 = $this->formService->getParentDataByFormId($data['form_1_id']);
-        $progress = $this->formService->getProgresSingleByParentFormId($data['form_1_id']);
-        $form6Progress = collect($progress)->firstWhere('form_type', 'form_6');
-        $form6EndedAt  = $form6Progress ? Carbon::parse($form6Progress['updated_at'])->translatedFormat('d F Y') : null;
 
-        // Hitung final result
-        $finalResult = $this->formService->getFinalResultByPkIdAndAsesiId($form1['pk_id'], $form1->asesi_id ?? null);
-        $finalOnly   = collect($finalResult)->pluck('final')->all();
-
-        $counts   = collect($finalOnly)->countBy();
-        $jumlahK  = $counts->get('K', 0);
-        $total    = count($finalOnly);
-        $persenK  = $total > 0 ? ($jumlahK / $total) * 100 : 0;
-
-        $overallFinal = $persenK >= 80 ? 'KOMPETEN' : 'BELUM KOMPETEN';
-
-        if ($form1) {
-            $kompetensi = KompetensiPk::find($form1['pk_id']); 
-
-            $data['nama']            = strtoupper($form1->asesi_name);
-            $data['tanggal_mulai']   = Carbon::parse($form1->updated_at)->translatedFormat('d F Y');
-            $data['tanggal_selesai'] = $form6EndedAt;
-            $data['status']          = $overallFinal;
-            $data['gelar']           = $kompetensi->nama_level;
-            $data['nomor_surat']     = '-'; // default, akan diisi saat simpan
+        if (!$form1) {
+            Log::error("Form1 tidak ditemukan!");
+            return response()->json(['message' => 'Form1 tidak ditemukan'], 404);
         }
 
+        Log::debug("Data Form1:", (array) $form1);
+
+        // Ambil progress
+        Log::info("Mengambil data progress Form1...");
+        $progress = $this->formService->getProgresSingleByParentFormId($data['form_1_id']);
+        Log::debug("Progress Form1:", (array) $progress);
+
+        $form6Progress = collect($progress)->firstWhere('form_type', 'form_6');
+        Log::debug("Progress Form6 ditemukan:", ['form6Progress' => $form6Progress]);
+
+        if (!$form6Progress) {
+            Log::warning("FORM 6 belum selesai → form6Progress NULL");
+        }
+
+        // Tanggal selesai Form 6
+        try {
+            $form6EndedAt = $form6Progress && isset($form6Progress['updated_at'])
+                ? Carbon::parse($form6Progress['updated_at'])->translatedFormat('d F Y')
+                : null;
+        } catch (\Exception $e) {
+            Log::error("Error parsing tanggal Form6:", ['error' => $e->getMessage()]);
+            $form6EndedAt = null;
+        }
+
+        Log::debug("Tanggal selesai Form6:", ['tanggal_selesai' => $form6EndedAt]);
+
+        // Hitung final result
+        Log::info("Menghitung final result...");
+        $finalResult = $this->formService->getFinalResultByPkIdAndAsesiId($form1['pk_id'], $form1->asesi_id ?? null);
+        Log::debug("Final result:", (array) $finalResult);
+
+        $finalOnly = collect($finalResult)->pluck('final')->all();
+        $counts    = collect($finalOnly)->countBy();
+
+        $jumlahK = $counts->get('K', 0);
+        $total   = count($finalOnly);
+        $persenK = $total > 0 ? ($jumlahK / $total) * 100 : 0;
+
+        Log::debug("Statistik final:", [
+            'jumlah_K' => $jumlahK,
+            'total'    => $total,
+            'persen_K' => $persenK
+        ]);
+
+        $overallFinal = $persenK >= 80 ? 'KOMPETEN' : 'BELUM KOMPETEN';
+        Log::info("Status akhir keseluruhan: {$overallFinal}");
+
+        // Bangun data sertifikat
+        $kompetensi = KompetensiPk::find($form1['pk_id']);
+        Log::debug("Kompetensi PK:", optional($kompetensi)->toArray() ?? []);
+
+        if (!$kompetensi) {
+            Log::error("Kompetensi PK dengan pk_id {$form1['pk_id']} tidak ditemukan!");
+        }
+
+        $data['nama']            = strtoupper($form1->asesi_name);
+        $data['tanggal_mulai']   = Carbon::parse($form1->updated_at)->translatedFormat('d F Y');
+        $data['tanggal_selesai'] = $form6EndedAt;
+        $data['status']          = $overallFinal;
+        $data['gelar']           = $kompetensi->nama_level ?? null;
+        $data['nomor_surat']     = '-';
+
+        Log::debug("DATA SERTIFIKAT:", $data);
+
+
+        // ======== TRANSAKSI =============
         DB::beginTransaction();
         try {
-            // Generate nomor surat otomatis + nomor urut
+            Log::info("Generate nomor surat...");
             [$nomorUrut, $nomorSurat] = SertifikatPk::generateNomorSurat();
             $data['nomor_surat'] = $nomorSurat;
 
-            // Buat nama file aman: gabungkan nama + nomor surat
+            Log::debug("Nomor urut / surat:", [
+                'nomor_urut'  => $nomorUrut,
+                'nomor_surat' => $nomorSurat
+            ]);
+
+            // Buat nama file aman
             $safeNama  = preg_replace('/[^A-Za-z0-9\-]/', '_', $data['nama']);
             $safeNomor = preg_replace('/[^A-Za-z0-9\-]/', '_', $nomorSurat);
             $fileName  = "sertifikat_{$safeNama}_{$safeNomor}.pdf";
 
-            // Folder berdasarkan tahun berjalan
+            Log::debug("Nama file PDF:", ['fileName' => $fileName]);
+
             $year = Carbon::now()->year;
-            $path = "sertifikat/{$year}/" . $fileName;
+            $path = "sertifikat/{$year}/{$fileName}";
 
             // Generate PDF
+            Log::info("Membuat file PDF...");
             $pdf = Pdf::loadView('sertifikat.keperawatan', $data);
 
-            // Simpan file PDF
+            // Simpan PDF
             Storage::disk('public')->put($path, $pdf->output());
+            Log::info("PDF berhasil disimpan!", ['path' => $path]);
 
-            // Simpan metadata sertifikat
+
+            // Simpan DB
+            Log::info("Menyimpan metadata sertifikat ke DB...");
             $sertifikat = SertifikatPk::create([
                 'asesi_id'        => $form1->asesi_id,
                 'form_1_id'       => $data['form_1_id'],
@@ -105,18 +168,35 @@ class CertificateController extends Controller
                 'gelar'           => $data['gelar'],
                 'status'          => $data['status'],
                 'tanggal_mulai'   => $form1->updated_at,
-                'tanggal_selesai' => $form6Progress['updated_at'],
+                'tanggal_selesai' => $form6Progress['updated_at'] ?? null,
                 'file_path'       => $path,
             ]);
 
-            $userAsesi = $this->formService->findUser($form1->asesi_id);
+            Log::debug("Data sertifikat tersimpan:", $sertifikat->toArray());
 
-             if ($form1->status === 'Approved') {
-                $updateForm1 = $this->formService->updateForm1($form1->form_1_id, 'Completed');
-                $updateProgres = $this->formService->updateProgresDanTrack($form1->form_1_id, 'form_1', 'Completed', Auth::id(), 'Sertifikat Asesmen sudah dibuat dan dikirim ke Asesi');
-                $this->formService->KirimNotifikasiKeUser($userAsesi, 'Sertifikat Asesmen', 'Sertifikat sudah dapat diunduh.');
+
+            // Update Form1
+            if ($form1->status === 'Approved') {
+                Log::info("Update progress Form1 jadi Completed...");
+
+                $this->formService->updateForm1($form1->form_1_id, 'Completed');
+                $this->formService->updateProgresDanTrack(
+                    $form1->form_1_id,
+                    'form_1',
+                    'Completed',
+                    Auth::id(),
+                    'Sertifikat Asesmen dibuat dan dikirim ke Asesi'
+                );
+
+                $this->formService->KirimNotifikasiKeUser(
+                    $this->formService->findUser($form1->asesi_id),
+                    'Sertifikat Asesmen',
+                    'Sertifikat sudah dapat diunduh.'
+                );
             }
+
             DB::commit();
+            Log::info("=== BERHASIL GENERATE SERTIFIKAT ===");
 
             return response()->json([
                 'message'     => 'Sertifikat berhasil disimpan',
@@ -124,11 +204,18 @@ class CertificateController extends Controller
                 'data'        => $sertifikat,
                 'nomor_surat' => $nomorSurat,
             ]);
+
         } catch (\Exception $e) {
             DB::rollBack();
 
+            Log::error("ERROR SAAT GENERATE SERTIFIKAT:", [
+                'message' => $e->getMessage(),
+                'trace'   => $e->getTraceAsString()
+            ]);
+
             if (isset($path) && Storage::disk('public')->exists($path)) {
                 Storage::disk('public')->delete($path);
+                Log::warning("File PDF sudah dihapus karena gagal.");
             }
 
             return response()->json([
@@ -137,6 +224,7 @@ class CertificateController extends Controller
             ], 500);
         }
     }
+
 
     public function downloadSertifikatByFormId($form_1_id)
     {

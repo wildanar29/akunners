@@ -244,12 +244,17 @@ class Form6Controller extends BaseController
 
     public function ApproveForm6ByAsesi(Request $request)
     {
+        Log::info("=== START ApproveForm6ByAsesi ===");
+        Log::debug("Request data:", $request->all());
+
         // Validasi input
         $validator = Validator::make($request->all(), [
             'form_6_id' => 'required|integer|exists:form_6,form_6_id',
         ]);
 
         if ($validator->fails()) {
+            Log::warning("Validasi gagal", $validator->errors()->toArray());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Validasi gagal',
@@ -259,35 +264,104 @@ class Form6Controller extends BaseController
 
         try {
             DB::beginTransaction();
-            $form6 = Form6::find($request->form_6_idrm4cId);
-            Log::info("Memproses approval Form 6 ID: {$request->form_6_id} oleh Asesi ID: {$form6->asesi_id}");
-            $form1Id = $this->formService->getParentFormIdByFormIdAndAsesiId($request->form_6_id, $form6->asesi_id, 'form_6');
-            Log::info("Form 1 ID yang terkait: {$form1Id}");
-            // $form1Id = $this->formService->getParentFormIdByFormId($request->form_6_id);
-            $form1 = $this->formService->getParentDataByFormId($form1Id);
-            $userAsesor = $this->formService->findUser($form1->asesor_id);
-            $form6Status = $this->formService->getStatusByParentFormIdAndType($form1Id, 'form_6')->first();
 
-            if ($form6Status === 'Submitted') {
-                $updatedForm6 = $this->formService->updateForm6($request->form_6_id, null, null, null, null, null, null, Carbon::now(), null, 'Completed');
-                $updateProgres = $this->formService->updateProgresDanTrack($request->form_6_id, 'form_6', 'Completed', Auth::id(), 'Form 6 telah di-approve oleh Asesi');
-                $this->formService->KirimNotifikasiKeUser($userAsesor, 'Form 6 Approved', 'Form 6 telah di-approve oleh Asesi.');
+            Log::info("Mencari Form6 berdasarkan form_6_id...");
+            $form6 = Form6::find($request->form_6_id);
+
+            if (!$form6) {
+                Log::error("Form6 tidak ditemukan!");
+            } else {
+                Log::debug("Data Form6:", $form6->toArray());
             }
+
+            Log::info("Memproses approval Form 6 ID: {$request->form_6_id}");
+
+            // FORM 1 ID
+            Log::info("Mencari Form1 ID berdasarkan Form6...");
+            $form1Id = $this->formService->getParentFormIdByFormIdAndAsesiId(
+                $request->form_6_id,
+                $form6->asesi_id,
+                'form_6'
+            );
+
+            Log::info("Form1 ID ditemukan: " . json_encode($form1Id));
+
+            $form1 = $this->formService->getParentDataByFormId($form1Id);
+
+            if (!$form1) {
+                Log::error("DATA FORM1 TIDAK DITEMUKAN!");
+            } else {
+                Log::debug("Data Form1:", (array) $form1);
+            }
+
+            // DATA ASESOR
+            $userAsesor = $this->formService->findUser($form1->asesor_id);
+            Log::debug("Data User Asesor:", optional($userAsesor)->toArray() ?? []);
+
+            // STATUS FORM 6
+            $form6Status = $this->formService
+                ->getStatusByParentFormIdAndType($form1Id, 'form_6')
+                ->first();
+
+            Log::info("Status Form 6 saat ini: " . json_encode($form6Status));
+
+            // UPDATE STATUS
+            if ($form6Status === 'Submitted') {
+                Log::info("Status Submitted → melakukan update ke Completed");
+
+                $updatedForm6 = $this->formService->updateForm6(
+                    $request->form_6_id,
+                    null, null, null, null, null, null,
+                    Carbon::now(),
+                    null,
+                    'Completed'
+                );
+
+                Log::debug("Result updateForm6:", (array) $updatedForm6);
+
+                $updateProgres = $this->formService->updateProgresDanTrack(
+                    $request->form_6_id,
+                    'form_6',
+                    'Completed',
+                    Auth::id(),
+                    'Form 6 telah di-approve oleh Asesi'
+                );
+
+                Log::debug("Hasil update progres & track:", (array) $updateProgres);
+
+                $this->formService->KirimNotifikasiKeUser(
+                    $userAsesor,
+                    'Form 6 Approved',
+                    'Form 6 telah di-approve oleh Asesi.'
+                );
+
+                Log::info("Notifikasi dikirim ke asesor.");
+            } else {
+                Log::warning("Status Form6 bukan 'Submitted'. Tidak dilakukan update.");
+            }
+
             DB::commit();
+            Log::info("=== END ApproveForm6ByAsesi SUCCESS ===");
 
             return response()->json([
                 'success' => true,
-                'message' => 'Form6 berhasil di-approve oleh Asesi',
+                'message' => 'Form 6 berhasil di-approve oleh Asesi',
                 'data' => $form6Status
             ]);
+
         } catch (\Exception $e) {
             DB::rollBack();
 
+            Log::error("ERROR ApproveForm6ByAsesi: " . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan saat menyimpan data: ' . $e->getMessage()
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
             ], 500);
         }
     }
+
 
 }
