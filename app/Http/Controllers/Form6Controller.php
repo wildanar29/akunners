@@ -260,7 +260,9 @@ class Form6Controller extends BaseController
         try {
             DB::beginTransaction();
             $form6 = Form6::find($request->form_6_idrm4cId);
+            Log::info("Memproses approval Form 6 ID: {$request->form_6_id} oleh Asesi ID: {$form6->asesi_id}");
             $form1Id = $this->formService->getParentFormIdByFormIdAndAsesiId($request->form_6_id, $form6->asesi_id, 'form_6');
+            Log::info("Form 1 ID yang terkait: {$form1Id}");
             // $form1Id = $this->formService->getParentFormIdByFormId($request->form_6_id);
             $form1 = $this->formService->getParentDataByFormId($form1Id);
             $userAsesor = $this->formService->findUser($form1->asesor_id);
