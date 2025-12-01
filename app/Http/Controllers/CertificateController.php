@@ -225,7 +225,6 @@ class CertificateController extends Controller
         }
     }
 
-
     public function downloadSertifikatByFormId($form_1_id)
     {
         // Cari sertifikat berdasarkan form_1_id
@@ -386,7 +385,9 @@ class CertificateController extends Controller
 
             // Tambahkan flag sertifikat + form_1_id
             $result = $form6List->map(function ($form6) {
-                $form_1_id = $this->formService->getParentFormIdByFormId($form6->form_6_id);
+                // $form6 = Form6::find($request->form_6_id);
+                $form_1_id = $this->formService->getParentFormIdByFormIdAndAsesiId($form6->form_6_id, $form6->asesi_id, 'form_6');
+                // $form_1_id = $this->formService->getParentFormIdByFormId($form6->form_6_id);
 
                 $existingSertifikat = SertifikatPk::where('form_1_id', $form_1_id)->first();
 
