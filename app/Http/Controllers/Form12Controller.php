@@ -250,7 +250,7 @@ class Form12Controller extends BaseController
             'action'     => $action
         ], [
             'form_12_id' => 'required|integer|exists:form_12,form_12_id',
-            'action'     => 'required|in:approve,reject'
+            'action'     => 'required|in:approved,rejected'
         ]);
 
         if ($validator->fails()) {
@@ -287,9 +287,9 @@ class Form12Controller extends BaseController
                 ->first();
 
             // ===========================================
-            // 🔥 PROSES JIKA REJECT
+            // 🔥 PROSES JIKA rejected
             // ===========================================
-            if ($action === 'reject') {
+            if ($action === 'rejected') {
 
                 $this->formService->updateForm12(
                     $form12Id,
@@ -363,7 +363,7 @@ class Form12Controller extends BaseController
             // ===========================================
             // 🔥 INISIALISASI FORM 9 (HANYA APPROVE)
             // ===========================================
-            if ($action === 'approve') {
+            if ($action === 'approved') {
 
                 $isForm9Exist = $this->formService->isFormExistSingle(
                     $form1->asesi_id,
@@ -438,7 +438,7 @@ class Form12Controller extends BaseController
 
             return response()->json([
                 'success' => true,
-                'message' => $action === 'approve'
+                'message' => $action === 'approved'
                     ? 'Form 12 berhasil di-approve oleh Asesi'
                     : 'Form 12 berhasil ditolak oleh Asesi',
             ]);
