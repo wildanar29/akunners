@@ -241,10 +241,13 @@ class Form12Controller extends BaseController
 
     public function ApproveForm12ByAsesi(Request $request, $form12Id)
     {
+        // 🔥 NORMALISASI action JADI LOWERCASE
+        $action = strtolower($request->action);
+
         // Validasi parameter
         $validator = Validator::make([
             'form_12_id' => $form12Id,
-            'action'     => $request->action
+            'action'     => $action
         ], [
             'form_12_id' => 'required|integer|exists:form_12,form_12_id',
             'action'     => 'required|in:approve,reject'
@@ -283,10 +286,10 @@ class Form12Controller extends BaseController
                 ->getStatusByParentFormIdAndType($form1Id, 'form_12')
                 ->first();
 
-            // ===============================
+            // ===========================================
             // 🔥 PROSES JIKA REJECT
-            // ===============================
-            if ($request->action === 'reject') {
+            // ===========================================
+            if ($action === 'reject') {
 
                 $this->formService->updateForm12(
                     $form12Id,
@@ -308,7 +311,7 @@ class Form12Controller extends BaseController
                     'Form form_12 telah DITOLAK oleh Asesi'
                 );
 
-                // Kirim notifikasi ke asesor
+                // Notifikasi ke asesor
                 $this->formService->kirimNotifikasiKeUser(
                     DaftarUser::find($form1->asesor_id),
                     'Form 12 Ditolak',
@@ -323,12 +326,12 @@ class Form12Controller extends BaseController
                 ]);
             }
 
-            // ===============================
-            // 🔥 PROSES APPROVE (existing)
-            // ===============================
+            // ===========================================
+            // 🔥 PROSES APPROVE
+            // ===========================================
             if ($form12Status === 'InAssessment') {
 
-                // Update status form 12 menjadi Completed
+                // Update status form 12
                 $this->formService->updateForm12(
                     $form12Id,
                     null,
@@ -341,7 +344,6 @@ class Form12Controller extends BaseController
                     'Completed'
                 );
 
-                // Update track
                 $this->formService->updateProgresDanTrack(
                     $form12Id,
                     'form_12',
@@ -358,10 +360,10 @@ class Form12Controller extends BaseController
                 );
             }
 
-            // ===============================
-            // 🔥 INISIALISASI FORM 9 (hanya saat approve)
-            // ===============================
-            if ($request->action === 'approve') {
+            // ===========================================
+            // 🔥 INISIALISASI FORM 9 (HANYA APPROVE)
+            // ===========================================
+            if ($action === 'approve') {
 
                 $isForm9Exist = $this->formService->isFormExistSingle(
                     $form1->asesi_id,
@@ -396,7 +398,6 @@ class Form12Controller extends BaseController
                         $questions = Form9Question::orderBy('order_no', 'asc')->get();
 
                         foreach ($questions as $question) {
-
                             $userId = $question->subject === 'asesi'
                                 ? $form1->asesi_id
                                 : ($question->subject === 'asesor'
@@ -437,7 +438,7 @@ class Form12Controller extends BaseController
 
             return response()->json([
                 'success' => true,
-                'message' => $request->action === 'approve'
+                'message' => $action === 'approve'
                     ? 'Form 12 berhasil di-approve oleh Asesi'
                     : 'Form 12 berhasil ditolak oleh Asesi',
             ]);
@@ -451,6 +452,7 @@ class Form12Controller extends BaseController
             ], 500);
         }
     }
+
 
 
 
