@@ -241,9 +241,13 @@ class Form12Controller extends BaseController
 
     public function ApproveForm12ByAsesi(Request $request, $form12Id)
     {
-        // Validasi ID Form 12
-        $validator = Validator::make(['form_12_id' => $form12Id], [
+        // Validasi parameter
+        $validator = Validator::make([
+            'form_12_id' => $form12Id,
+            'action'     => $request->action
+        ], [
             'form_12_id' => 'required|integer|exists:form_12,form_12_id',
+            'action'     => 'required|in:approve,reject'
         ]);
 
         if ($validator->fails()) {
@@ -266,32 +270,78 @@ class Form12Controller extends BaseController
                 ], 404);
             }
 
-            // Ambil form induk (form_1) berdasarkan relasi
-            // $form1Id = $this->formService->getParentFormIdByFormId($form12Id);
-
-            // $form1   = $this->formService->getParentDataByFormId($form1Id);
-            $form1Id = $this->formService->getParentFormIdByFormIdAndAsesiId($form12Id, $form12->asesi_id, 'form_12');
+            // Ambil parent form_1
+            $form1Id = $this->formService->getParentFormIdByFormIdAndAsesiId(
+                $form12Id,
+                $form12->asesi_id,
+                'form_12'
+            );
             $form1 = $this->formService->getParentDataByFormId($form1Id);
-            // Ambil status form 12 sesuai form_type
+
+            // Cek status existing
             $form12Status = $this->formService
                 ->getStatusByParentFormIdAndType($form1Id, 'form_12')
                 ->first();
 
-            if ($form12Status === 'InAssessment') {
-                // Update status form 12
-                $updatedForm12 = $this->formService->updateForm12(
+            // ===============================
+            // 🔥 PROSES JIKA REJECT
+            // ===============================
+            if ($request->action === 'reject') {
+
+                $this->formService->updateForm12(
                     $form12Id,
-                    null, // pkId
-                    null, // daftarTilikId
-                    'form_12', // form_type
-                    null, // asesiId
-                    null, // asesiName
-                    null, // asesorId
-                    null, // asesorName
-                    'Completed' // status
+                    null,
+                    null,
+                    'form_12',
+                    null,
+                    null,
+                    null,
+                    null,
+                    'Rejected'
                 );
 
-                // Update progres & track
+                $this->formService->updateProgresDanTrack(
+                    $form12Id,
+                    'form_12',
+                    'Rejected',
+                    $form12->asesi_id,
+                    'Form form_12 telah DITOLAK oleh Asesi'
+                );
+
+                // Kirim notifikasi ke asesor
+                $this->formService->kirimNotifikasiKeUser(
+                    DaftarUser::find($form1->asesor_id),
+                    'Form 12 Ditolak',
+                    'Form form_12 telah ditolak oleh Asesi.'
+                );
+
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Form 12 berhasil DITOLAK oleh Asesi',
+                ]);
+            }
+
+            // ===============================
+            // 🔥 PROSES APPROVE (existing)
+            // ===============================
+            if ($form12Status === 'InAssessment') {
+
+                // Update status form 12 menjadi Completed
+                $this->formService->updateForm12(
+                    $form12Id,
+                    null,
+                    null,
+                    'form_12',
+                    null,
+                    null,
+                    null,
+                    null,
+                    'Completed'
+                );
+
+                // Update track
                 $this->formService->updateProgresDanTrack(
                     $form12Id,
                     'form_12',
@@ -300,101 +350,96 @@ class Form12Controller extends BaseController
                     'Form form_12 telah di-approve oleh Asesi'
                 );
 
-                // Kirim notifikasi ke asesor
+                // Notifikasi ke asesor
                 $this->formService->kirimNotifikasiKeUser(
                     DaftarUser::find($form1->asesor_id),
-                    'Form form_12 Completed',
+                    'Form 12 Completed',
                     'Form form_12 telah di-approve oleh Asesi.'
                 );
             }
 
-            // ===== INISIALISASI FORM 9 =====
-            $isForm9Exist = $this->formService->isFormExistSingle(
-                $form1->asesi_id,
-                $form1->pk_id,
-                'form_9'
-            );
+            // ===============================
+            // 🔥 INISIALISASI FORM 9 (hanya saat approve)
+            // ===============================
+            if ($request->action === 'approve') {
 
-            if (!$isForm9Exist) {
-                Log::info("Form 9 belum ada, membuat form 9...");
-                $form9 = $this->formService->inputForm9(
+                $isForm9Exist = $this->formService->isFormExistSingle(
+                    $form1->asesi_id,
                     $form1->pk_id,
-                    $form1->asesi_id,
-                    $form1->asesi_name,
-                    $form1->asesor_id,
-                    $form1->asesor_name,
-                    $form1->no_reg
+                    'form_9'
                 );
 
-                $this->formService->createProgresDanTrack(
-                    $form9->form_9_id,
-                    'form_9',
-                    'InAssessment',
-                    $form1->asesi_id,
-                    $form1->form_1_id,
-                    'Form 9 sudah dapat diisi Asesi.'
-                );
+                if (!$isForm9Exist) {
 
-                // ===== INIT JAWABAN FORM 9 =====
-                $isAnswerExist = Form9Answer::where('form_9_id', $form9->form_9_id)->exists();
+                    $form9 = $this->formService->inputForm9(
+                        $form1->pk_id,
+                        $form1->asesi_id,
+                        $form1->asesi_name,
+                        $form1->asesor_id,
+                        $form1->asesor_name,
+                        $form1->no_reg
+                    );
 
-                if (!$isAnswerExist) {
-                    $questions = Form9Question::orderBy('order_no', 'asc')->get();
+                    $this->formService->createProgresDanTrack(
+                        $form9->form_9_id,
+                        'form_9',
+                        'InAssessment',
+                        $form1->asesi_id,
+                        $form1->form_1_id,
+                        'Form 9 sudah dapat diisi Asesi.'
+                    );
 
-                    foreach ($questions as $question) {
-                        // Tentukan siapa user yang menjawab berdasarkan subject
-                        $userId = null;
-                        if ($question->subject === 'asesi') {
-                            $userId = $form1->asesi_id;
-                        } elseif ($question->subject === 'asesor') {
-                            $userId = $form1->asesor_id;
-                        }
+                    // Inisialisasi jawaban form 9
+                    $isAnswerExist = Form9Answer::where('form_9_id', $form9->form_9_id)->exists();
 
-                        // Cek apakah pertanyaan punya sub pertanyaan
-                        if ($question->has_sub_questions) {
-                            $subQuestions = $question->subQuestions()->orderBy('order_no', 'asc')->get();
+                    if (!$isAnswerExist) {
+                        $questions = Form9Question::orderBy('order_no', 'asc')->get();
 
-                            foreach ($subQuestions as $subQuestion) {
+                        foreach ($questions as $question) {
+
+                            $userId = $question->subject === 'asesi'
+                                ? $form1->asesi_id
+                                : ($question->subject === 'asesor'
+                                    ? $form1->asesor_id
+                                    : null);
+
+                            if ($question->has_sub_questions) {
+
+                                $subQuestions = $question->subQuestions()->orderBy('order_no')->get();
+
+                                foreach ($subQuestions as $subQuestion) {
+                                    Form9Answer::create([
+                                        'form_9_id'       => $form9->form_9_id,
+                                        'question_id'     => $question->question_id,
+                                        'sub_question_id' => $subQuestion->sub_question_id,
+                                        'answer_text'     => null,
+                                        'is_checked'      => false,
+                                        'user_id'         => $userId
+                                    ]);
+                                }
+
+                            } else {
                                 Form9Answer::create([
                                     'form_9_id'       => $form9->form_9_id,
                                     'question_id'     => $question->question_id,
-                                    'sub_question_id' => $subQuestion->sub_question_id,
-                                    'answer_text'     => null, // default kosong
-                                    'is_checked'      => false, // default tidak dicentang
-                                    'user_id'         => $userId,
+                                    'sub_question_id' => null,
+                                    'answer_text'     => null,
+                                    'is_checked'      => null,
+                                    'user_id'         => $userId
                                 ]);
                             }
-                        } else {
-                            // Jika tidak punya sub pertanyaan, buat jawaban normal
-                            Form9Answer::create([
-                                'form_9_id'       => $form9->form_9_id,
-                                'question_id'     => $question->question_id,
-                                'sub_question_id' => null,
-                                'answer_text'     => null,
-                                'is_checked'      => null,
-                                'user_id'         => $userId,
-                            ]);
                         }
                     }
-
-                    Log::info("Jawaban form 9 berhasil diinisialisasi untuk asesi {$form1->asesi_id} dan asesor {$form1->asesor_id}");
-                } else {
-                    Log::info("Jawaban untuk form_9_id {$form9->form_9_id} sudah ada, tidak dibuat ulang.");
                 }
-
-
-
-            } else {
-                Log::info("Form 9 sudah ada, tidak membuat ulang.");
             }
-
 
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Form form_12 berhasil di-approve oleh Asesi',
-                'data'    => $form12Status
+                'message' => $request->action === 'approve'
+                    ? 'Form 12 berhasil di-approve oleh Asesi'
+                    : 'Form 12 berhasil ditolak oleh Asesi',
             ]);
 
         } catch (\Exception $e) {
@@ -402,10 +447,11 @@ class Form12Controller extends BaseController
 
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan saat menyimpan data: ' . $e->getMessage()
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
             ], 500);
         }
     }
+
 
 
 }
