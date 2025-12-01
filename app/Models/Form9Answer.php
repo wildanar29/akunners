@@ -17,6 +17,7 @@ class Form9Answer extends Model
         'user_id',
         'answer_text',
         'is_checked',
+        'notes',
     ];
 
     // Relasi ke form_9

@@ -8,16 +8,12 @@ namespace App\Docs;
  *     tags={"FORM 9 (UMPAN BALIK)"},
  *     summary="Simpan atau perbarui jawaban Form 9 (oleh Asesor atau Asesi)",
  *     description="
- * Endpoint ini digunakan untuk **menyimpan atau memperbarui jawaban Form 9** berdasarkan role pengguna (`asesor` atau `asesi`).
- * 
- * 🔹 **Asesi** → hanya memiliki pertanyaan utama dengan field tambahan `is_checked` (true/false).  
- * 🔹 **Asesor** → memiliki pertanyaan utama dan daftar `sub_questions` untuk setiap pertanyaan tertentu.
- * 
- * Contoh pemanggilan:
- * - `/form9/1/save-jawaban` dengan body `subject=asesi`
- * - `/form9/1/save-jawaban` dengan body `subject=asesor`
+ * Endpoint ini digunakan untuk menyimpan atau memperbarui jawaban Form 9 berdasarkan role (asesor atau asesi).
+ *
+ * - Asesi → mengisi answer_text + is_checked (tanpa sub_questions)
+ * - Asesor → mengisi answer_text & sub_questions yang dapat berisi notes (opsional)
  *     ",
- * 
+ *
  *     @OA\Parameter(
  *         name="form9Id",
  *         in="path",
@@ -25,60 +21,55 @@ namespace App\Docs;
  *         description="ID Form 9 yang akan disimpan jawabannya",
  *         @OA\Schema(type="integer", example=1)
  *     ),
- * 
+ *
  *     @OA\RequestBody(
  *         required=true,
- *         description="Contoh struktur JSON untuk Asesi (dengan is_checked) dan Asesor (dengan sub_questions)",
+ *         description="Struktur JSON request body untuk Asesi dan Asesor",
  *         @OA\JsonContent(
  *             oneOf={
+ *
  *                 @OA\Schema(
- *                     title="Contoh request body untuk Asesi (dengan is_checked)",
+ *                     title="Contoh request body untuk Asesi",
  *                     example={
  *                         "subject": "asesi",
  *                         "answers": {
  *                             {
  *                                 "question_id": 1,
- *                                 "answer_text": "Saya mendapatkan penjelasan yang cukup memadai mengenai proses asesmen/uji kompetensi",
+ *                                 "answer_text": "Penjelasan proses asesmen sudah memadai",
  *                                 "is_checked": true,
  *                                 "sub_questions": {}
  *                             },
  *                             {
  *                                 "question_id": 2,
- *                                 "answer_text": "Saya diberikan kesempatan untuk mempelajari standar kompetensi yang akan diujikan dan menilai diri sendiri terhadap pencapaiannya",
- *                                 "is_checked": true,
- *                                 "sub_questions": {}
- *                             },
- *                             {
- *                                 "question_id": 3,
- *                                 "answer_text": "Asesor memberikan kesempatan untuk mendiskusikan/ menegosiasikan metoda, instrumen dan sumber asesmen serta jadwal asesmen",
+ *                                 "answer_text": "Saya diberikan kesempatan menilai diri sendiri",
  *                                 "is_checked": true,
  *                                 "sub_questions": {}
  *                             }
  *                         }
  *                     }
  *                 ),
- * 
+ *
  *                 @OA\Schema(
- *                     title="Contoh request body untuk Asesor (dengan sub_questions)",
+ *                     title="Contoh request body untuk Asesor dengan sub_questions + notes",
  *                     example={
  *                         "subject": "asesor",
  *                         "answers": {
  *                             {
  *                                 "question_id": 10,
  *                                 "sub_questions": {
- *                                     {"sub_question_id": 1, "answer_text": "1"},
- *                                     {"sub_question_id": 2, "answer_text": "0"},
- *                                     {"sub_question_id": 3, "answer_text": "1"},
- *                                     {"sub_question_id": 4, "answer_text": "1"}
+ *                                     {"sub_question_id": 1, "answer_text": "1", "notes": "Catatan untuk sub 1"},
+ *                                     {"sub_question_id": 2, "answer_text": "0", "notes": "Catatan untuk sub 2"},
+ *                                     {"sub_question_id": 3, "answer_text": "1", "notes": "Catatan untuk sub 3"},
+ *                                     {"sub_question_id": 4, "answer_text": "1", "notes": "Catatan untuk sub 4"}
  *                                 }
  *                             },
  *                             {
  *                                 "question_id": 11,
  *                                 "sub_questions": {
- *                                     {"sub_question_id": 5, "answer_text": "1"},
- *                                     {"sub_question_id": 6, "answer_text": "1"},
- *                                     {"sub_question_id": 7, "answer_text": "0"},
- *                                     {"sub_question_id": 8, "answer_text": "1"}
+ *                                     {"sub_question_id": 5, "answer_text": "1", "notes": "Catatan untuk sub 5"},
+ *                                     {"sub_question_id": 6, "answer_text": "1", "notes": "Catatan untuk sub 6"},
+ *                                     {"sub_question_id": 7, "answer_text": "0", "notes": "Catatan untuk sub 7"},
+ *                                     {"sub_question_id": 8, "answer_text": "1", "notes": "Catatan untuk sub 8"}
  *                                 }
  *                             },
  *                             {
@@ -89,22 +80,23 @@ namespace App\Docs;
  *                         }
  *                     }
  *                 )
+ *
  *             }
  *         )
  *     ),
- * 
+ *
  *     @OA\Response(
  *         response=200,
  *         description="Jawaban berhasil disimpan atau diperbarui",
  *         @OA\JsonContent(
  *             @OA\Property(property="success", type="boolean", example=true),
- *             @OA\Property(property="message", type="string", example="Jawaban berhasil disimpan/diperbarui")
+ *             @OA\Property(property="message", type="string", example="Jawaban berhasil disimpan atau diperbarui")
  *         )
  *     ),
- * 
+ *
  *     @OA\Response(
  *         response=422,
- *         description="Validasi gagal (contoh: question_id tidak ditemukan atau data tidak sesuai)",
+ *         description="Validasi gagal (question_id tidak valid atau JSON salah format)",
  *         @OA\JsonContent(
  *             @OA\Property(property="success", type="boolean", example=false),
  *             @OA\Property(property="message", type="string", example="Validasi gagal"),
@@ -112,12 +104,14 @@ namespace App\Docs;
  *                 property="errors",
  *                 type="object",
  *                 example={
- *                     "answers.0.question_id": {"The selected question id is invalid."}
+ *                     "answers.0.sub_questions.0.notes": {
+ *                         "The notes field must be a string."
+ *                     }
  *                 }
  *             )
  *         )
  *     ),
- * 
+ *
  *     @OA\Response(
  *         response=500,
  *         description="Terjadi kesalahan server",

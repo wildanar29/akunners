@@ -236,6 +236,8 @@ class Form9Controller extends BaseController
             'answers.*.sub_questions' => 'nullable|array',
             'answers.*.sub_questions.*.sub_question_id' => 'required|integer|exists:form9_sub_questions,sub_question_id',
             'answers.*.sub_questions.*.answer_text' => 'nullable|string',
+            'answers.*.sub_questions.*.notes' => 'nullable|string',
+
         ]);
 
         if ($validator->fails()) {
@@ -370,7 +372,12 @@ class Form9Controller extends BaseController
                         ],
                         [
                             'answer_text' => $sq['answer_text'] ?? null,
-                            'user_id' => $userId, // ✅ tetap gunakan user_id dari subject
+                            'user_id' => $userId,
+
+                            // hanya asesor yang boleh isi notes
+                            'notes' => ($subject === 'asesor')
+                                ? ($sq['notes'] ?? null)
+                                : null,
                         ]
                     );
                 }
