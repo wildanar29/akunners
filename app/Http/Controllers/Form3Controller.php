@@ -608,7 +608,7 @@ class Form3Controller extends BaseController
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <link rel="icon" href="/favicon.ico">
+            <link rel="icon" href="data:,">
             <title>Form 3 A</title>
             <style>
                 table { width: 100%; max-width: 100%; border-collapse: collapse; overflow-x: auto; display: block; }
