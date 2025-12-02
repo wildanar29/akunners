@@ -341,6 +341,7 @@ class Form3Controller extends BaseController
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <link rel="icon" href="data:,">
                 <title>Form 3 B</title>
                 <style>
                     table { 
@@ -504,6 +505,7 @@ class Form3Controller extends BaseController
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <link rel="icon" href="data:,">
             <title>Form 3 C</title>
             <style>
                 table { width: 100%; max-width: 100%; border-collapse: collapse; overflow-x: auto; display: block; }
@@ -731,6 +733,7 @@ class Form3Controller extends BaseController
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <link rel="icon" href="data:,">
             <title>Form 3 D</title>
             <style>
                 h2 { text-align: left; font-family: Arial, sans-serif; }
