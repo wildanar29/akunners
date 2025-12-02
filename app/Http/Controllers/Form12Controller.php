@@ -318,6 +318,74 @@ class Form12Controller extends BaseController
                     'Form form_12 telah ditolak oleh Asesi.'
                 );
 
+                $isForm9Exist = $this->formService->isFormExistSingle(
+                    $form1->asesi_id,
+                    $form1->pk_id,
+                    'form_9'
+                );
+
+                if (!$isForm9Exist) {
+
+                    $form9 = $this->formService->inputForm9(
+                        $form1->pk_id,
+                        $form1->asesi_id,
+                        $form1->asesi_name,
+                        $form1->asesor_id,
+                        $form1->asesor_name,
+                        $form1->no_reg
+                    );
+
+                    $this->formService->createProgresDanTrack(
+                        $form9->form_9_id,
+                        'form_9',
+                        'InAssessment',
+                        $form1->asesi_id,
+                        $form1->form_1_id,
+                        'Form 9 sudah dapat diisi Asesi.'
+                    );
+
+                    // Inisialisasi jawaban form 9
+                    $isAnswerExist = Form9Answer::where('form_9_id', $form9->form_9_id)->exists();
+
+                    if (!$isAnswerExist) {
+                        $questions = Form9Question::orderBy('order_no', 'asc')->get();
+
+                        foreach ($questions as $question) {
+                            $userId = $question->subject === 'asesi'
+                                ? $form1->asesi_id
+                                : ($question->subject === 'asesor'
+                                    ? $form1->asesor_id
+                                    : null);
+
+                            if ($question->has_sub_questions) {
+
+                                $subQuestions = $question->subQuestions()->orderBy('order_no')->get();
+
+                                foreach ($subQuestions as $subQuestion) {
+                                    Form9Answer::create([
+                                        'form_9_id'       => $form9->form_9_id,
+                                        'question_id'     => $question->question_id,
+                                        'sub_question_id' => $subQuestion->sub_question_id,
+                                        'answer_text'     => null,
+                                        'is_checked'      => false,
+                                        'user_id'         => $userId
+                                    ]);
+                                }
+
+                            } else {
+                                Form9Answer::create([
+                                    'form_9_id'       => $form9->form_9_id,
+                                    'question_id'     => $question->question_id,
+                                    'sub_question_id' => null,
+                                    'answer_text'     => null,
+                                    'is_checked'      => null,
+                                    'user_id'         => $userId
+                                ]);
+                            }
+                        }
+                    }
+                }
+
                 DB::commit();
 
                 return response()->json([
