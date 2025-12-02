@@ -346,7 +346,7 @@ class CertificateController extends Controller
         }
 
         // Format object data
-        $previewUrl = asset('storage/' . $sertifikat->file_path);
+        $previewUrl = url('storage/' . $sertifikat->file_path);
 
         $data = [
             'id'              => $sertifikat->id,
