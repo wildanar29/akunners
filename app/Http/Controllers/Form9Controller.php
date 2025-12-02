@@ -428,7 +428,7 @@ class Form9Controller extends BaseController
             'form_9',
             $newStatus,
             $form1->asesi_id,
-            "Form 9 telah di-update oleh {$subject} dengan status {$newStatus}"
+            "Form 9 telah diisi oleh {$subject} dengan status {$newStatus}"
         );
 
         // Jika yang submit adalah asesi → cek kondisi banding

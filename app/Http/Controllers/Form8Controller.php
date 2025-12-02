@@ -53,12 +53,11 @@ class Form8Controller extends BaseController
 
     public function storeFormBandingAsesmen(Request $request)
     {
-        // Validasi awal untuk form_1_id + field lain
+        // Validasi
         $validator = Validator::make($request->all(), [
             'form_1_id'          => 'required|integer',
             'alasan_banding'     => 'required|string',
             'persetujuan_asesi'  => 'nullable|boolean',
-            'persetujuan_asesor' => 'nullable|boolean',
         ]);
 
         if ($validator->fails()) {
@@ -68,70 +67,62 @@ class Form8Controller extends BaseController
             ], 422);
         }
 
-        // Ambil parent data berdasarkan form_1_id
+        // Ambil data Form 1
         $form1 = $this->formService->getParentDataByFormId($request->form_1_id);
 
-        if (
-            !$form1 ||
-            !isset($form1->asesi_id) ||
-            !isset($form1->asesor_id) ||
-            !isset($form1->asesor_date)
-        ) {
+        if (!$form1 || !isset($form1->asesi_id) || !isset($form1->asesor_id) || !isset($form1->asesor_date)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Data asesi, asesor, atau tanggal asesmen tidak ditemukan dari form_1_id',
             ], 404);
         }
 
-        // 🔒 Cek apakah form banding dengan form_1_id ini sudah ada
+        // Cek apakah form banding sudah ada (WAJIB ADA)
         $existing = FormBandingAsesmen::where('form_1_id', $request->form_1_id)->first();
 
-        if ($existing) {
+        if (!$existing) {
             return response()->json([
                 'success' => false,
-                'message' => 'Form Banding Asesmen untuk form_1_id ini sudah pernah dibuat.',
-                'data'    => $existing,
-            ], 409); // 409 Conflict
+                'message' => 'Form Banding belum diinisialisasi.',
+            ], 404);
         }
 
         DB::beginTransaction();
         try {
-            // Simpan data baru
-            $formBanding = FormBandingAsesmen::create([
-                'form_1_id'          => $request->form_1_id,
-                'asesi_id'           => $form1->asesi_id,
-                'asesor_id'          => $form1->asesor_id,
-                'tanggal_asesmen'    => $form1->asesor_date,
+
+            // Update data Form 8
+            $existing->update([
                 'alasan_banding'     => $request->alasan_banding,
                 'persetujuan_asesi'  => $request->persetujuan_asesi ?? false,
-                'persetujuan_asesor' => $request->persetujuan_asesor ?? false,
+                // persetujuan_asesor tidak di-update oleh asesi
             ]);
 
+            // Update progress menjadi Submitted (Asesi sudah mengisi)
             $this->formService->createProgresDanTrack(
-                $formBanding->banding_id,
+                $existing->banding_id,
                 'form_8',
                 'Submitted',
                 $form1->asesi_id,
                 $form1->form_1_id,
-                'Form 8 diisi oleh asesi.'
+                'Asesi telah mengisi Formulir Banding.'
             );
 
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Form banding asesmen berhasil disimpan',
-                'data'    => $formBanding
-            ], 201);
+                'message' => 'Form banding asesmen berhasil diperbarui.',
+                'data'    => $existing,
+            ], 200);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Gagal menyimpan FormBandingAsesmen: ' . $e->getMessage());
+            Log::error('Gagal update FormBandingAsesmen: ' . $e->getMessage());
 
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan saat menyimpan data',
-                'error'   => $e->getMessage()
+                'message' => 'Terjadi kesalahan saat mengupdate data.',
+                'error'   => $e->getMessage(),
             ], 500);
         }
     }
