@@ -318,6 +318,7 @@ class CertificateController extends Controller
 
     public function getSertifikatByPkId($pk_id)
     {
+        // Ambil user yang sedang login
         $userId = auth()->id();
 
         // Validasi pk_id
@@ -333,7 +334,7 @@ class CertificateController extends Controller
             ], 422);
         }
 
-        // Ambil data sertifikat berdasarkan asesi + pk_id
+        // Ambil 1 data sertifikat (bukan array)
         $sertifikat = SertifikatPk::where('asesi_id', $userId)
             ->where('pk_id', $pk_id)
             ->first();
@@ -344,26 +345,29 @@ class CertificateController extends Controller
             ], 404);
         }
 
-        // Ambil file_path dari DB
-        $filePath = $sertifikat->file_path;
+        // Format object data
+        $previewUrl = asset('storage/' . $sertifikat->file_path);
 
-        // Pastikan file ada di storage/app/public/<path>
-        if (!Storage::disk('public')->exists($filePath)) {
-            return response()->json([
-                'message' => 'File sertifikat tidak ditemukan'
-            ], 404);
-        }
+        $data = [
+            'id'              => $sertifikat->id,
+            'form_1_id'       => $sertifikat->form_1_id,
+            'pk_id'           => $sertifikat->pk_id,
+            'nomor_urut'      => $sertifikat->nomor_urut,
+            'nomor_surat'     => $sertifikat->nomor_surat,
+            'nama'            => $sertifikat->nama,
+            'gelar'           => $sertifikat->gelar,
+            'status'          => $sertifikat->status,
+            'tanggal_mulai'   => $sertifikat->tanggal_mulai,
+            'tanggal_selesai' => $sertifikat->tanggal_selesai,
+            'preview_url'     => $previewUrl,
+        ];
 
-        // Ambil konten file & mime
-        $file = Storage::disk('public')->get($filePath);
-        $mime = Storage::disk('public')->mimeType($filePath);
 
-        // Return file langsung ke browser (inline)
-        return response($file)
-            ->header('Content-Type', $mime)
-            ->header('Content-Disposition', 'inline; filename="' . basename($filePath) . '"');
+        return response()->json([
+            'message' => 'Detail sertifikat berhasil diambil',
+            'data'    => $data,
+        ]);
     }
-
 
 
     public function getListSertifikat(Request $request)
