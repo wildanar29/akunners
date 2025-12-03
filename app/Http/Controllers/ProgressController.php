@@ -185,6 +185,30 @@ class ProgressController extends Controller
 
             $item->progres = $progres;
 
+            // =====================
+            // 🔥 URUTAN CUSTOM
+            // =====================
+            $order = [
+                'form_8' => 1,
+                'form_6' => 2,
+                'form_5' => 3,
+                'form_4' => 4,
+                'form_3' => 5,
+                'form_2' => 6,
+                'form_1' => 7,
+            ];
+
+            // Urutkan berdasarkan form_type
+           $progres = $progres->sortBy(function ($prog) {
+                if ($prog->form_type === 'form_6') {
+                    return 999999;
+                }
+                return intval(str_replace('form_', '', $prog->form_type));
+            })->values();
+
+            $item->progres = $progres;
+
+
             // ================================================================
             // 🔹 Response Final
             // ================================================================
@@ -226,14 +250,6 @@ class ProgressController extends Controller
             ], 500);
         }
     }
-
-
-
-
-
-
-
-
 
     public function getTracksByFormId(Request $request)
     {
