@@ -145,6 +145,7 @@ class CertificateController extends Controller
             Log::debug("Nama file PDF:", ['fileName' => $fileName]);
 
             $year = Carbon::now()->year;
+            Log::debug("Tahun saat ini:", ['year' => $year]);
             $path = "sertifikat/{$year}/{$fileName}";
 
             // Generate PDF
