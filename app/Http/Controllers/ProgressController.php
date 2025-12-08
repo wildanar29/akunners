@@ -121,7 +121,7 @@ class ProgressController extends Controller
             }
 
             // ================================================================
-            // 🔹 Data Kontak A S E S I
+            // 🔹 Data Kontak AS E S I
             // ================================================================
             $asesiEmail = $item->asesiUser->email ?? null;
             $asesiNoTelp = $item->asesiUser->no_telp ?? null;
@@ -130,7 +130,7 @@ class ProgressController extends Controller
                 : null;
 
             // ================================================================
-            // 🔹 Data Kontak A S E S O R
+            // 🔹 Data Kontak AS E S O R
             // ================================================================
             $asesorUser = DaftarUser::where('user_id', $item->asesor_id)
                 ->select('user_id', 'email', 'no_telp', 'foto')
@@ -153,10 +153,13 @@ class ProgressController extends Controller
                 $item->status_utama = $progresUtama->status;
                 $item->pk_id = $pk_id;
 
-                $tracksUtama = \DB::table('kompetensi_tracks')
+                $tracksUtama = DB::table('kompetensi_tracks')
                     ->where('progres_id', $progresUtama->id)
+                    ->where('form_type', 'form_1')                // hanya form_1
+                    // ->where('user_id', $progresUtama->user_id)     // hanya track milik user yang sama
                     ->orderBy('activity_time', 'asc')
                     ->get();
+
 
                 $item->tracks_utama = $tracksUtama;
             } else {
@@ -189,25 +192,47 @@ class ProgressController extends Controller
             // 🔥 URUTAN CUSTOM
             // =====================
             $order = [
-                'form_8' => 1,
-                'form_6' => 2,
-                'form_5' => 3,
-                'form_4' => 4,
-                'form_3' => 5,
-                'form_2' => 6,
-                'form_1' => 7,
+                'form_1' => 1,
+                'form_2' => 2,
+                'form_3' => 3,
+                'intv_pra_asesmen' => 4,
+
+                // 🔥 form_5 ditempatkan di posisi 5 (tepat setelah intv_pra_asesmen)
+                'form_5' => 5,
+
+                // sisanya digeser ke bawah
+                'form_10.001' => 6,
+                'form_10.002' => 7,
+                'form_10.003' => 8,
+                'form_10.004' => 9,
+                'form_10.005' => 10,
+                'form_10.006' => 11,
+                'form_10.007' => 12,
+                'form_10.008' => 13,
+                'form_10.009' => 14,
+                'form_10.010' => 15,
+                'form_10.011' => 16,
+                'form_10.012' => 17,
+
+                'form_4a' => 18,
+                'form_4b' => 19,
+                'form_4c' => 20,
+                'form_4d' => 21,
+
+                'form_7' => 22,
+                'form_8' => 23,
+                'form_9' => 24,
+                'form_12' => 25,
+                'form_6' => 26,
             ];
 
-            // Urutkan berdasarkan form_type
-           $progres = $progres->sortBy(function ($prog) {
-                if ($prog->form_type === 'form_6') {
-                    return 999999;
-                }
-                return intval(str_replace('form_', '', $prog->form_type));
+
+            // SORTING FIX — PAKAI MAPPING ORDER
+            $progres = $progres->sortBy(function ($prog) use ($order) {
+                return $order[$prog->form_type] ?? 99999;  // fallback = paling akhir
             })->values();
 
             $item->progres = $progres;
-
 
             // ================================================================
             // 🔹 Response Final
@@ -215,7 +240,7 @@ class ProgressController extends Controller
             $responseData = [
                 'form_1_id' => $item->form_1_id,
 
-                // AS ESI
+                // ASESI
                 'asesi_name' => $item->asesi_name,
                 'asesi_id'   => $item->asesi_id,
                 'asesi_date' => $item->asesi_date,
@@ -223,7 +248,7 @@ class ProgressController extends Controller
                 'asesi_no_telp' => $asesiNoTelp,
                 'asesi_foto' => $asesiFoto,
 
-                // AS ESOR
+                // ASESOR
                 'asesor_name' => $item->asesor_name,
                 'asesor_id'   => $item->asesor_id,
                 'asesor_email' => $asesorEmail,
@@ -250,6 +275,7 @@ class ProgressController extends Controller
             ], 500);
         }
     }
+
 
     public function getTracksByFormId(Request $request)
     {
