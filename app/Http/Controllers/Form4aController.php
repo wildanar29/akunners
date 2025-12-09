@@ -59,13 +59,16 @@ class Form4aController extends BaseController
 
         $elemenList = ElemenForm3::with(['kukForm3' => function ($query) use ($pkId, $groupNo) {
             $query->where('pk_id', $pkId)
-                ->whereHas('iukForm3', function ($q) use ($groupNo) {
-                    $q->whereRaw('FIND_IN_SET(?, group_no)', [$groupNo]);
+                ->whereHas('iukForm3', function ($q) use ($pkId, $groupNo) {
+                    $q->where('pk_id', $pkId)
+                    ->whereRaw('FIND_IN_SET(?, group_no)', [$groupNo]);
                 })
-                ->with(['iukForm3' => function ($q) use ($groupNo) {
-                    $q->whereRaw('FIND_IN_SET(?, group_no)', [$groupNo])
-                        ->with('poinForm4');
+                ->with(['iukForm3' => function ($q) use ($pkId, $groupNo) {
+                    $q->where('pk_id', $pkId)
+                    ->whereRaw('FIND_IN_SET(?, group_no)', [$groupNo])
+                    ->with('poinForm4');
                 }]);
+
         }])
         ->where('pk_id', $pkId)
         ->orderByRaw('CAST(no_elemen_form_3 AS UNSIGNED)')
