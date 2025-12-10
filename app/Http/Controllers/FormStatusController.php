@@ -8,13 +8,14 @@ use App\Models\PkProgressModel;
 use Illuminate\Support\Facades\Log;
 use App\Models\BidangModel;
 
-        /**
+    /**
      * @OA\Get(
      *     path="/get-indikator-status",
-     *     summary="Ambil semua status form berdasarkan asesi",
-     *     description="Mengembalikan status semua form yang terkait dengan asesi_id.",
+     *     summary="Ambil seluruh status form berdasarkan asesi",
+     *     description="Mengembalikan status semua form beserta progress penyelesaiannya berdasarkan asesi_id dan pk_id.",
      *     operationId="getFormStatusByAsesi",
      *     tags={"Form Status"},
+     *
      *     @OA\Parameter(
      *         name="asesi_id",
      *         in="query",
@@ -22,9 +23,17 @@ use App\Models\BidangModel;
      *         description="ID Asesi",
      *         @OA\Schema(type="integer", example=123)
      *     ),
+     *     @OA\Parameter(
+     *         name="pk_id",
+     *         in="query",
+     *         required=false,
+     *         description="ID PK (opsional). Jika tidak diisi, sistem akan mendeteksi PK aktif yang belum Completed.",
+     *         @OA\Schema(type="integer", example=5)
+     *     ),
+     *
      *     @OA\Response(
      *         response=200,
-     *         description="Status data retrieved successfully",
+     *         description="Status berhasil diambil",
      *         @OA\JsonContent(
      *             type="object",
      *             @OA\Property(property="success", type="boolean", example=true),
@@ -32,25 +41,24 @@ use App\Models\BidangModel;
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
-     *                 additionalProperties=@OA\Schema(
+     *                 @OA\Property(
+     *                     property="status",
      *                     type="object",
-     *                     @OA\Property(property="asesi_id", type="integer", example=123),
-     *                     @OA\Property(property="asesi_name", type="string", example="John Doe"),
-     *                     @OA\Property(property="asesi_date", type="string", format="date-time", example="2025-09-03 10:00:00"),
-     *                     @OA\Property(property="asesor_id", type="integer", example=45),
-     *                     @OA\Property(property="asesor_name", type="string", example="Jane Smith"),
-     *                     @OA\Property(property="asesor_date", type="string", format="date-time", example="2025-09-03 11:00:00"),
-     *                     @OA\Property(
-     *                         property="status",
-     *                         type="object",
-     *                         additionalProperties=@OA\Schema(type="string", example="Completed"),
-     *                         description="Key adalah form_type, value adalah status"
-     *                     )
+     *                     additionalProperties=@OA\Schema(type="string", example="Completed"),
+     *                     description="Key adalah form_type, value adalah status form"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="progress",
+     *                     type="object",
+     *                     @OA\Property(property="completed_items", type="integer", example=23),
+     *                     @OA\Property(property="total_items", type="integer", example=24),
+     *                     @OA\Property(property="percentage", type="number", format="float", example=95.83)
      *                 )
      *             ),
      *             @OA\Property(property="status_code", type="integer", example=200)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=400,
      *         description="Parameter asesi_id wajib diisi",
@@ -62,6 +70,19 @@ use App\Models\BidangModel;
      *             @OA\Property(property="data", type="string", example=null)
      *         )
      *     ),
+     *
+     *     @OA\Response(
+     *         response=404,
+     *         description="Tidak ada PK aktif untuk asesi ini",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Tidak ada PK aktif (belum completed) untuk asesi ini."),
+     *             @OA\Property(property="status_code", type="integer", example=404),
+     *             @OA\Property(property="data", type="string", example=null)
+     *         )
+     *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Data tidak tersedia",
@@ -73,20 +94,22 @@ use App\Models\BidangModel;
      *             @OA\Property(property="data", type="string", example=null)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
-     *         description="Error occurred while retrieving data",
+     *         description="Terjadi error ketika mengambil data",
      *         @OA\JsonContent(
      *             type="object",
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An error occurred while retrieving data."),
-     *             @OA\Property(property="error", type="string", example="SQL error or exception message"),
+     *             @OA\Property(property="error", type="string", example="SQLSTATE[23000]: ..."),
      *             @OA\Property(property="status_code", type="integer", example=500),
      *             @OA\Property(property="data", type="string", example=null)
      *         )
      *     )
      * )
      */
+
 
 
 class FormStatusController extends Controller
@@ -107,27 +130,25 @@ class FormStatusController extends Controller
             }
 
             // ---------------------------------------------------------
-            // 🔍 Jika pk_id tidak diisi → cari pk_id atau parent_form_id
-            //     yang status progresnya belum Completed
+            // Jika pk_id tidak diisi → cari pk_id aktif yang belum Completed
             // ---------------------------------------------------------
             if (!$pk_id) {
 
                 $pk_id = BidangModel::where('asesi_id', $asesi_id)
-                ->where(function ($q) {
-                    $q->whereIn('pk_id', function ($sub) {
-                        $sub->select('pk_id')
-                            ->from('kompetensi_progres')
-                            ->where(function ($s) {
-                                $s->where('status', '!=', 'Completed')
-                                ->orWhereNull('status');
-                            });
-                    });
-                })
-                ->orderBy('pk_id')
-                ->value('pk_id');
+                    ->where(function ($q) {
+                        $q->whereIn('pk_id', function ($sub) {
+                            $sub->select('pk_id')
+                                ->from('kompetensi_progres')
+                                ->where(function ($s) {
+                                    $s->where('status', '!=', 'Completed')
+                                    ->orWhereNull('status');
+                                });
+                        });
+                    })
+                    ->orderBy('pk_id')
+                    ->value('pk_id');
 
-
-                \Log::info('🔄 Auto-detect pk_id untuk asesi', [
+                \Log::info('Auto-detect pk_id untuk asesi', [
                     'asesi_id' => $asesi_id,
                     'pk_id_terdeteksi' => $pk_id
                 ]);
@@ -143,7 +164,7 @@ class FormStatusController extends Controller
             }
 
             // ---------------------------------------------------------
-            // 🔍 Ambil item BidangModel sesuai pk_id (baik manual atau auto)
+            // Ambil item BidangModel sesuai pk_id
             // ---------------------------------------------------------
             $item = BidangModel::where('asesi_id', $asesi_id)
                 ->where('pk_id', $pk_id)
@@ -168,10 +189,9 @@ class FormStatusController extends Controller
                 ], 200);
             }
 
-            // -----------------------------------------------------------------
-            //  🚀 Logika asli Anda untuk mapping status tetap sama
-            // -----------------------------------------------------------------
-
+            // ---------------------------------------------------------
+            // Ambil default list form dari KompetensiTrack
+            // ---------------------------------------------------------
             $defaultForms = \App\Models\KompetensiTrack::distinct()
                 ->pluck('form_type')
                 ->filter()
@@ -180,12 +200,15 @@ class FormStatusController extends Controller
 
             $status = array_fill_keys($defaultForms, null);
 
+            // ---------------------------------------------------------
+            // Ambil seluruh progres form 1 + children
+            // ---------------------------------------------------------
             $allProgres = \App\Models\KompetensiProgres::where(function ($q) use ($item) {
                     $q->where(function ($q2) use ($item) {
                             $q2->where('form_id', $item->form_1_id)
                             ->whereNull('parent_form_id');
-                        })
-                        ->orWhere('parent_form_id', $item->form_1_id);
+                    })
+                    ->orWhere('parent_form_id', $item->form_1_id);
                 })
                 ->select('id', 'form_id', 'parent_form_id', 'status', 'created_at')
                 ->orderByRaw('CASE WHEN parent_form_id IS NULL THEN 0 ELSE 1 END')
@@ -204,16 +227,44 @@ class FormStatusController extends Controller
                 $status[$form_type] = $prog->status;
             }
 
+            // -------------------------------------------------------------
+            // Hitung PROGRESS (Completed + Submitted)
+            // form_8 SELALU dihitung, apapun status form_12
+            // -------------------------------------------------------------
+            $statusForProgress = $status;
+
+            $totalForms = count($statusForProgress);
+
+            $finishedStatuses = ['Completed', 'Submitted'];
+
+            $finishedCount = collect($statusForProgress)->filter(function ($value) use ($finishedStatuses) {
+                return in_array($value, $finishedStatuses);
+            })->count();
+
+            $progressPercentage = $totalForms > 0
+                ? round(($finishedCount / $totalForms) * 100, 2)
+                : 0;
+
+            // -------------------------------------------------------------
+            // Return Response JSON Lengkap
+            // -------------------------------------------------------------
             return response()->json([
                 'success' => true,
                 'message' => 'Status data retrieved successfully.',
-                'data'    => $status,
+                'data' => [
+                    'status' => $status,
+                    'progress' => [
+                        'completed_items' => $finishedCount,
+                        'total_items'     => $totalForms,
+                        'percentage'      => $progressPercentage
+                    ],
+                ],
                 'status_code' => 200,
             ], 200);
 
         } catch (\Exception $e) {
 
-            Log::error('❌ Error getFormStatusByAsesi', [
+            Log::error('Error getFormStatusByAsesi', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -227,6 +278,8 @@ class FormStatusController extends Controller
             ], 500);
         }
     }
+
+
 
 
 }
