@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 use App\Models\KompetensiProgres;
 use App\Models\KompetensiTrack;
 use App\Models\BidangModel;
@@ -128,7 +129,21 @@ class ProgressController extends Controller
             $asesiFoto = $item->asesiUser && $item->asesiUser->foto
                 ? url('storage/' . $item->asesiUser->foto)
                 : null;
+            $endDate = null;
+            $endDateStatus = null;
 
+            if (!empty($item->asesi_date)) {
+
+                $endDate = \Carbon\Carbon::parse($item->asesi_date)
+                            ->addDays(30)
+                            ->format('Y-m-d');
+
+                // true = masih dalam masa waktu
+                // false = sudah melewati batas
+                $endDateStatus = \Carbon\Carbon::now()->lessThanOrEqualTo(
+                    \Carbon\Carbon::parse($endDate)
+                );
+            }
             // ================================================================
             // 🔹 Data Kontak AS E S O R
             // ================================================================
@@ -244,6 +259,8 @@ class ProgressController extends Controller
                 'asesi_name' => $item->asesi_name,
                 'asesi_id'   => $item->asesi_id,
                 'asesi_date' => $item->asesi_date,
+                'end_date' => $endDate,
+                'end_date_status' => $endDateStatus,
                 'asesi_email' => $asesiEmail,
                 'asesi_no_telp' => $asesiNoTelp,
                 'asesi_foto' => $asesiFoto,
