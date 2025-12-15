@@ -118,7 +118,7 @@ class FormStatusController extends Controller
     {
         try {
             $asesi_id = $request->query('asesi_id');
-            $pk_id = $request->query('pk_id');
+            $pk_id    = $request->query('pk_id');
 
             if (!$asesi_id) {
                 return response()->json([
@@ -190,6 +190,25 @@ class FormStatusController extends Controller
             }
 
             // ---------------------------------------------------------
+            // 🔥 HITUNG DURASI ASESMEN (END DATE)
+            // ---------------------------------------------------------
+            $endDate = null;
+            $endDateStatus = null;
+
+            if (!empty($item->asesi_date)) {
+
+                $endDate = \Carbon\Carbon::parse($item->asesi_date)
+                    ->addDays(30)
+                    ->format('Y-m-d');
+
+                // true  = masih dalam batas waktu
+                // false = sudah melewati batas
+                $endDateStatus = \Carbon\Carbon::now()->lessThanOrEqualTo(
+                    \Carbon\Carbon::parse($endDate)
+                );
+            }
+
+            // ---------------------------------------------------------
             // Ambil default list form dari KompetensiTrack
             // ---------------------------------------------------------
             $defaultForms = \App\Models\KompetensiTrack::distinct()
@@ -227,17 +246,14 @@ class FormStatusController extends Controller
                 $status[$form_type] = $prog->status;
             }
 
-            // -------------------------------------------------------------
+            // ---------------------------------------------------------
             // Hitung PROGRESS (Completed + Submitted)
-            // form_8 SELALU dihitung, apapun status form_12
-            // -------------------------------------------------------------
-            $statusForProgress = $status;
-
-            $totalForms = count($statusForProgress);
+            // ---------------------------------------------------------
+            $totalForms = count($status);
 
             $finishedStatuses = ['Completed', 'Submitted'];
 
-            $finishedCount = collect($statusForProgress)->filter(function ($value) use ($finishedStatuses) {
+            $finishedCount = collect($status)->filter(function ($value) use ($finishedStatuses) {
                 return in_array($value, $finishedStatuses);
             })->count();
 
@@ -245,9 +261,9 @@ class FormStatusController extends Controller
                 ? round(($finishedCount / $totalForms) * 100, 2)
                 : 0;
 
-            // -------------------------------------------------------------
-            // Return Response JSON Lengkap
-            // -------------------------------------------------------------
+            // ---------------------------------------------------------
+            // RESPONSE JSON FINAL
+            // ---------------------------------------------------------
             return response()->json([
                 'success' => true,
                 'message' => 'Status data retrieved successfully.',
@@ -256,7 +272,11 @@ class FormStatusController extends Controller
                     'progress' => [
                         'completed_items' => $finishedCount,
                         'total_items'     => $totalForms,
-                        'percentage'      => $progressPercentage
+                        'percentage'      => $progressPercentage,
+
+                        // 🔥 DURASI ASESMEN
+                        'end_date'        => $endDate,
+                        'end_date_status' => $endDateStatus,
                     ],
                 ],
                 'status_code' => 200,
@@ -264,9 +284,9 @@ class FormStatusController extends Controller
 
         } catch (\Exception $e) {
 
-            Log::error('Error getFormStatusByAsesi', [
+            \Log::error('Error getFormStatusByAsesi', [
                 'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace'   => $e->getTraceAsString()
             ]);
 
             return response()->json([
@@ -278,6 +298,7 @@ class FormStatusController extends Controller
             ], 500);
         }
     }
+
 
 
 
