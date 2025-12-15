@@ -61,14 +61,17 @@ class Form7Controller extends BaseController
             ], 422);
         }
 
-        $elemen = ElemenForm3::with([
-                'kukForm3.iukForm3.soalForm7' => function($query) use ($pkId) {
-                    $query->where('pk_id', $pkId)
-                        ->orderBy('id', 'asc');
-                }
-            ])
-            ->orderBy('no_elemen_form_3', 'asc')
-            ->get();
+        $elemen = ElemenForm3::whereHas('kukForm3.iukForm3.soalForm7', function ($q) use ($pkId) {
+            $q->where('pk_id', $pkId);
+        })
+        ->with([
+            'kukForm3.iukForm3.soalForm7' => function ($q) use ($pkId) {
+                $q->where('pk_id', $pkId)
+                ->orderBy('id', 'asc');
+            }
+        ])
+        ->orderBy('no_elemen_form_3', 'asc')
+        ->get();
 
         return response()->json([
             'status' => 'success',
