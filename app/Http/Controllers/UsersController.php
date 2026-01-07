@@ -42,7 +42,7 @@ class UsersController extends Controller
 				'nama' => 'required|string|max:255',
 				'email' => 'required|email|unique:users',
 				'role_id' => 'required|integer|exists:roles,role_id', // tetap role_id untuk input
-				'no_telp' => 'required|max:13|unique:users',
+				'no_telp' => 'required|max:14|unique:users',
 			];
 
 			if (in_array($roleId, [2])) {
