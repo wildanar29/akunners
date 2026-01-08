@@ -273,6 +273,7 @@ class FormStatusController extends Controller
                         'completed_items' => $finishedCount,
                         'total_items'     => $totalForms,
                         'percentage'      => $progressPercentage,
+                        'pk_id_active'    => $pk_id,
 
                         // 🔥 DURASI ASESMEN
                         'end_date'        => $endDate,

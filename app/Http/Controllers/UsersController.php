@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Log;
+use App\Service\FormService;
 use OpenApi\Annotations as OA;
 use Tymon\JWTAuth\Facades\JWTAuth; 
 
@@ -30,6 +31,14 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 	*/
 class UsersController extends Controller
 {
+
+	protected $formService;
+
+    public function __construct(FormService $formService)
+    {
+        $this->formService = $formService;
+    }
+
 	public function RegisterAkunNurse(Request $request)
 	{
 		try {
@@ -327,6 +336,8 @@ class UsersController extends Controller
 			// Cari user
 			$user = DaftarUser::where('nik', $request->nik)->first();
 
+			$pkIdActive = $this->formService->getActivePkIdByAsesi($user->user_id ?? 0);
+
 			if (!$user) {
 				return response()->json([
 					'status' => 404,
@@ -403,6 +414,7 @@ class UsersController extends Controller
 					'name' => $user->nama,
 					'nik' => $user->nik,
 					'user_id' => $user->user_id,
+					'pk_id_active' => $pkIdActive,
 
 					/**
 					 * =============================

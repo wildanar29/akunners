@@ -635,6 +635,14 @@ class FormService
 			->values(); // reset indeks array
 	}
 
+	public function getActivePkIdByAsesi(int $asesiId): ?int
+    {
+        return BidangModel::where('asesi_id', $asesiId)
+            ->where('status', '!=', 'Completed')
+            ->orderByDesc('form_1_id')
+            ->value('pk_id');
+    }
+
 	public function getStatusByParentFormIdAndType(int $formId, string $formType)
 	{
 		return KompetensiProgres::with('track:id,progres_id,form_type')
