@@ -12,6 +12,7 @@ use App\Service\OneSignalService;
 use App\Models\DataAsesorModel;
 use App\Models\DaftarUser;
 use App\Models\BidangModel;
+use App\Models\HistoryJabatan;
 use App\Models\UserRole;
 use App\Models\KompetensiTrack;
 use App\Models\KompetensiProgres;
@@ -801,7 +802,7 @@ class FormService
 			], 500);
 		}
 	}
-	
+
 	public function getStatusByParentFormIdAndType(int $formId, string $formType)
 	{
 		return KompetensiProgres::with('track:id,progres_id,form_type')
