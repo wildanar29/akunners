@@ -365,7 +365,7 @@ class AsesiPermohonanController extends Controller
 	public function getForm1ByAsesor(Request $request) 
 	{
 		$userId = $request->input('user_id');
-		$status = $request->input('status'); // Tambahkan input status
+		$status = $request->input('status');
 
 		// Validasi input user_id
 		if (!$userId) {
@@ -376,13 +376,15 @@ class AsesiPermohonanController extends Controller
 		}
 
 		// Cek apakah user adalah asesor
-		$asesor = DB::table('data_asesor')->where('user_id', $userId)->first();
+		$asesor = DB::table('data_asesor')
+			->where('user_id', $userId)
+			->first();
 
 		if (!$asesor) {
 			return response()->json([
 				'success' => "OK",
 				'message' => 'User ini bukan asesor.',
-			], 403); // Forbidden
+			], 403);
 		}
 
 		// Ambil no_reg asesor
@@ -396,22 +398,38 @@ class AsesiPermohonanController extends Controller
 		}
 
 		// Query dasar
-		$query = DB::table('form_1')->where('no_reg', $noReg);
+		$query = DB::table('form_1')
+			->where('no_reg', $noReg);
 
-		// Tambahkan filter status jika diberikan
+		// Filter status jika ada
 		if (!is_null($status)) {
 			$query->where('status', $status);
 		}
 
 		// Eksekusi query
-		$formList = $query->orderBy('created_at', 'desc')->get();
+		$formList = $query
+			->orderBy('created_at', 'desc')
+			->get();
 
-		// Map foto berdasarkan user_id
+		// Mapping tambahan: foto + nama_pk
 		$formList = $formList->map(function ($item) {
+
+			/** ======================
+			 * FOTO ASESI
+			 * ====================== */
 			$user = DaftarUser::find($item->asesi_id);
 
-			$item->foto = $user && $user->foto
+			$item->foto = ($user && $user->foto)
 				? url('storage/foto_nurse/' . basename($user->foto))
+				: null;
+
+			/** ======================
+			 * NAMA PK
+			 * ====================== */
+			$pk = KompetensiPk::find($item->pk_id);
+
+			$item->nama_pk = $pk
+				? $pk->nama_level
 				: null;
 
 			return $item;
