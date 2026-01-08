@@ -530,7 +530,7 @@ class UsersController extends Controller
 			// Validasi data
 			$validator = Validator::make($request->all(), [
 				'nama'            => 'nullable|string|max:255',
-				'email'           => 'nullable|email|unique:users,email,' . $nik . ',nik',
+				'email'           => 'nullable|email',
 				'no_telp' 		  => 'nullable|max:13|unique:users,no_telp,' . $nik . ',nik',
 				'tempat_lahir'    => 'nullable|string|max:255',
 				'tanggal_lahir'   => 'nullable|date',
