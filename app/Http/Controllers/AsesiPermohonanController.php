@@ -62,20 +62,20 @@ class AsesiPermohonanController extends Controller
 
 			$pkId = (int) $request->input('pk_id');
 
-			if ($pkId > 1) {
-				$previousPk = BidangModel::where('asesi_id', $user->user_id)
-					->where('pk_id', $pkId - 1)
-					->where('status', 'Completed')
-					->first();
+			// if ($pkId > 1) {
+			// 	$previousPk = BidangModel::where('asesi_id', $user->user_id)
+			// 		->where('pk_id', $pkId - 1)
+			// 		->where('status', 'Completed')
+			// 		->first();
 
-				if (!$previousPk) {
-					return response()->json([
-						'success' => false,
-						'message' => "You must complete PK " . ($pkId - 1) . " before submitting PK {$pkId}.",
-						'status_code' => 403,
-					], 403);
-				}
-			}
+			// 	if (!$previousPk) {
+			// 		return response()->json([
+			// 			'success' => false,
+			// 			'message' => "You must complete PK " . ($pkId - 1) . " before submitting PK {$pkId}.",
+			// 			'status_code' => 403,
+			// 		], 403);
+			// 	}
+			// }
 
 			$alreadySubmitted = BidangModel::where('asesi_id', $user->user_id)
 				->where('pk_id', $pkId)
