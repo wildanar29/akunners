@@ -93,7 +93,7 @@ class AsesiPermohonanController extends Controller
 			}
 
 			// ✅ Cek kelengkapan data profil
-			$dataChecker = new UsersController();
+			// $dataChecker = new UsersController();
 			$checkDataResponse = $this->formService->CheckDataCompleteness($user->nik);
 			if ($checkDataResponse->getStatusCode() !== 200) {
 				return $checkDataResponse;
