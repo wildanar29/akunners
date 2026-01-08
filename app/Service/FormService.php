@@ -14,6 +14,7 @@ use App\Models\DaftarUser;
 use App\Models\BidangModel;
 use App\Models\HistoryJabatan;
 use App\Models\UserRole;
+use App\Models\Role;
 use App\Models\KompetensiTrack;
 use App\Models\KompetensiProgres;
 use App\Models\Notification;
