@@ -8,6 +8,7 @@ use App\Models\Role;
 use App\Models\KompetensiProgres;
 use App\Models\KompetensiTrack;
 use App\Models\Notification;
+use App\Models\KompetensiPk;
 use App\Models\DaftarUser; // Pastikan untuk mengimpor model User  
 use App\Models\IjazahModel; // Model untuk users_ijazah_file  
 use App\Models\TranskripModel; // Model untuk users_transkrip_file  
@@ -487,7 +488,6 @@ class BidangController extends Controller
 				'Assigned',
 				'Process',
 				'Approved',
-				'Process',
 				'Completed',
 				'Rejected',
 				'InAssessment',
@@ -497,47 +497,61 @@ class BidangController extends Controller
 
 			if ($status && !in_array($status, $allowedStatus)) {
 				return response()->json([
-					'status' => 'ERR',
+					'status'  => 'ERR',
 					'message' => 'Status tidak valid.',
-					'data' => null
+					'data'    => null
 				], 400);
 			}
 
+			// Ambil data Form 1
 			$form1Data = $status
 				? BidangModel::where('status', $status)->get()
 				: BidangModel::all();
 
-			// Tambahkan foto dari DaftarUser berdasarkan user_id
+			// Mapping tambahan: foto + nama_pk
 			$form1Data = $form1Data->map(function ($item) {
+
+				/** ======================
+				 *  FOTO ASES I
+				 *  ====================== */
 				$user = DaftarUser::find($item->asesi_id);
 
-				Log::info('Mencari foto untuk user_id: ' . ($item->asesi_id ?? 'null'), [
-					'user_found' => $user ? true : false,
-					'foto' => $user ? $user->foto : 'null'
+				Log::info('Mencari foto untuk asesi_id', [
+					'asesi_id'   => $item->asesi_id,
+					'user_found' => (bool) $user,
+					'foto'       => $user->foto ?? null
 				]);
 
-				$item->foto = $user && $user->foto
+				$item->foto = ($user && $user->foto)
 					? url('storage/foto_nurse/' . basename($user->foto))
+					: null;
+
+				/** ======================
+				 *  NAMA PK
+				 *  ====================== */
+				$pk = KompetensiPk::find($item->pk_id);
+
+				$item->nama_pk = $pk
+					? $pk->nama_level
 					: null;
 
 				return $item;
 			});
 
 			return response()->json([
-				'status' => 'OK',
+				'status'  => 'OK',
 				'message' => 'Data berhasil diambil.',
-				'data' => $form1Data,
+				'data'    => $form1Data,
 			], 200);
 
 		} catch (\Exception $e) {
 			return response()->json([
-				'status' => 'ERR',
+				'status'  => 'ERR',
 				'message' => 'Terjadi kesalahan: ' . $e->getMessage(),
-				'data' => null
+				'data'    => null
 			], 500);
 		}
 	}
-
 
 
 
@@ -581,118 +595,161 @@ class BidangController extends Controller
  */
 
 	public function getForm1ById($form_1_id)
-	{
-		try {
-			$form1Data = BidangModel::find($form_1_id);
+{
+    try {
+        $form1Data = BidangModel::find($form_1_id);
 
-			if (!$form1Data) {
-				return response()->json([
-					'status' => 404,
-					'message' => 'Form 1 tidak ditemukan.',
-					'data' => null
-				], 404);
-			}
+        if (!$form1Data) {
+            return response()->json([
+                'status' => 404,
+                'message' => 'Form 1 tidak ditemukan.',
+                'data' => null
+            ], 404);
+        }
 
-			// Ambil user terkait
-			$user = $form1Data->asesi_id ? DaftarUser::with('roles')->find($form1Data->asesi_id) : null;
+        /** ======================
+         *  AMBIL NAMA PK
+         *  ====================== */
+        $pk = $form1Data->pk_id
+            ? KompetensiPk::find($form1Data->pk_id)
+            : null;
 
-			$userData = [];
-			if ($user) {
-				// Ambil history jabatan
-				$historyJabatan = HistoryJabatan::where('user_id', $user->user_id)->get();
-				$jabatanData = $historyJabatan->map(function ($history) {
-					$working_unit = DB::table('working_unit')->where('working_unit_id', $history->working_unit_id)->first();
-					$jabatan = DB::table('jabatan')->where('jabatan_id', $history->jabatan_id)->first();
+        $namaPk = $pk ? $pk->nama_level : null;
 
-					return [
-						'working_unit_id' => $history->working_unit_id,
-						'working_unit_name' => $working_unit->working_unit_name ?? null,
-						'jabatan_id' => $history->jabatan_id,
-						'nama_jabatan' => $jabatan->nama_jabatan ?? null,
-						'dari' => $history->dari,
-						'sampai' => $history->sampai
-					];
-				});
+        // Ambil user terkait
+        $user = $form1Data->asesi_id
+            ? DaftarUser::with('roles')->find($form1Data->asesi_id)
+            : null;
 
-				// Dokumen user
-				$ijazah = $user->ijazah ? ['url' => url('storage/' . $user->ijazah->path_file)] : null;
-				$ujikom = $user->ujikom ? [
-					'url' => url('storage/' . $user->ujikom->path_file),
-					'nomor' => $user->ujikom->nomor_kompetensi ?? null,
-					'masa_berlaku' => $user->ujikom->masa_berlaku_kompetensi ?? null
-				] : null;
-				$str = $user->str ? [
-					'url' => url('storage/' . $user->str->path_file),
-					'nomor' => $user->str->nomor_str ?? null,
-					'masa_berlaku' => $user->str->masa_berlaku_str ?? null
-				] : null;
-				$sip = $user->sip ? [
-					'url' => url('storage/' . $user->sip->path_file),
-					'nomor' => $user->sip->nomor_sip ?? null,
-					'masa_berlaku' => $user->sip->masa_berlaku_sip ?? null
-				] : null;
-				$spk = $user->spk ? [
-					'url' => url('storage/' . $user->spk->path_file),
-					'nomor' => $user->spk->nomor_spk ?? null,
-					'masa_berlaku' => $user->spk->masa_berlaku_spk ?? null
-				] : null;
+        $userData = [];
 
-				// Sertifikat
-				$sertifikat = $user->sertifikat->map(function ($item) {
-					return [
-						'url' => url('storage/' . $item->path_file),
-						'type' => $item->type_sertifikat,
-						'sertifikat_id' => $item->sertifikat_id,
-						'nomor' => $item->nomor_sertifikat ?? null,
-						'masa_berlaku' => $item->masa_berlaku_sertifikat ?? null
-					];
-				});
+        if ($user) {
 
-				// Susun data user
-				$userData = [
-					'nama' => $user->nama,
-					'email' => $user->email,
-					'no_telp' => $user->no_telp,
-					'tempat_lahir' => $user->tempat_lahir,
-					'tanggal_lahir' => $user->tanggal_lahir,
-					'kewarganegaraan' => $user->kewarganegaraan,
-					'jenis_kelamin' => $user->jenis_kelamin,
-					'pendidikan' => $user->pendidikan,
-					'tahun_lulus' => $user->tahun_lulus,
-					'provinsi' => $user->provinsi,
-					'kota' => $user->kota,
-					'alamat' => $user->alamat,
-					'kode_pos' => $user->kode_pos,
-					'role_id' => $user->current_role_id,
-					'role_name' => $user->roles->first()->role_name ?? null,
-					'jabatan_history' => $jabatanData,
-					'foto' => $user->foto ? url('storage/foto_nurse/' . basename($user->foto)) : null,
-					'ijazah' => $ijazah,
-					'ujikom' => $ujikom,
-					'str' => $str,
-					'sip' => $sip,
-					'spk' => $spk,
-					'sertifikat' => $sertifikat
-				];
-			}
+            /** ======================
+             *  HISTORY JABATAN
+             *  ====================== */
+            $historyJabatan = HistoryJabatan::where('user_id', $user->user_id)->get();
 
-			// Gabungkan data form + user
-			$mergedData = array_merge($form1Data->toArray(), $userData);
+            $jabatanData = $historyJabatan->map(function ($history) {
+                $working_unit = DB::table('working_unit')
+                    ->where('working_unit_id', $history->working_unit_id)
+                    ->first();
 
-			return response()->json([
-				'status' => 200,
-				'message' => 'Data Form 1 berhasil ditemukan.',
-				'data' => $mergedData
-			], 200);
+                $jabatan = DB::table('jabatan')
+                    ->where('jabatan_id', $history->jabatan_id)
+                    ->first();
 
-		} catch (\Exception $e) {
-			return response()->json([
-				'status' => 500,
-				'message' => 'Terjadi kesalahan pada server.',
-				'error' => $e->getMessage()
-			], 500);
-		}
-	}
+                return [
+                    'working_unit_id'   => $history->working_unit_id,
+                    'working_unit_name' => $working_unit->working_unit_name ?? null,
+                    'jabatan_id'        => $history->jabatan_id,
+                    'nama_jabatan'      => $jabatan->nama_jabatan ?? null,
+                    'dari'              => $history->dari,
+                    'sampai'            => $history->sampai
+                ];
+            });
+
+            /** ======================
+             *  DOKUMEN USER
+             *  ====================== */
+            $ijazah = $user->ijazah
+                ? ['url' => url('storage/' . $user->ijazah->path_file)]
+                : null;
+
+            $ujikom = $user->ujikom ? [
+                'url'           => url('storage/' . $user->ujikom->path_file),
+                'nomor'         => $user->ujikom->nomor_kompetensi ?? null,
+                'masa_berlaku'  => $user->ujikom->masa_berlaku_kompetensi ?? null
+            ] : null;
+
+            $str = $user->str ? [
+                'url'           => url('storage/' . $user->str->path_file),
+                'nomor'         => $user->str->nomor_str ?? null,
+                'masa_berlaku'  => $user->str->masa_berlaku_str ?? null
+            ] : null;
+
+            $sip = $user->sip ? [
+                'url'           => url('storage/' . $user->sip->path_file),
+                'nomor'         => $user->sip->nomor_sip ?? null,
+                'masa_berlaku'  => $user->sip->masa_berlaku_sip ?? null
+            ] : null;
+
+            $spk = $user->spk ? [
+                'url'           => url('storage/' . $user->spk->path_file),
+                'nomor'         => $user->spk->nomor_spk ?? null,
+                'masa_berlaku'  => $user->spk->masa_berlaku_spk ?? null
+            ] : null;
+
+            /** ======================
+             *  SERTIFIKAT
+             *  ====================== */
+            $sertifikat = $user->sertifikat->map(function ($item) {
+                return [
+                    'url'            => url('storage/' . $item->path_file),
+                    'type'           => $item->type_sertifikat,
+                    'sertifikat_id'  => $item->sertifikat_id,
+                    'nomor'          => $item->nomor_sertifikat ?? null,
+                    'masa_berlaku'   => $item->masa_berlaku_sertifikat ?? null
+                ];
+            });
+
+            /** ======================
+             *  DATA USER
+             *  ====================== */
+            $userData = [
+                'nama'              => $user->nama,
+                'email'             => $user->email,
+                'no_telp'           => $user->no_telp,
+                'tempat_lahir'      => $user->tempat_lahir,
+                'tanggal_lahir'     => $user->tanggal_lahir,
+                'kewarganegaraan'   => $user->kewarganegaraan,
+                'jenis_kelamin'     => $user->jenis_kelamin,
+                'pendidikan'        => $user->pendidikan,
+                'tahun_lulus'       => $user->tahun_lulus,
+                'provinsi'          => $user->provinsi,
+                'kota'              => $user->kota,
+                'alamat'            => $user->alamat,
+                'kode_pos'          => $user->kode_pos,
+                'role_id'           => $user->current_role_id,
+                'role_name'         => $user->roles->first()->role_name ?? null,
+                'jabatan_history'   => $jabatanData,
+                'foto'              => $user->foto
+                    ? url('storage/foto_nurse/' . basename($user->foto))
+                    : null,
+                'ijazah'            => $ijazah,
+                'ujikom'            => $ujikom,
+                'str'               => $str,
+                'sip'               => $sip,
+                'spk'               => $spk,
+                'sertifikat'        => $sertifikat
+            ];
+        }
+
+        /** ======================
+         *  GABUNG DATA FORM + PK + USER
+         *  ====================== */
+        $mergedData = array_merge(
+            $form1Data->toArray(),
+            [
+                'nama_pk' => $namaPk
+            ],
+            $userData
+        );
+
+        return response()->json([
+            'status'  => 200,
+            'message' => 'Data Form 1 berhasil ditemukan.',
+            'data'    => $mergedData
+        ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'status'  => 500,
+            'message' => 'Terjadi kesalahan pada server.',
+            'error'   => $e->getMessage()
+        ], 500);
+    }
+}
 
 
 

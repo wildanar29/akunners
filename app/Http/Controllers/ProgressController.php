@@ -90,15 +90,21 @@ class ProgressController extends Controller
 
             if (!$asesi_id || !$pk_id) {
                 return response()->json([
-                    'status' => 'ERROR',
+                    'status'  => 'ERROR',
                     'message' => 'Parameter asesi_id dan pk_id wajib diisi.',
-                    'data' => null,
+                    'data'    => null,
                 ], 400);
             }
 
-            // ================================================================
-            // 🔹 Ambil data form + relasi user asesi
-            // ================================================================
+            /** ===============================================================
+             * 🔹 Ambil NAMA PK
+             * =============================================================== */
+            $pk = KompetensiPk::find($pk_id);
+            $namaPk = $pk ? $pk->nama_level : null;
+
+            /** ===============================================================
+             * 🔹 Ambil data form + relasi user asesi
+             * =============================================================== */
             $item = BidangModel::with(['asesiUser:user_id,email,no_telp,foto'])
                 ->where('pk_id', $pk_id)
                 ->where('asesi_id', $asesi_id)
@@ -115,52 +121,51 @@ class ProgressController extends Controller
 
             if (!$item) {
                 return response()->json([
-                    'status' => 'SUCCESS',
+                    'status'  => 'SUCCESS',
                     'message' => 'Data tidak tersedia.',
-                    'data' => null,
+                    'data'    => null,
                 ], 200);
             }
 
-            // ================================================================
-            // 🔹 Data Kontak AS E S I
-            // ================================================================
-            $asesiEmail = $item->asesiUser->email ?? null;
+            /** ===============================================================
+             * 🔹 Data Kontak ASESI
+             * =============================================================== */
+            $asesiEmail  = $item->asesiUser->email ?? null;
             $asesiNoTelp = $item->asesiUser->no_telp ?? null;
-            $asesiFoto = $item->asesiUser && $item->asesiUser->foto
+            $asesiFoto   = $item->asesiUser && $item->asesiUser->foto
                 ? url('storage/' . $item->asesiUser->foto)
                 : null;
+
             $endDate = null;
             $endDateStatus = null;
 
             if (!empty($item->asesi_date)) {
+                $endDate = Carbon::parse($item->asesi_date)
+                    ->addDays(30)
+                    ->format('Y-m-d');
 
-                $endDate = \Carbon\Carbon::parse($item->asesi_date)
-                            ->addDays(30)
-                            ->format('Y-m-d');
-
-                // true = masih dalam masa waktu
-                // false = sudah melewati batas
-                $endDateStatus = \Carbon\Carbon::now()->lessThanOrEqualTo(
-                    \Carbon\Carbon::parse($endDate)
+                $endDateStatus = Carbon::now()->lessThanOrEqualTo(
+                    Carbon::parse($endDate)
                 );
             }
-            // ================================================================
-            // 🔹 Data Kontak AS E S O R
-            // ================================================================
+
+            /** ===============================================================
+             * 🔹 Data Kontak ASESOR
+             * =============================================================== */
             $asesorUser = DaftarUser::where('user_id', $item->asesor_id)
                 ->select('user_id', 'email', 'no_telp', 'foto')
                 ->first();
 
-            $asesorEmail = $asesorUser->email ?? null;
+            $asesorEmail  = $asesorUser->email ?? null;
             $asesorNoTelp = $asesorUser->no_telp ?? null;
-            $asesorFoto = $asesorUser && $asesorUser->foto
+            $asesorFoto   = $asesorUser && $asesorUser->foto
                 ? url('storage/' . $asesorUser->foto)
                 : null;
 
-            // ================================================================
-            // 🔹 Ambil progres utama
-            // ================================================================
-            $progresUtama = \App\Models\KompetensiProgres::where('form_id', $item->form_1_id)
+            /** ===============================================================
+             * 🔹 Ambil progres utama
+             * =============================================================== */
+            $progresUtama = KompetensiProgres::where('form_id', $item->form_1_id)
                 ->select('id', 'form_id', 'status', 'user_id')
                 ->first();
 
@@ -170,11 +175,9 @@ class ProgressController extends Controller
 
                 $tracksUtama = DB::table('kompetensi_tracks')
                     ->where('progres_id', $progresUtama->id)
-                    ->where('form_type', 'form_1')                // hanya form_1
-                    // ->where('user_id', $progresUtama->user_id)     // hanya track milik user yang sama
+                    ->where('form_type', 'form_1')
                     ->orderBy('activity_time', 'asc')
                     ->get();
-
 
                 $item->tracks_utama = $tracksUtama;
             } else {
@@ -183,17 +186,19 @@ class ProgressController extends Controller
                 $item->pk_id = $pk_id;
             }
 
-            // ================================================================
-            // 🔹 Ambil progres anak
-            // ================================================================
-            $progres = \App\Models\KompetensiProgres::where('parent_form_id', $item->form_1_id)
+            /** ===============================================================
+             * 🔹 Ambil progres anak
+             * =============================================================== */
+            $progres = KompetensiProgres::where('parent_form_id', $item->form_1_id)
                 ->select('id', 'form_id', 'status', 'user_id', 'parent_form_id')
                 ->get()
                 ->map(function ($prog) use ($pk_id) {
                     $prog->pk_id = $pk_id;
-                    $prog->form_type = \App\Models\KompetensiTrack::where('progres_id', $prog->id)->value('form_type');
 
-                    $prog->tracks = \DB::table('kompetensi_tracks')
+                    $prog->form_type = KompetensiTrack::where('progres_id', $prog->id)
+                        ->value('form_type');
+
+                    $prog->tracks = DB::table('kompetensi_tracks')
                         ->where('progres_id', $prog->id)
                         ->orderBy('activity_time', 'asc')
                         ->get();
@@ -201,21 +206,15 @@ class ProgressController extends Controller
                     return $prog;
                 });
 
-            $item->progres = $progres;
-
-            // =====================
-            // 🔥 URUTAN CUSTOM
-            // =====================
+            /** =====================
+             * 🔥 URUTAN CUSTOM
+             * ===================== */
             $order = [
                 'form_1' => 1,
                 'form_2' => 2,
                 'form_3' => 3,
                 'intv_pra_asesmen' => 4,
-
-                // 🔥 form_5 ditempatkan di posisi 5 (tepat setelah intv_pra_asesmen)
                 'form_5' => 5,
-
-                // sisanya digeser ke bawah
                 'form_10.001' => 6,
                 'form_10.002' => 7,
                 'form_10.003' => 8,
@@ -228,12 +227,10 @@ class ProgressController extends Controller
                 'form_10.010' => 15,
                 'form_10.011' => 16,
                 'form_10.012' => 17,
-
                 'form_4a' => 18,
                 'form_4b' => 19,
                 'form_4c' => 20,
                 'form_4d' => 21,
-
                 'form_7' => 22,
                 'form_8' => 23,
                 'form_9' => 24,
@@ -241,17 +238,13 @@ class ProgressController extends Controller
                 'form_6' => 26,
             ];
 
-
-            // SORTING FIX — PAKAI MAPPING ORDER
             $progres = $progres->sortBy(function ($prog) use ($order) {
-                return $order[$prog->form_type] ?? 99999;  // fallback = paling akhir
+                return $order[$prog->form_type] ?? 99999;
             })->values();
 
-            $item->progres = $progres;
-
-            // ================================================================
-            // 🔹 Response Final
-            // ================================================================
+            /** ===============================================================
+             * 🔹 Response Final
+             * =============================================================== */
             $responseData = [
                 'form_1_id' => $item->form_1_id,
 
@@ -259,7 +252,7 @@ class ProgressController extends Controller
                 'asesi_name' => $item->asesi_name,
                 'asesi_id'   => $item->asesi_id,
                 'asesi_date' => $item->asesi_date,
-                'end_date' => $endDate,
+                'end_date'   => $endDate,
                 'end_date_status' => $endDateStatus,
                 'asesi_email' => $asesiEmail,
                 'asesi_no_telp' => $asesiNoTelp,
@@ -272,23 +265,27 @@ class ProgressController extends Controller
                 'asesor_no_telp' => $asesorNoTelp,
                 'asesor_foto' => $asesorFoto,
 
-                'pk_id' => $pk_id,
+                // PK
+                'pk_id'   => $pk_id,
+                'nama_pk'=> $namaPk,
+
+                // PROGRES
                 'status_utama' => $item->status_utama,
                 'tracks_utama' => $item->tracks_utama,
-                'progres' => $item->progres,
+                'progres' => $progres,
             ];
 
             return response()->json([
-                'status' => 'SUCCESS',
+                'status'  => 'SUCCESS',
                 'message' => 'Data progres berhasil diambil.',
-                'data' => $responseData,
+                'data'    => $responseData,
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
-                'status' => 'ERROR',
+                'status'  => 'ERROR',
                 'message' => 'Gagal mengambil data progres: ' . $e->getMessage(),
-                'data' => null,
+                'data'    => null,
             ], 500);
         }
     }

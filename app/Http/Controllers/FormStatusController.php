@@ -148,7 +148,7 @@ class FormStatusController extends Controller
                     ->orderBy('pk_id')
                     ->value('pk_id');
 
-                \Log::info('Auto-detect pk_id untuk asesi', [
+                Log::info('Auto-detect pk_id untuk asesi', [
                     'asesi_id' => $asesi_id,
                     'pk_id_terdeteksi' => $pk_id
                 ]);
@@ -162,6 +162,12 @@ class FormStatusController extends Controller
                     ], 404);
                 }
             }
+
+            // ---------------------------------------------------------
+            // 🔹 Ambil NAMA PK
+            // ---------------------------------------------------------
+            $pk = KompetensiPk::find($pk_id);
+            $namaPk = $pk ? $pk->nama_level : null;
 
             // ---------------------------------------------------------
             // Ambil item BidangModel sesuai pk_id
@@ -190,28 +196,25 @@ class FormStatusController extends Controller
             }
 
             // ---------------------------------------------------------
-            // 🔥 HITUNG DURASI ASESMEN (END DATE)
+            // 🔥 HITUNG DURASI ASESMEN
             // ---------------------------------------------------------
             $endDate = null;
             $endDateStatus = null;
 
             if (!empty($item->asesi_date)) {
-
-                $endDate = \Carbon\Carbon::parse($item->asesi_date)
+                $endDate = Carbon::parse($item->asesi_date)
                     ->addDays(30)
                     ->format('Y-m-d');
 
-                // true  = masih dalam batas waktu
-                // false = sudah melewati batas
-                $endDateStatus = \Carbon\Carbon::now()->lessThanOrEqualTo(
-                    \Carbon\Carbon::parse($endDate)
+                $endDateStatus = Carbon::now()->lessThanOrEqualTo(
+                    Carbon::parse($endDate)
                 );
             }
 
             // ---------------------------------------------------------
-            // Ambil default list form dari KompetensiTrack
+            // Ambil default list form
             // ---------------------------------------------------------
-            $defaultForms = \App\Models\KompetensiTrack::distinct()
+            $defaultForms = KompetensiTrack::distinct()
                 ->pluck('form_type')
                 ->filter()
                 ->values()
@@ -220,9 +223,9 @@ class FormStatusController extends Controller
             $status = array_fill_keys($defaultForms, null);
 
             // ---------------------------------------------------------
-            // Ambil seluruh progres form 1 + children
+            // Ambil seluruh progres form
             // ---------------------------------------------------------
-            $allProgres = \App\Models\KompetensiProgres::where(function ($q) use ($item) {
+            $allProgres = KompetensiProgres::where(function ($q) use ($item) {
                     $q->where(function ($q2) use ($item) {
                             $q2->where('form_id', $item->form_1_id)
                             ->whereNull('parent_form_id');
@@ -236,7 +239,7 @@ class FormStatusController extends Controller
 
             foreach ($allProgres as $prog) {
 
-                $form_type = \App\Models\KompetensiTrack::where('progres_id', $prog->id)
+                $form_type = KompetensiTrack::where('progres_id', $prog->id)
                     ->value('form_type');
 
                 if (!$form_type || !array_key_exists($form_type, $status)) {
@@ -247,10 +250,9 @@ class FormStatusController extends Controller
             }
 
             // ---------------------------------------------------------
-            // Hitung PROGRESS (Completed + Submitted)
+            // Hitung PROGRESS
             // ---------------------------------------------------------
             $totalForms = count($status);
-
             $finishedStatuses = ['Completed', 'Submitted'];
 
             $finishedCount = collect($status)->filter(function ($value) use ($finishedStatuses) {
@@ -262,20 +264,22 @@ class FormStatusController extends Controller
                 : 0;
 
             // ---------------------------------------------------------
-            // RESPONSE JSON FINAL
+            // RESPONSE FINAL
             // ---------------------------------------------------------
             return response()->json([
                 'success' => true,
                 'message' => 'Status data retrieved successfully.',
                 'data' => [
+                    'pk' => [
+                        'pk_id'   => $pk_id,
+                        'nama_pk'=> $namaPk,
+                    ],
                     'status' => $status,
                     'progress' => [
                         'completed_items' => $finishedCount,
                         'total_items'     => $totalForms,
                         'percentage'      => $progressPercentage,
                         'pk_id_active'    => $pk_id,
-
-                        // 🔥 DURASI ASESMEN
                         'end_date'        => $endDate,
                         'end_date_status' => $endDateStatus,
                     ],
@@ -285,7 +289,7 @@ class FormStatusController extends Controller
 
         } catch (\Exception $e) {
 
-            \Log::error('Error getFormStatusByAsesi', [
+            Log::error('Error getFormStatusByAsesi', [
                 'message' => $e->getMessage(),
                 'trace'   => $e->getTraceAsString()
             ]);
@@ -299,6 +303,7 @@ class FormStatusController extends Controller
             ], 500);
         }
     }
+
 
 
 
