@@ -643,6 +643,165 @@ class FormService
             ->value('pk_id');
     }
 
+	public function CheckDataCompleteness($nik)
+	{
+		try {
+
+			$user = DaftarUser::where('nik', $nik)->first();
+
+			if (!$user) {
+				return response()->json([
+					'status' => 404,
+					'message' => 'User not found.',
+					'detail' => "The account with NIK '{$nik}' is not registered in the system.",
+					'solution' => 'Please check your NIK or ensure you have registered.'
+				], 404);
+			}
+
+			$latestHistory = HistoryJabatan::where('user_id', $user->user_id)->latest()->first();
+			$working_unit_id = $latestHistory?->working_unit_id ?? null;
+			$jabatan_id = $latestHistory?->jabatan_id ?? null;
+
+			$requiredFields = [
+				'nama', 'email', 'no_telp', 'tempat_lahir', 'tanggal_lahir',
+				'kewarganegaraan', 'jenis_kelamin', 'pendidikan', 'tahun_lulus',
+				'provinsi', 'kota', 'alamat', 'kode_pos', 'current_role_id'
+			];
+
+			$missingFields = [];
+
+			foreach ($requiredFields as $field) {
+				if (empty($user->$field)) {
+					$missingFields[] = $field;
+				}
+			}
+
+			if (empty($working_unit_id)) {
+				$missingFields[] = 'working_unit_id';
+			}
+			if (empty($jabatan_id)) {
+				$missingFields[] = 'jabatan_id';
+			}
+
+			// Dokumen yang diperiksa
+			$documentFields = [
+				'ijazah' => isset($user->ijazah->path_file) ? url('storage/' . $user->ijazah->path_file) : null,
+				'sip' => isset($user->sip->path_file) ? [
+					'url' => url('storage/' . $user->sip->path_file),
+					'masa_berlaku' => $user->sip->masa_berlaku_sip ?? null,
+					'nomor' => $user->sip->nomor_sip ?? null
+				] : null,
+				'str' => isset($user->str->path_file) ? [
+					'url' => url('storage/' . $user->str->path_file),
+					'masa_berlaku' => $user->str->masa_berlaku_str ?? null,
+					'nomor' => $user->str->nomor_str ?? null
+				] : null,
+
+				// 'ujikom' => isset($user->ujikom->path_file) ? [
+				// 	'url' => url('storage/' . $user->ujikom->path_file),
+				// 	'masa_berlaku' => $user->ujikom->masa_berlaku_kompetensi ?? null,
+				// 	'nomor' => $user->ujikom->nomor_kompetensi ?? null
+				// ] : null
+			];
+
+			$missingDocuments = [];
+			foreach ($documentFields as $key => $value) {
+				if (empty($value)) {
+					$missingDocuments[] = $key;
+				}
+			}
+
+			// if (empty($user->ujikom?->path_file)) {
+			// 	$missingDocuments[] = 'ujikom';
+			// }
+
+			if (count($missingFields) > 0 || count($missingDocuments) > 0) {
+				return response()->json([
+					'status' => 400,
+					'message' => 'User data is incomplete.',
+					'missing_fields' => $missingFields,
+					'missing_documents' => $missingDocuments,
+					'detail' => "The following data is incomplete: " . implode(', ', $missingFields) .
+						(count($missingDocuments) > 0 ? ". Missing documents: " . implode(', ', $missingDocuments) : ""),
+					'solution' => 'Please review the missing data and complete the required information.'
+				], 400);
+			}
+
+			$role = Role::where('role_id', $user->current_role_id)->first();
+			$role_name = $role ? $role->role_name : null;
+
+			$working_unit = DB::table('working_unit')->where('working_unit_id', $user->working_unit_id)->first();
+			$working_unit_name = $working_unit ? $working_unit->working_unit_name : null;
+
+			$working_area = DB::table('working_area')
+				->where('working_area_id', $working_unit ? $working_unit->working_area_id : null)
+				->first();
+			$working_area_id = $working_area ? $working_area->working_area_id : null;
+			$working_area_name = $working_area ? $working_area->working_area_name : null;
+
+			$jabatan = DB::table('jabatan')
+				->where('jabatan_id', $user->jabatan_id)
+				->select('nama_jabatan')
+				->first();
+			$jabatan_id = $jabatan ? $user->jabatan_id : null;
+			$nama_jabatan = $jabatan ? $jabatan->nama_jabatan : null;
+
+			$sertifikat = $user->sertifikat->map(function ($item) {
+				return [
+					'url' => url('storage/' . $item->path_file),
+					'masa_berlaku' => $item->masa_berlaku_sertifikat ?? null,
+					'nomor' => $item->nomor_sertifikat ?? null
+				];
+			});
+
+			$userData = [
+				'nama' => $user->nama,
+				'email' => $user->email,
+				'no_telp' => $user->no_telp,
+				'tempat_lahir' => $user->tempat_lahir,
+				'tanggal_lahir' => $user->tanggal_lahir,
+				'kewarganegaraan' => $user->kewarganegaraan,
+				'jenis_kelamin' => $user->jenis_kelamin,
+				'pendidikan' => $user->pendidikan,
+				'tahun_lulus' => $user->tahun_lulus,
+				'provinsi' => $user->provinsi,
+				'kota' => $user->kota,
+				'alamat' => $user->alamat,
+				'kode_pos' => $user->kode_pos,
+				'role_id' => $user->current_role_id,
+				'role_name' => $role_name,
+				'working_unit_id' => $user->working_unit_id,
+				'working_unit_name' => $working_unit_name,
+				'working_area_id' => $working_area_id,
+				'working_area_name' => $working_area_name,
+				'jabatan_id' => $jabatan_id,
+				'nama_jabatan' => $nama_jabatan,
+				'ijazah' => $documentFields['ijazah'],
+				'sip' => $documentFields['sip'],
+				'str' => $documentFields['str'],
+				// 'ujikom' => $documentFields['ujikom'],
+				'sertifikat' => $sertifikat,
+				'foto' => $user->foto ? url('storage/foto_nurse/' . basename($user->foto)) : null,
+			];
+
+			return response()->json([
+				'status' => 200,
+				'message' => 'User data found and complete.',
+				'source' => 'Database',
+				'data' => $userData,
+				'message_detail' => 'User data retrieved successfully from the database.'
+			], 200);
+
+		} catch (\Exception $e) {
+			return response()->json([
+				'status' => 500,
+				'message' => 'An error occurred on the server.',
+				'kesalahan' => $e->getMessage(),
+				'solusi' => 'Please try again later. If the issue persists, contact the system admin.'
+			], 500);
+		}
+	}
+	
 	public function getStatusByParentFormIdAndType(int $formId, string $formType)
 	{
 		return KompetensiProgres::with('track:id,progres_id,form_type')

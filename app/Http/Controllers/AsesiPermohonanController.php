@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\IjazahModel;
 use Illuminate\Support\Facades\Log;
 use App\Service\OneSignalService;
+use App\Service\FormService;
 use App\Models\DaftarUser;
 use App\Models\KompetensiProgres;
 use App\Models\KompetensiTrack;
@@ -28,10 +29,12 @@ class AsesiPermohonanController extends Controller
 {
 
 	protected $oneSignalService;
+	protected $formService;
 
-    public function __construct(OneSignalService $oneSignalService)
+    public function __construct(OneSignalService $oneSignalService, FormService $formService)
     {
         $this->oneSignalService = $oneSignalService;
+        $this->formService = $formService;
     }
 
 	public function AjuanPermohonanAsesi(Request $request)
@@ -91,7 +94,7 @@ class AsesiPermohonanController extends Controller
 
 			// ✅ Cek kelengkapan data profil
 			$dataChecker = new UsersController();
-			$checkDataResponse = $dataChecker->CheckDataCompleteness($user->nik);
+			$checkDataResponse = $this->formService->CheckDataCompleteness($user->nik);
 			if ($checkDataResponse->getStatusCode() !== 200) {
 				return $checkDataResponse;
 			}
