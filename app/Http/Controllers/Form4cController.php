@@ -120,6 +120,8 @@ class Form4cController extends BaseController
                     'errors' => $validator->errors(),
                 ],
             ], 422);
+
+            Log::error('Validasi gagal: ' . json_encode($validator->errors()));
         }
 
         // Ambil attempt terakhir
