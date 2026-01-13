@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use App\Models\KompetensiProgres;
 use App\Models\KompetensiTrack;
 use App\Models\BidangModel;
 use App\Models\KompetensiPk;
+use App\Models\DaftarTilik;
 use App\Models\DaftarUser;
 
 class ProgressController extends Controller
@@ -97,6 +99,36 @@ class ProgressController extends Controller
                 ], 400);
             }
 
+            /** ===============================
+             * 🔹 MAP JUDUL STATIS
+             * =============================== */
+            $formTitleMap = [
+                'form_1' => 'PENGAJUAN ASESMEN',
+                'form_2' => 'ASESMEN MANDIRI',
+                'form_3' => 'RENCANA ASESMEN',
+                'intv_pra_asesmen' => 'JANJI TEMU KONSULTASI',
+                'form_5' => 'KONSULTASI PRA ASESMEN',
+                'form_4a' => 'UJI OBSERVASI',
+                'form_4b' => 'UJI LISAN',
+                'form_4c' => 'UJI TULIS',
+                'form_4d' => 'PORTOFOLIO',
+                'form_7' => 'BUKTI ASESMEN',
+                'form_8' => 'UJI BANDING',
+                'form_9' => 'UMPAN BALIK',
+                'form_12' => 'REKAPITULASI ASESMEN',
+                'form_6' => 'DAFTAR CEK PELAKSANAAN ASESMEN',
+            ];
+
+            /** ===============================
+             * 🔹 DAFTAR TILIK (form_10.xxx)
+             * 🔹 FIX: keyBy form_number (BUKAN form_type)
+             * =============================== */
+            $daftarTilikMap = DaftarTilik::where('pk_id', $pk_id)
+                ->get()
+                ->keyBy(fn ($item) => trim($item->form_number));
+
+            Log::info('Daftar Tilik Map', ['map' => $daftarTilikMap->toArray()]);
+
             /** ===============================================================
              * 🔹 Ambil NAMA PK
              * =============================================================== */
@@ -174,13 +206,11 @@ class ProgressController extends Controller
                 $item->status_utama = $progresUtama->status;
                 $item->pk_id = $pk_id;
 
-                $tracksUtama = DB::table('kompetensi_tracks')
+                $item->tracks_utama = DB::table('kompetensi_tracks')
                     ->where('progres_id', $progresUtama->id)
                     ->where('form_type', 'form_1')
                     ->orderBy('activity_time', 'asc')
                     ->get();
-
-                $item->tracks_utama = $tracksUtama;
             } else {
                 $item->status_utama = null;
                 $item->tracks_utama = [];
@@ -188,16 +218,26 @@ class ProgressController extends Controller
             }
 
             /** ===============================================================
-             * 🔹 Ambil progres anak
+             * 🔹 Ambil progres anak + TITLE (FIXED)
              * =============================================================== */
             $progres = KompetensiProgres::where('parent_form_id', $item->form_1_id)
                 ->select('id', 'form_id', 'status', 'user_id', 'parent_form_id')
                 ->get()
-                ->map(function ($prog) use ($pk_id) {
+                ->map(function ($prog) use ($pk_id, $formTitleMap, $daftarTilikMap) {
+
                     $prog->pk_id = $pk_id;
 
                     $prog->form_type = KompetensiTrack::where('progres_id', $prog->id)
                         ->value('form_type');
+
+                    Log::info('Progres ID ' . $prog->id . ' has form_type: ' . $prog->form_type);
+
+                    /** 🔹 TITLE */
+                    if ($prog->form_type && str_starts_with($prog->form_type, 'form_10.')) {
+                        $prog->title = $daftarTilikMap[$prog->form_type]->description ?? null;
+                    } else {
+                        $prog->title = $formTitleMap[$prog->form_type] ?? null;
+                    }
 
                     $prog->tracks = DB::table('kompetensi_tracks')
                         ->where('progres_id', $prog->id)
@@ -239,47 +279,35 @@ class ProgressController extends Controller
                 'form_6' => 26,
             ];
 
-            $progres = $progres->sortBy(function ($prog) use ($order) {
-                return $order[$prog->form_type] ?? 99999;
-            })->values();
+            $progres = $progres->sortBy(fn ($p) => $order[$p->form_type] ?? 99999)->values();
 
             /** ===============================================================
-             * 🔹 Response Final
+             * 🔹 Response Final (TIDAK DIKURANGI)
              * =============================================================== */
-            $responseData = [
-                'form_1_id' => $item->form_1_id,
-
-                // ASESI
-                'asesi_name' => $item->asesi_name,
-                'asesi_id'   => $item->asesi_id,
-                'asesi_date' => $item->asesi_date,
-                'end_date'   => $endDate,
-                'end_date_status' => $endDateStatus,
-                'asesi_email' => $asesiEmail,
-                'asesi_no_telp' => $asesiNoTelp,
-                'asesi_foto' => $asesiFoto,
-
-                // ASESOR
-                'asesor_name' => $item->asesor_name,
-                'asesor_id'   => $item->asesor_id,
-                'asesor_email' => $asesorEmail,
-                'asesor_no_telp' => $asesorNoTelp,
-                'asesor_foto' => $asesorFoto,
-
-                // PK
-                'pk_id'   => $pk_id,
-                'nama_pk'=> $namaPk,
-
-                // PROGRES
-                'status_utama' => $item->status_utama,
-                'tracks_utama' => $item->tracks_utama,
-                'progres' => $progres,
-            ];
-
             return response()->json([
                 'status'  => 'SUCCESS',
                 'message' => 'Data progres berhasil diambil.',
-                'data'    => $responseData,
+                'data'    => [
+                    'form_1_id' => $item->form_1_id,
+                    'asesi_name' => $item->asesi_name,
+                    'asesi_id' => $item->asesi_id,
+                    'asesi_date' => $item->asesi_date,
+                    'end_date' => $endDate,
+                    'end_date_status' => $endDateStatus,
+                    'asesi_email' => $asesiEmail,
+                    'asesi_no_telp' => $asesiNoTelp,
+                    'asesi_foto' => $asesiFoto,
+                    'asesor_name' => $item->asesor_name,
+                    'asesor_id' => $item->asesor_id,
+                    'asesor_email' => $asesorEmail,
+                    'asesor_no_telp' => $asesorNoTelp,
+                    'asesor_foto' => $asesorFoto,
+                    'pk_id' => $pk_id,
+                    'nama_pk' => $namaPk,
+                    'status_utama' => $item->status_utama,
+                    'tracks_utama' => $item->tracks_utama,
+                    'progres' => $progres,
+                ],
             ]);
 
         } catch (\Exception $e) {
@@ -290,6 +318,7 @@ class ProgressController extends Controller
             ], 500);
         }
     }
+
 
 
     public function getTracksByFormId(Request $request)
