@@ -258,10 +258,10 @@ class ProgressController extends Controller
                 'form_5' => 5,
 
                 // form 4
-                'form_4a' => 8,
+                'form_4a' => 9,
                 'form_4b' => 7,
                 'form_4c' => 6,
-                'form_4d' => 9,
+                'form_4d' => 8,
 
                 // form 10
                 'form_10.001' => 10,
