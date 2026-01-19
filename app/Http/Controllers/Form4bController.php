@@ -218,87 +218,110 @@ class Form4bController extends BaseController
     public function getSoalDanJawabanForm4b(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'pk_id' => 'required|integer',
-            'group_no' => 'required|string',
+            'pk_id'     => 'required|integer',
+            'group_no'  => 'required|string',
             'form_1_id' => 'required|integer',
-            'user_id' => 'required|integer',
+            'user_id'   => 'required|integer',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
-                'status' => false,
+                'status'  => false,
                 'message' => 'Validasi gagal',
-                'errors' => $validator->errors(),
+                'errors'  => $validator->errors(),
             ], 422);
         }
 
-        $groupNo = $request->input('group_no');
-        $form1Id = $request->input('form_1_id');
-        $userId = $request->input('user_id');
+        $pkId    = $request->pk_id;
+        $groupNo = $request->group_no;
+        $form1Id = $request->form_1_id;
+        $userId  = $request->user_id;
 
-        // Ambil data IUK + pertanyaan + poin
-        $iukList = IukModel::whereRaw('FIND_IN_SET(?, group_no)', [$groupNo])
+        /**
+         * ==================================================
+         * AMBIL IUK + SOAL (PK_ID + GROUP_NO)
+         * ==================================================
+         */
+        $iukList = IukModel::where('pk_id', $pkId)
+            ->whereRaw('FIND_IN_SET(?, group_no)', [$groupNo])
+            ->whereHas('pertanyaanForm4b')
             ->orderByRaw('CAST(no_iuk AS UNSIGNED)')
             ->with([
                 'pertanyaanForm4b' => function ($query) {
                     $query->orderBy('urutan')->with([
-                        'poinPertanyaan' => function ($q) {
-                            $q->orderBy('urutan');
-                        },
-                        'children.poinPertanyaan' => function ($q) {
-                            $q->orderBy('urutan');
-                        }
+                        'poinPertanyaan' => fn ($q) => $q->orderBy('urutan'),
+                        'children.poinPertanyaan' => fn ($q) => $q->orderBy('urutan'),
                     ]);
                 }
             ])
             ->get(['iuk_form3_id', 'no_iuk', 'group_no']);
 
-        // Ambil jawaban yang sudah tersimpan
+        /**
+         * ==================================================
+         * AMBIL JAWABAN (PENCAPAIAN SAJA)
+         * ==================================================
+         */
         $jawabanMap = JawabanForm4b::where('form_1_id', $form1Id)
             ->where('user_id', $userId)
+            ->whereIn('iuk_form3_id', $iukList->pluck('iuk_form3_id'))
             ->get()
             ->keyBy('iuk_form3_id');
 
-        // Susun response
+        /**
+         * ==================================================
+         * SUSUN RESPONSE (STRUKTUR SKRIP 2)
+         * ==================================================
+         */
         $data = $iukList->map(function ($iuk) use ($jawabanMap) {
+
             $jawaban = $jawabanMap->get($iuk->iuk_form3_id);
 
             return [
                 'iuk_form3_id' => $iuk->iuk_form3_id,
-                'no_iuk' => $iuk->no_iuk,
-                'group_no' => $iuk->group_no,
-                'jawaban' => $jawaban ? [
-                    'jawaban_asesi' => $jawaban->jawaban_asesi,
-                    'pencapaian' => (bool) $jawaban->pencapaian,
-                    'nilai' => $jawaban->nilai,
-                    'catatan' => $jawaban->catatan,
-                ] : null,
+                'no_iuk'       => $iuk->no_iuk,
+                'group_no'     => $iuk->group_no,
+
+                /**
+                 * ================================
+                 * JAWABAN (LANGSUNG DARI PENCAPAIAN)
+                 * ================================
+                 */
+                'jawaban' => $jawaban
+                    ? (bool) $jawaban->pencapaian
+                    : null,
+
+                /**
+                 * ================================
+                 * SOAL
+                 * ================================
+                 */
                 'pertanyaan_form4b' => $iuk->pertanyaanForm4b->map(function ($pertanyaan) {
                     return [
-                        'id' => $pertanyaan->id,
-                        'parent_id' => $pertanyaan->parent_id,
+                        'id'         => $pertanyaan->id,
+                        'parent_id'  => $pertanyaan->parent_id,
                         'pertanyaan' => $pertanyaan->pertanyaan,
-                        'urutan' => $pertanyaan->urutan,
+                        'urutan'     => $pertanyaan->urutan,
+
                         'poin_pertanyaan' => $pertanyaan->poinPertanyaan->map(function ($poin) {
                             return [
-                                'id' => $poin->id,
-                                'pertanyaan_form4b_id' => $poin->pertanyaan_form4b_id,
+                                'id'       => $poin->id,
                                 'isi_poin' => $poin->isi_poin,
-                                'urutan' => $poin->urutan,
+                                'urutan'   => $poin->urutan,
                             ];
                         }),
+
                         'children' => $pertanyaan->children->map(function ($child) {
                             return [
-                                'id' => $child->id,
-                                'parent_id' => $child->parent_id,
+                                'id'         => $child->id,
+                                'parent_id'  => $child->parent_id,
                                 'pertanyaan' => $child->pertanyaan,
-                                'urutan' => $child->urutan,
+                                'urutan'     => $child->urutan,
+
                                 'poin_pertanyaan' => $child->poinPertanyaan->map(function ($poin) {
                                     return [
-                                        'id' => $poin->id,
-                                        'pertanyaan_form4b_id' => $poin->pertanyaan_form4b_id,
+                                        'id'       => $poin->id,
                                         'isi_poin' => $poin->isi_poin,
-                                        'urutan' => $poin->urutan,
+                                        'urutan'   => $poin->urutan,
                                     ];
                                 }),
                             ];
@@ -309,9 +332,9 @@ class Form4bController extends BaseController
         });
 
         return response()->json([
-            'status' => true,
-            'message' => 'Data soal dan jawaban berhasil diambil',
-            'data' => $data,
+            'status'  => true,
+            'message' => 'Data soal dan jawaban Form 4B berhasil diambil',
+            'data'    => $data,
         ]);
     }
 
