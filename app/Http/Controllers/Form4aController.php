@@ -175,7 +175,7 @@ class Form4aController extends BaseController
 
             $this->formService->updateProgresDanTrack(
                 $form_4a_id,
-                'Form_4a',
+                'form_4a',
                 'Submitted',
                 $userId,
                 'Form 4A telah di isi oleh Asesor'
