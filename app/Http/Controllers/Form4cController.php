@@ -321,39 +321,44 @@ class Form4cController extends BaseController
     public function getSoalDanJawabanForm4c(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'pk_id' => 'required|integer',
-            'group_no' => 'required|string',
+            'pk_id'     => 'required|integer',
+            'group_no'  => 'required|string',
             'form_1_id' => 'required|integer',
-            'user_id' => 'required|integer',
+            'user_id'   => 'required|integer',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
-                'status' => false,
+                'status'  => false,
                 'message' => 'Validasi gagal',
-                'errors' => $validator->errors(),
+                'errors'  => $validator->errors(),
             ], 422);
         }
 
-        $pkId      = $request->input('pk_id');
-        $groupNo   = $request->input('group_no');
-        $form1Id   = $request->input('form_1_id');
-        $userId    = $request->input('user_id');
+        $pkId    = $request->input('pk_id');
+        $groupNo = $request->input('group_no');
+        $form1Id = $request->input('form_1_id');
+        $userId  = $request->input('user_id');
 
-        // Ambil IUK + pertanyaan
+        // ============================
+        // AMBIL IUK + PERTANYAAN
+        // ============================
         $iukList = \App\Models\IukModel::whereRaw('FIND_IN_SET(?, group_no)', [$groupNo])
+            ->where('pk_id', $pkId)
             ->orderByRaw('CAST(no_iuk AS UNSIGNED)')
             ->with([
                 'pertanyaanForm4c' => function ($query) {
-                    $query->orderBy('urutan')->with([
-                        'question.questionChoices.choice'
-                    ]);
+                    $query->orderBy('urutan')
+                        ->with([
+                            'question.questionChoices.choice'
+                        ]);
                 }
             ])
-            ->where('pk_id', $pkId)
             ->get(['iuk_form3_id', 'no_iuk', 'group_no', 'iuk_name']);
 
-        // Ambil jawaban user
+        // ============================
+        // AMBIL JAWABAN USER TERAKHIR
+        // ============================
         $lastAttempt = \App\Models\JawabanForm4c::where('form_1_id', $form1Id)
             ->where('user_id', $userId)
             ->max('attempt');
@@ -364,75 +369,77 @@ class Form4cController extends BaseController
             ->get()
             ->keyBy('pertanyaan_form4c_id');
 
-        // Susun response data
+        // ============================
+        // SUSUN RESPONSE DATA
+        // (SAMA DENGAN SKRIP 1)
+        // + FILTER IUK TANPA PERTANYAAN
+        // ============================
         $data = $iukList
             ->filter(function ($iuk) {
-                // Jangan sertakan IUK tanpa pertanyaan
                 return $iuk->pertanyaanForm4c && $iuk->pertanyaanForm4c->count() > 0;
             })
             ->map(function ($iuk) use ($jawabanMap) {
                 return [
                     'iuk_form3_id' => $iuk->iuk_form3_id,
-                    'no_iuk' => $iuk->no_iuk,
-                    'iuk_desc' => $iuk->iuk_name,
+                    'no_iuk'       => $iuk->no_iuk,
+                    'iuk_desc'     => $iuk->iuk_name,
                     'pertanyaan_form4c' => $iuk->pertanyaanForm4c->map(function ($pertanyaan) use ($jawabanMap) {
                         $jawaban = $jawabanMap->get($pertanyaan->id);
 
                         return [
-                            'id' => $pertanyaan->id,
+                            'id'     => $pertanyaan->id,
                             'urutan' => $pertanyaan->urutan,
                             'question' => [
-                                'id' => $pertanyaan->question->id,
+                                'id'            => $pertanyaan->question->id,
                                 'question_text' => $pertanyaan->question->question_text,
                                 'question_choices' => $pertanyaan->question->questionChoices->map(function ($qc) {
                                     return [
-                                        'id' => $qc->id,
+                                        'id'         => $qc->id,
                                         'is_correct' => (bool) $qc->is_correct,
                                         'choice' => [
-                                            'id' => $qc->choice->id,
+                                            'id'           => $qc->choice->id,
                                             'choice_label' => $qc->choice->choice_label,
-                                            'choice_text' => $qc->choice->choice_text,
+                                            'choice_text'  => $qc->choice->choice_text,
                                         ]
                                     ];
-                                }),
+                                })->values(),
                             ],
                             'jawaban' => $jawaban ? [
                                 'question_choice_id' => $jawaban->question_choice_id,
-                                'choice_label' => $jawaban->choice_label,
-                                'is_correct' => (bool) $jawaban->is_correct,
-                                'catatan' => $jawaban->catatan,
+                                'choice_label'       => $jawaban->choice_label,
+                                'is_correct'         => (bool) $jawaban->is_correct,
+                                'catatan'            => $jawaban->catatan,
                             ] : null,
                         ];
-                    })
+                    })->values()
                 ];
-            });
-
+            })
+            ->values(); // 🔴 INI KUNCI AGAR JSON ARRAY SEPERTI SKRIP 1
 
         // ============================
-        //   HITUNG SCORE FORM 4C
+        // HITUNG SCORE FORM 4C
         // ============================
-
         $summary = $this->hitungNilai4c($form1Id, $userId);
 
-        // Score output sesuai format lama (TIDAK DIUBAH)
         $score = [
-            'total_jawaban' => $summary['total_jawaban'],
-            'jawaban_benar' => $summary['jawaban_benar'],
-            'jawaban_salah' => $summary['jawaban_salah'],
-            'skor' => $summary['skor'],
-            'nilai' => $summary['nilai'],
-            'is_passed' => $summary['is_passed']
+            'total_jawaban'  => $summary['total_jawaban'],
+            'jawaban_benar'  => $summary['jawaban_benar'],
+            'jawaban_salah'  => $summary['jawaban_salah'],
+            'skor'           => $summary['skor'],
+            'nilai'          => $summary['nilai'],
+            'is_passed'      => $summary['is_passed'],
         ];
 
         return response()->json([
-            'status' => true,
+            'status'  => true,
             'message' => 'Data soal dan jawaban berhasil diambil',
-            'data' => [
+            'data'    => [
                 'items' => $data,
                 'score' => $score
             ]
         ]);
     }
+
 
 
 
