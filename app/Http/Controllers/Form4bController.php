@@ -179,11 +179,11 @@ class Form4bController extends BaseController
                 ]);
             }
 
-            $form_4b_id = $this->formService->getFormIdsByParentFormIdAndType($request->form_1_id, 'Form_4b');
+            $form_4b_id = $this->formService->getFormIdsByParentFormIdAndType($request->form_1_id, 'form_4b');
 
             $this->formService->updateProgresDanTrack(
                 $form_4b_id,
-                'Form_4b',
+                'form_4b',
                 'Submitted',
                 $request->asesi_id,
                 'Form 4B telah di isi oleh Asesor'
