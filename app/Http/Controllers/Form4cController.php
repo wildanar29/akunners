@@ -365,42 +365,48 @@ class Form4cController extends BaseController
             ->keyBy('pertanyaan_form4c_id');
 
         // Susun response data
-        $data = $iukList->map(function ($iuk) use ($jawabanMap) {
-            return [
-                'iuk_form3_id' => $iuk->iuk_form3_id,
-                'no_iuk' => $iuk->no_iuk,
-                'iuk_desc' => $iuk->iuk_name,
-                'pertanyaan_form4c' => $iuk->pertanyaanForm4c->map(function ($pertanyaan) use ($jawabanMap) {
-                    $jawaban = $jawabanMap->get($pertanyaan->id);
+        $data = $iukList
+            ->filter(function ($iuk) {
+                // Jangan sertakan IUK tanpa pertanyaan
+                return $iuk->pertanyaanForm4c && $iuk->pertanyaanForm4c->count() > 0;
+            })
+            ->map(function ($iuk) use ($jawabanMap) {
+                return [
+                    'iuk_form3_id' => $iuk->iuk_form3_id,
+                    'no_iuk' => $iuk->no_iuk,
+                    'iuk_desc' => $iuk->iuk_name,
+                    'pertanyaan_form4c' => $iuk->pertanyaanForm4c->map(function ($pertanyaan) use ($jawabanMap) {
+                        $jawaban = $jawabanMap->get($pertanyaan->id);
 
-                    return [
-                        'id' => $pertanyaan->id,
-                        'urutan' => $pertanyaan->urutan,
-                        'question' => [
-                            'id' => $pertanyaan->question->id,
-                            'question_text' => $pertanyaan->question->question_text,
-                            'question_choices' => $pertanyaan->question->questionChoices->map(function ($qc) {
-                                return [
-                                    'id' => $qc->id,
-                                    'is_correct' => (bool) $qc->is_correct,
-                                    'choice' => [
-                                        'id' => $qc->choice->id,
-                                        'choice_label' => $qc->choice->choice_label,
-                                        'choice_text' => $qc->choice->choice_text,
-                                    ]
-                                ];
-                            }),
-                        ],
-                        'jawaban' => $jawaban ? [
-                            'question_choice_id' => $jawaban->question_choice_id,
-                            'choice_label' => $jawaban->choice_label,
-                            'is_correct' => (bool) $jawaban->is_correct,
-                            'catatan' => $jawaban->catatan,
-                        ] : null,
-                    ];
-                })
-            ];
-        });
+                        return [
+                            'id' => $pertanyaan->id,
+                            'urutan' => $pertanyaan->urutan,
+                            'question' => [
+                                'id' => $pertanyaan->question->id,
+                                'question_text' => $pertanyaan->question->question_text,
+                                'question_choices' => $pertanyaan->question->questionChoices->map(function ($qc) {
+                                    return [
+                                        'id' => $qc->id,
+                                        'is_correct' => (bool) $qc->is_correct,
+                                        'choice' => [
+                                            'id' => $qc->choice->id,
+                                            'choice_label' => $qc->choice->choice_label,
+                                            'choice_text' => $qc->choice->choice_text,
+                                        ]
+                                    ];
+                                }),
+                            ],
+                            'jawaban' => $jawaban ? [
+                                'question_choice_id' => $jawaban->question_choice_id,
+                                'choice_label' => $jawaban->choice_label,
+                                'is_correct' => (bool) $jawaban->is_correct,
+                                'catatan' => $jawaban->catatan,
+                            ] : null,
+                        ];
+                    })
+                ];
+            });
+
 
         // ============================
         //   HITUNG SCORE FORM 4C
