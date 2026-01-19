@@ -258,7 +258,7 @@ class Form4bController extends BaseController
 
         /**
          * ==================================================
-         * AMBIL JAWABAN (PENCAPAIAN SAJA)
+         * AMBIL JAWABAN (FULL OBJECT)
          * ==================================================
          */
         $jawabanMap = JawabanForm4b::where('form_1_id', $form1Id)
@@ -269,7 +269,7 @@ class Form4bController extends BaseController
 
         /**
          * ==================================================
-         * SUSUN RESPONSE (STRUKTUR SKRIP 2)
+         * SUSUN RESPONSE (STRUKTUR JSON 2)
          * ==================================================
          */
         $data = $iukList->map(function ($iuk) use ($jawabanMap) {
@@ -283,12 +283,17 @@ class Form4bController extends BaseController
 
                 /**
                  * ================================
-                 * JAWABAN (LANGSUNG DARI PENCAPAIAN)
+                 * JAWABAN (OBJECT)
                  * ================================
                  */
-                'jawaban' => $jawaban
-                    ? (bool) $jawaban->pencapaian
-                    : null,
+                'jawaban' => $jawaban ? [
+                    'jawaban_asesi' => $jawaban->jawaban_asesi,
+                    'pencapaian'    => $jawaban->pencapaian === null
+                        ? null
+                        : (bool) $jawaban->pencapaian,
+                    'nilai'         => $jawaban->nilai,
+                    'catatan'       => $jawaban->catatan,
+                ] : null,
 
                 /**
                  * ================================
@@ -304,9 +309,10 @@ class Form4bController extends BaseController
 
                         'poin_pertanyaan' => $pertanyaan->poinPertanyaan->map(function ($poin) {
                             return [
-                                'id'       => $poin->id,
-                                'isi_poin' => $poin->isi_poin,
-                                'urutan'   => $poin->urutan,
+                                'id'                       => $poin->id,
+                                'pertanyaan_form4b_id'     => $poin->pertanyaan_form4b_id,
+                                'isi_poin'                 => $poin->isi_poin,
+                                'urutan'                   => $poin->urutan,
                             ];
                         }),
 
@@ -319,9 +325,10 @@ class Form4bController extends BaseController
 
                                 'poin_pertanyaan' => $child->poinPertanyaan->map(function ($poin) {
                                     return [
-                                        'id'       => $poin->id,
-                                        'isi_poin' => $poin->isi_poin,
-                                        'urutan'   => $poin->urutan,
+                                        'id'                       => $poin->id,
+                                        'pertanyaan_form4b_id'     => $poin->pertanyaan_form4b_id,
+                                        'isi_poin'                 => $poin->isi_poin,
+                                        'urutan'                   => $poin->urutan,
                                     ];
                                 }),
                             ];
@@ -333,10 +340,11 @@ class Form4bController extends BaseController
 
         return response()->json([
             'status'  => true,
-            'message' => 'Data soal dan jawaban Form 4B berhasil diambil',
+            'message' => 'Data soal dan jawaban berhasil diambil',
             'data'    => $data,
         ]);
     }
+
 
     public function ApproveForm4bByAsesi(Request $request, $form4bId)
     {
