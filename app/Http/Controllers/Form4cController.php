@@ -66,7 +66,7 @@ class Form4cController extends BaseController
             $q->where('pk_id', $request->pk_id);
         });
 
-        $data = $query->get();
+        $data = $query->get()->shuffle();
 
         // Format ulang data agar hanya field yang dibutuhkan saja yang tampil
         $filtered = $data->map(function ($item) {
