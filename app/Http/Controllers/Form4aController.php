@@ -231,91 +231,103 @@ class Form4aController extends BaseController
 
         /**
          * ==================================================
-         * AMBIL JAWABAN USER
-         * ==================================================
-         */
-        $jawabanMap = JawabanForm4a::where('form_1_id', $form1Id)
-            ->where('user_id', $userId)
-            ->get()
-            ->keyBy(fn ($j) => (int) $j->iuk_form3_id);
-
-        /**
-         * ==================================================
-         * AMBIL ELEMEN + KUK + IUK + POIN
+         * AMBIL SOAL (SAMA PERSIS DENGAN getSoalForm4a)
          * ==================================================
          */
         $elemenList = ElemenForm3::with([
-                'kukForm3' => function ($query) use ($pkId, $groupNo) {
-                    $query->where('pk_id', $pkId)
-                        ->whereHas('iukForm3', function ($q) use ($groupNo) {
-                            $q->whereRaw('FIND_IN_SET(?, group_no)', [$groupNo])
-                            ->whereHas('poinForm4'); // 🔴 FILTER UTAMA
-                        })
-                        ->with([
-                            'iukForm3' => function ($q) use ($groupNo) {
-                                $q->whereRaw('FIND_IN_SET(?, group_no)', [$groupNo])
-                                ->whereHas('poinForm4')
-                                ->with('poinForm4');
-                            }
-                        ]);
-                }
-            ])
-            ->where('pk_id', $pkId)
-            ->orderByRaw('CAST(no_elemen_form_3 AS UNSIGNED)')
-            ->get()
-            ->filter(fn ($elemen) => $elemen->kukForm3->isNotEmpty())
-            ->values()
-            ->map(function ($elemen) use ($jawabanMap) {
+            'kukForm3' => function ($query) use ($pkId, $groupNo) {
+                $query->where('pk_id', $pkId)
+                    ->whereHas('iukForm3', function ($q) use ($pkId, $groupNo) {
+                        $q->where('pk_id', $pkId)
+                        ->whereRaw('FIND_IN_SET(?, group_no)', [$groupNo])
+                        ->whereHas('poinForm4');
+                    })
+                    ->with([
+                        'iukForm3' => function ($q) use ($pkId, $groupNo) {
+                            $q->where('pk_id', $pkId)
+                            ->whereRaw('FIND_IN_SET(?, group_no)', [$groupNo])
+                            ->whereHas('poinForm4')
+                            ->with('poinForm4');
+                        }
+                    ]);
+            }
+        ])
+        ->where('pk_id', $pkId)
+        ->orderByRaw('CAST(no_elemen_form_3 AS UNSIGNED)')
+        ->get()
+        ->filter(fn ($elemen) => $elemen->kukForm3->isNotEmpty())
+        ->values()
+        ->map(function ($elemen) use ($form1Id, $userId) {
 
-                $elemen->kuk_form3 = $elemen->kukForm3->map(function ($kuk) use ($jawabanMap) {
+            $elemen->isi_elemen = preg_replace(
+                '/\s+/',
+                ' ',
+                trim(str_replace(["\t", "\n", "\r"], ' ', $elemen->isi_elemen))
+            );
 
-                    $kuk->iuk_form3 = $kuk->iukForm3
-                        ->filter(fn ($iuk) => $iuk->poinForm4->isNotEmpty()) // 🔴 FILTER FINAL
-                        ->map(function ($iuk) use ($jawabanMap) {
+            $elemen->kuk_form3 = $elemen->kukForm3->map(function ($kuk) use ($form1Id, $userId) {
 
-                            $poinGrouped = $iuk->poinForm4->groupBy('parent_id');
+                unset($kuk->kuk_name, $kuk->pk_id);
 
-                            $buildTree = function ($parentId) use (&$buildTree, $poinGrouped) {
-                                return ($poinGrouped[$parentId] ?? collect())->map(function ($poin) use (&$buildTree) {
-                                    return [
-                                        'id'        => $poin->id,
-                                        'isi_poin'  => $poin->isi_poin,
-                                        'urutan'    => $poin->urutan,
-                                        'parent_id'=> $poin->parent_id,
-                                        'children' => $buildTree($poin->id),
-                                    ];
-                                })->values();
-                            };
+                $kuk->iuk_form3 = $kuk->iukForm3->map(function ($iuk) use ($form1Id, $userId) {
 
-                            $jawaban = $jawabanMap->get((int) $iuk->iuk_form3_id);
+                    /**
+                     * ===============================
+                     * QUERY JAWABAN LANGSUNG PER IUK
+                     * ===============================
+                     */
+                    $jawaban = JawabanForm4a::where('form_1_id', $form1Id)
+                        ->where('user_id', $userId)
+                        ->where('iuk_form3_id', $iuk->iuk_form3_id)
+                        ->first();
 
+                    /**
+                     * ===============================
+                     * BUILD TREE POIN
+                     * ===============================
+                     */
+                    $poinGrouped = $iuk->poinForm4->groupBy('parent_id');
+
+                    $buildTree = function ($parentId) use (&$buildTree, $poinGrouped) {
+                        return ($poinGrouped[$parentId] ?? collect())->map(function ($poin) use (&$buildTree) {
                             return [
-                                'iuk_form3_id' => $iuk->iuk_form3_id,
-                                'no_iuk'       => $iuk->no_iuk,
-                                'group_no'     => $iuk->group_no,
-                                'poin_form4'   => $buildTree(null),
-                                'jawaban'      => [
-                                    'pencapaian' => $jawaban
-                                        ? (bool) $jawaban->pencapaian
-                                        : null,
-                                    'nilai'      => $jawaban->nilai ?? null,
-                                    'catatan'    => $jawaban->catatan ?? null,
-                                ],
+                                'id'        => $poin->id,
+                                'isi_poin'  => preg_replace(
+                                    '/\s+/',
+                                    ' ',
+                                    trim(str_replace(["\t", "\n", "\r"], ' ', $poin->isi_poin))
+                                ),
+                                'urutan'    => $poin->urutan,
+                                'parent_id'=> $poin->parent_id,
+                                'children' => $buildTree($poin->id),
                             ];
-                        })
-                        ->values();
+                        })->values();
+                    };
 
-                    unset($kuk->iukForm3);
-                    return $kuk;
+                    return [
+                        'iuk_form3_id' => $iuk->iuk_form3_id,
+                        'no_iuk'       => $iuk->no_iuk,
+                        'group_no'     => $iuk->group_no,
+                        'poin_form4'   => $buildTree(null),
+                        'jawaban'      => [
+                            'pencapaian' => $jawaban ? (bool) $jawaban->pencapaian : null,
+                            'nilai'      => $jawaban->nilai ?? null,
+                            'catatan'    => $jawaban->catatan ?? null,
+                        ],
+                    ];
                 });
 
-                unset($elemen->kukForm3);
-                return $elemen;
+                unset($kuk->iukForm3);
+                return $kuk;
             });
+
+            unset($elemen->kukForm3);
+            return $elemen;
+        });
 
         /**
          * ==================================================
-         * HITUNG SCORE (TETAP)
+         * HITUNG SCORE
          * ==================================================
          */
         $totalIuk = $elemenList->sum(fn ($e) =>
@@ -324,8 +336,12 @@ class Form4aController extends BaseController
             )
         );
 
-        $jumlahPencapaian     = $jawabanMap->where('pencapaian', 1)->count();
-        $jumlahTidakTercapai  = $jawabanMap->where('pencapaian', 0)->count();
+        $jawabanAll = JawabanForm4a::where('form_1_id', $form1Id)
+            ->where('user_id', $userId)
+            ->get();
+
+        $jumlahPencapaian    = $jawabanAll->where('pencapaian', 1)->count();
+        $jumlahTidakTercapai = $jawabanAll->where('pencapaian', 0)->count();
 
         $persentase = $totalIuk > 0
             ? round(($jumlahPencapaian / $totalIuk) * 100, 2)
@@ -336,14 +352,15 @@ class Form4aController extends BaseController
             'message' => 'Data soal dan jawaban berhasil diambil',
             'data'    => $elemenList,
             'score'   => [
-                'total_iuk'       => $totalIuk,
-                'pencapaian'      => $jumlahPencapaian,
-                'tidak_tercapai'  => $jumlahTidakTercapai,
-                'skor'            => $jumlahPencapaian,
-                'persentase'      => $persentase,
+                'total_iuk'      => $totalIuk,
+                'pencapaian'     => $jumlahPencapaian,
+                'tidak_tercapai' => $jumlahTidakTercapai,
+                'skor'           => $jumlahPencapaian,
+                'persentase'     => $persentase,
             ],
         ]);
     }
+
 
 
 
