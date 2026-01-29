@@ -149,10 +149,12 @@ class Form12Controller extends BaseController
 
     public function getByPkId(Request $request)
     {
-        // ✅ Validasi request
+        // =========================
+        // 1. VALIDASI REQUEST
+        // =========================
         $validator = Validator::make($request->all(), [
-            'pk_id'     => 'required|integer|min:1',
-            'asesi_id'  => 'required|integer|min:1',
+            'pk_id'    => 'required|integer|min:1',
+            'asesi_id' => 'required|integer|min:1',
         ]);
 
         if ($validator->fails()) {
@@ -162,26 +164,31 @@ class Form12Controller extends BaseController
             ], 422);
         }
 
-        $pkId     = $request->input('pk_id');
-        $asesiId  = $request->input('asesi_id');
+        $pkId    = $request->pk_id;
+        $asesiId = $request->asesi_id;
 
-        // Tentukan ekspresi casting sesuai driver
+        // =========================
+        // 2. SORTING NUMERIC
+        // =========================
         $driver = DB::getDriverName();
         $orderExpr = $driver === 'mysql'
             ? 'CAST(no_elemen_form_3 AS UNSIGNED)'
             : 'CAST(no_elemen_form_3 AS INTEGER)';
 
-        // ✅ Query ambil data nested dengan filter asesi_id
+        // =========================
+        // 3. QUERY DATA
+        // =========================
         $data = ElemenForm3::with([
             'kukForm3.iukForm3.soalForm7.jawabanForm7' => function ($q) use ($asesiId) {
                 $q->where('asesi_id', $asesiId);
             }
         ])
         ->where('pk_id', $pkId)
-        ->whereHas('kukForm3.iukForm3.soalForm7.jawabanForm7', function ($q) use ($asesiId) {
-            $q->where('asesi_id', $asesiId);
-        })
-        ->orderByRaw("$orderExpr ASC")   // ⬅️ numeric sorting
+        ->whereHas(
+            'kukForm3.iukForm3.soalForm7.jawabanForm7',
+            fn ($q) => $q->where('asesi_id', $asesiId)
+        )
+        ->orderByRaw("$orderExpr ASC")
         ->get();
 
         if ($data->isEmpty()) {
@@ -191,45 +198,78 @@ class Form12Controller extends BaseController
             ], 404);
         }
 
-        // ✅ Hitung nilai final hanya di level Elemen
+        // =========================
+        // 4. PERHITUNGAN NILAI
+        // =========================
         $elemenFinal = $data->map(function ($elemen) {
-            $jumlahKuk = $elemen->kukForm3->count();
-            $jumlahK   = 0;
+
+            $totalKukValid = 0;
+            $jumlahKKuk   = 0;
 
             foreach ($elemen->kukForm3 as $kuk) {
-                $totalIuk = $kuk->iukForm3->count();
-                $jumlahKIuk = 0;
+
+                $totalIukValid = 0;
+                $jumlahKIuk    = 0;
 
                 foreach ($kuk->iukForm3 as $iuk) {
-                    $totalSoal = $iuk->soalForm7->count();
+
+                    $totalSoal   = 0;
                     $jumlahKSoal = 0;
 
                     foreach ($iuk->soalForm7 as $soal) {
                         foreach ($soal->jawabanForm7 as $jawaban) {
+                            $totalSoal++;
                             if ($jawaban->keputusan === 'K') {
                                 $jumlahKSoal++;
                             }
                         }
                     }
 
-                    $iukFinal = ($totalSoal > 0 && ($jumlahKSoal / $totalSoal) >= 0.5) ? 'K' : 'BK';
-                    if ($iukFinal === 'K') $jumlahKIuk++;
+                    // ⚠️ IUK tanpa jawaban DIABAIKAN
+                    if ($totalSoal === 0) {
+                        continue;
+                    }
+
+                    $totalIukValid++;
+
+                    $iukFinal = ($jumlahKSoal / $totalSoal) >= 0.5 ? 'K' : 'BK';
+
+                    if ($iukFinal === 'K') {
+                        $jumlahKIuk++;
+                    }
                 }
 
-                $kukFinal = ($totalIuk > 0 && ($jumlahKIuk / $totalIuk) >= 0.5) ? 'K' : 'BK';
-                if ($kukFinal === 'K') $jumlahK++;
+                // ⚠️ KUK tanpa IUK valid DIABAIKAN
+                if ($totalIukValid === 0) {
+                    continue;
+                }
+
+                $totalKukValid++;
+
+                $kukFinal = ($jumlahKIuk / $totalIukValid) >= 0.5 ? 'K' : 'BK';
+
+                if ($kukFinal === 'K') {
+                    $jumlahKKuk++;
+                }
             }
 
-            $elemenFinal = ($jumlahKuk > 0 && ($jumlahK / $jumlahKuk) >= 0.5) ? 'K' : 'BK';
+            // ⚠️ ELEME tanpa KUK valid → default BK
+            $elemenFinal = (
+                $totalKukValid > 0 &&
+                ($jumlahKKuk / $totalKukValid) >= 0.5
+            ) ? 'K' : 'BK';
 
             return [
                 'id'               => $elemen->id,
                 'no_elemen_form_3' => $elemen->no_elemen_form_3,
-                'nama_elemen'      => $elemen->isi_elemen, // sesuai kode kamu
+                'nama_elemen'      => $elemen->isi_elemen,
                 'final'            => $elemenFinal,
             ];
         });
 
+        // =========================
+        // 5. RESPONSE
+        // =========================
         return response()->json([
             'status' => 'success',
             'data'   => $elemenFinal,
