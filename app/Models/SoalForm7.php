@@ -18,6 +18,7 @@ class SoalForm7 extends Model
         'iuk_form3_id',
         'pertanyaan',
         'sumber_form',
+        'is_ignore',
     ];
 
     // Laravel/Lumen otomatis handle created_at dan updated_at

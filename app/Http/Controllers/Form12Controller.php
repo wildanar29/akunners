@@ -179,17 +179,25 @@ class Form12Controller extends BaseController
         // 3. QUERY DATA
         // =========================
         $data = ElemenForm3::with([
+            'kukForm3.iukForm3.soalForm7' => function ($q) {
+                $q->where('is_ignore', 0);
+            },
             'kukForm3.iukForm3.soalForm7.jawabanForm7' => function ($q) use ($asesiId) {
                 $q->where('asesi_id', $asesiId);
             }
         ])
         ->where('pk_id', $pkId)
         ->whereHas(
+            'kukForm3.iukForm3.soalForm7',
+            fn ($q) => $q->where('is_ignore', 0)
+        )
+        ->whereHas(
             'kukForm3.iukForm3.soalForm7.jawabanForm7',
             fn ($q) => $q->where('asesi_id', $asesiId)
         )
         ->orderByRaw("$orderExpr ASC")
         ->get();
+
 
         if ($data->isEmpty()) {
             return response()->json([

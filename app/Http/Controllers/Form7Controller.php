@@ -48,6 +48,37 @@ class Form7Controller extends BaseController
         $this->formService = $formService;
     }
 
+    // public function getSoalForm7($pkId)
+    // {
+    //     $validator = Validator::make(['pk_id' => $pkId], [
+    //         'pk_id' => 'required|integer'
+    //     ]);
+
+    //     if ($validator->fails()) {
+    //         return response()->json([
+    //             'status' => 'error',
+    //             'message' => $validator->errors()->first()
+    //         ], 422);
+    //     }
+
+    //     $elemen = ElemenForm3::whereHas('kukForm3.iukForm3.soalForm7', function ($q) use ($pkId) {
+    //         $q->where('pk_id', $pkId);
+    //     })
+    //     ->with([
+    //         'kukForm3.iukForm3.soalForm7' => function ($q) use ($pkId) {
+    //             $q->where('pk_id', $pkId)
+    //             ->orderBy('id', 'asc');
+    //         }
+    //     ])
+    //     ->orderBy('no_elemen_form_3', 'asc')
+    //     ->get();
+
+    //     return response()->json([
+    //         'status' => 'success',
+    //         'data' => $elemen
+    //     ]);
+    // }
+
     public function getSoalForm7($pkId)
     {
         $validator = Validator::make(['pk_id' => $pkId], [
@@ -61,23 +92,37 @@ class Form7Controller extends BaseController
             ], 422);
         }
 
-        $elemen = ElemenForm3::whereHas('kukForm3.iukForm3.soalForm7', function ($q) use ($pkId) {
-            $q->where('pk_id', $pkId);
-        })
-        ->with([
-            'kukForm3.iukForm3.soalForm7' => function ($q) use ($pkId) {
-                $q->where('pk_id', $pkId)
-                ->orderBy('id', 'asc');
-            }
-        ])
-        ->orderBy('no_elemen_form_3', 'asc')
-        ->get();
+        $elemen = ElemenForm3::where('pk_id', $pkId) // ✅ FILTER ELEMEN
+            ->whereHas('kukForm3.iukForm3.soalForm7', function ($q) use ($pkId) {
+                $q->where('pk_id', $pkId);
+            })
+            ->with([
+                'kukForm3' => function ($q) use ($pkId) {
+                    $q->where('pk_id', $pkId) // ✅ JIKA KUK JUGA PK-BASED
+                    ->whereHas('iukForm3.soalForm7', function ($q) use ($pkId) {
+                        $q->where('pk_id', $pkId);
+                    })
+                    ->with([
+                        'iukForm3' => function ($q) use ($pkId) {
+                            $q->where('pk_id', $pkId)
+                                ->with([
+                                    'soalForm7' => function ($q) use ($pkId) {
+                                        $q->where('pk_id', $pkId);
+                                    }
+                                ]);
+                        }
+                    ]);
+                }
+            ])
+            ->orderBy('no_elemen_form_3', 'asc')
+            ->get();
 
         return response()->json([
             'status' => 'success',
             'data' => $elemen
         ]);
     }
+
 
     public function simpanBanyakJawabanForm7(Request $request)
     {
