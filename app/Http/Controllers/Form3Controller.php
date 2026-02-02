@@ -1049,7 +1049,7 @@ class Form3Controller extends BaseController
         }
     }
 
-	public function UpdateAsesorForm3($form3_id)
+    public function UpdateAsesorForm3($form3_id)
     {
         $user = auth()->user();
 
@@ -1075,7 +1075,6 @@ class Form3Controller extends BaseController
         }
 
         try {
-            // Jalankan seluruh proses dalam 1 transaksi atomik
             DB::beginTransaction();
 
             /** ===============================
@@ -1099,15 +1098,51 @@ class Form3Controller extends BaseController
             $form3->no_reg = $asesor->no_reg;
             $form3->save();
 
+            Log::info('✅ Form3 berhasil diupdate', [
+                'form_3_id' => $form3->form_3_id,
+                'asesor_id' => $user->user_id
+            ]);
+
             /** =======================================
              * 2️⃣ Update Progres dan buat Track
              * ======================================= */
-            $progres = KompetensiProgres::where('form_id', $form3->form_3_id)->first();
-            if ($progres) {
+            Log::info('🔍 Mulai proses update progres Form3', [
+                'form_3_id' => $form3->form_3_id
+            ]);
+
+            $form_1_id = $this->formService->getParentFormIdByFormIdAndAsesiId(
+                $form3->form_3_id,
+                $form3->user_id,
+                'form_3'
+            );
+            
+            // $progres = KompetensiProgres::where('form_id', $form3->form_3_id)->first();
+
+            $progres = KompetensiProgres::where('form_id', $form3->form_3_id)
+                ->where('user_id', $form3->user_id)
+                ->where('parent_form_id', $form_1_id)
+                ->first();
+
+
+            if (!$progres) {
+                Log::warning('⚠️ Progres Form3 TIDAK ditemukan', [
+                    'form_3_id' => $form3->form_3_id
+                ]);
+            } else {
+                Log::info('✅ Progres ditemukan', [
+                    'progres_id' => $progres->id,
+                    'status_sebelum' => $progres->status
+                ]);
+
                 $progres->status = 'Completed';
                 $progres->save();
 
-                KompetensiTrack::create([
+                Log::info('✅ Status progres berhasil diupdate', [
+                    'progres_id' => $progres->id,
+                    'status_sesudah' => $progres->status
+                ]);
+
+                $track = KompetensiTrack::create([
                     'progres_id' => $progres->id,
                     'form_type' => 'form_3',
                     'form_id' => $form3->form_3_id,
@@ -1115,6 +1150,12 @@ class Form3Controller extends BaseController
                     'description' => 'Rencana asesmen telah selesai',
                     'updated_by' => $user->user_id,
                     'updated_at' => Carbon::now()
+                ]);
+
+                Log::info('✅ Track progres berhasil dibuat', [
+                    'track_id' => $track->id ?? null,
+                    'progres_id' => $progres->id,
+                    'form_type' => 'form_3'
                 ]);
             }
 
@@ -1141,7 +1182,11 @@ class Form3Controller extends BaseController
                 ->first();
 
             if ($existingInterview) {
-                Log::warning("Interview sudah ada untuk asesi_id={$form1Data->asesi_id}, pk_id={$form1Data->pk_id}, form_1_id={$form_1_id}");
+                Log::warning('⚠️ Interview sudah ada', [
+                    'asesi_id' => $form1Data->asesi_id,
+                    'pk_id' => $form1Data->pk_id,
+                    'form_1_id' => $form_1_id
+                ]);
                 throw new \Exception('Interview untuk kombinasi Asesi, PK, dan Form 1 ini sudah ada.');
             }
 
@@ -1161,11 +1206,15 @@ class Form3Controller extends BaseController
             $interview->pk_id = $form1Data->pk_id;
             $interview->save();
 
-            Log::info("✅ Interview baru dibuat: " . json_encode($interview->toArray()));
+            Log::info('✅ Interview baru berhasil dibuat', [
+                'interview_id' => $interview->interview_id
+            ]);
 
             /** =======================================
              * 6️⃣ Buat progres & track interview
              * ======================================= */
+            Log::info('🔍 Mulai create progres & track interview');
+
             $this->formService->createProgresDanTrack(
                 $interview->interview_id,
                 'intv_pra_asesmen',
@@ -1175,19 +1224,23 @@ class Form3Controller extends BaseController
                 'Konsultasi Pra asesmen sudah dapat diajukan.'
             );
 
-            /** =======================================
-             * 7️⃣ Commit transaksi (baru kirim notifikasi setelah ini)
-             * ======================================= */
+            Log::info('✅ Progres & track interview berhasil dibuat', [
+                'interview_id' => $interview->interview_id
+            ]);
+
             DB::commit();
 
             /** =======================================
-             * 8️⃣ Kirim notifikasi ke Asesi
+             * 7️⃣ Kirim notifikasi ke Asesi
              * ======================================= */
             $userAsesi = DaftarUser::where('user_id', $form3->user_id)->first();
             if ($userAsesi) {
-                $title = 'Form 3 Disetujui';
-                $message = 'Form 3 Anda telah disetujui oleh asesor. Anda bisa mengajukan jadwal wawancara asesmen.';
-                $this->kirimNotifikasiKeUser($userAsesi, $title, $message, $form3->form_3_id);
+                $this->kirimNotifikasiKeUser(
+                    $userAsesi,
+                    'Form 3 Disetujui',
+                    'Form 3 Anda telah disetujui oleh asesor. Anda bisa mengajukan jadwal wawancara asesmen.',
+                    $form3->form_3_id
+                );
             }
 
             return response()->json([
@@ -1201,7 +1254,14 @@ class Form3Controller extends BaseController
         } catch (\Exception $e) {
             DB::rollBack();
 
-            Log::error("❌ Gagal memperbarui Form3: {$e->getMessage()}");
+            Log::error('❌ Gagal UpdateAsesorForm3', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'form_3_id' => $form3_id,
+                'user_id' => $user->user_id ?? null
+            ]);
+
             return response()->json([
                 'status' => 500,
                 'message' => 'Terjadi kesalahan saat memperbarui data.',
@@ -1209,6 +1269,168 @@ class Form3Controller extends BaseController
             ], 500);
         }
     }
+
+	// public function UpdateAsesorForm3($form3_id)
+    // {
+    //     $user = auth()->user();
+
+    //     if (!$user) {
+    //         return response()->json([
+    //             'status' => 401,
+    //             'message' => 'User belum login.',
+    //             'data' => null
+    //         ], 401);
+    //     }
+
+    //     // Pastikan user adalah asesor
+    //     $hasRoleAsesor = UserRole::where('user_id', $user->user_id)
+    //         ->where('role_id', 2)
+    //         ->exists();
+
+    //     if (!$hasRoleAsesor) {
+    //         return response()->json([
+    //             'status' => 403,
+    //             'message' => 'Anda tidak memiliki izin untuk mengisi bagian asesor.',
+    //             'data' => null
+    //         ], 403);
+    //     }
+
+    //     try {
+    //         // Jalankan seluruh proses dalam 1 transaksi atomik
+    //         DB::beginTransaction();
+
+    //         /** ===============================
+    //          * 1️⃣ Validasi dan Update Form 3
+    //          * =============================== */
+    //         $form3 = Form3Model::find($form3_id);
+    //         if (!$form3) {
+    //             throw new \Exception('Data Form3 tidak ditemukan.');
+    //         }
+
+    //         $asesor = DataAsesorModel::where('user_id', $user->user_id)
+    //             ->where('aktif', 1)
+    //             ->first();
+
+    //         if (!$asesor) {
+    //             throw new \Exception('Data no_reg asesor tidak ditemukan.');
+    //         }
+
+    //         $form3->asesor_name = $user->nama;
+    //         $form3->asesor_date = Carbon::now();
+    //         $form3->no_reg = $asesor->no_reg;
+    //         $form3->save();
+
+    //         /** =======================================
+    //          * 2️⃣ Update Progres dan buat Track
+    //          * ======================================= */
+    //         $progres = KompetensiProgres::where('form_id', $form3->form_3_id)->first();
+    //         Log::info("Progres ditemukan untuk form_3_id={$form3->form_3_id}: " . ($progres ? json_encode($progres) : 'null'));
+    //         if ($progres) {
+    //             $progres->status = 'Completed';
+    //             $progres->save();
+
+    //             KompetensiTrack::create([
+    //                 'progres_id' => $progres->id,
+    //                 'form_type' => 'form_3',
+    //                 'form_id' => $form3->form_3_id,
+    //                 'activity' => 'Completed',
+    //                 'description' => 'Rencana asesmen telah selesai',
+    //                 'updated_by' => $user->user_id,
+    //                 'updated_at' => Carbon::now()
+    //             ]);
+    //         }
+
+    //         /** =======================================
+    //          * 3️⃣ Ambil data form 1 terkait dan validasi
+    //          * ======================================= */
+    //         $form_1_id = $this->formService->getParentFormIdByFormIdAndAsesiId(
+    //             $form3->form_3_id,
+    //             $form3->user_id,
+    //             'form_3'
+    //         );
+
+    //         $form1Data = BidangModel::where('form_1_id', $form_1_id)->first();
+    //         if (!$form1Data) {
+    //             throw new \Exception('Data form 1 tidak ditemukan.');
+    //         }
+
+    //         /** =======================================
+    //          * 4️⃣ Cek apakah interview sudah ada
+    //          * ======================================= */
+    //         $existingInterview = InterviewModel::where('user_id', $form1Data->asesi_id)
+    //             ->where('pk_id', $form1Data->pk_id)
+    //             ->where('form_1_id', $form_1_id)
+    //             ->first();
+
+    //         if ($existingInterview) {
+    //             Log::warning("Interview sudah ada untuk asesi_id={$form1Data->asesi_id}, pk_id={$form1Data->pk_id}, form_1_id={$form_1_id}");
+    //             throw new \Exception('Interview untuk kombinasi Asesi, PK, dan Form 1 ini sudah ada.');
+    //         }
+
+    //         /** =======================================
+    //          * 5️⃣ Buat Interview baru
+    //          * ======================================= */
+    //         $interview = new InterviewModel();
+    //         $interview->asesi_name = $form1Data->asesi_name;
+    //         $interview->user_id = $form1Data->asesi_id;
+    //         $interview->date = null;
+    //         $interview->time = null;
+    //         $interview->place = null;
+    //         $interview->form_1_id = $form_1_id;
+    //         $interview->asesor_id = $form1Data->asesor_id;
+    //         $interview->asesor_name = $form1Data->asesor_name;
+    //         $interview->status = 'InAssessment';
+    //         $interview->pk_id = $form1Data->pk_id;
+    //         $interview->save();
+
+    //         Log::info("✅ Interview baru dibuat: " . json_encode($interview->toArray()));
+
+    //         /** =======================================
+    //          * 6️⃣ Buat progres & track interview
+    //          * ======================================= */
+    //         $this->formService->createProgresDanTrack(
+    //             $interview->interview_id,
+    //             'intv_pra_asesmen',
+    //             'InAssessment',
+    //             $form1Data->asesi_id,
+    //             $form1Data->form_1_id,
+    //             'Konsultasi Pra asesmen sudah dapat diajukan.'
+    //         );
+
+    //         /** =======================================
+    //          * 7️⃣ Commit transaksi (baru kirim notifikasi setelah ini)
+    //          * ======================================= */
+    //         DB::commit();
+
+    //         /** =======================================
+    //          * 8️⃣ Kirim notifikasi ke Asesi
+    //          * ======================================= */
+    //         $userAsesi = DaftarUser::where('user_id', $form3->user_id)->first();
+    //         if ($userAsesi) {
+    //             $title = 'Form 3 Disetujui';
+    //             $message = 'Form 3 Anda telah disetujui oleh asesor. Anda bisa mengajukan jadwal wawancara asesmen.';
+    //             $this->kirimNotifikasiKeUser($userAsesi, $title, $message, $form3->form_3_id);
+    //         }
+
+    //         return response()->json([
+    //             'status' => 200,
+    //             'message' => 'Form3 berhasil diperbarui dan semua proses telah disimpan dengan aman.',
+    //             'data' => [
+    //                 'form3' => $form3,
+    //                 'interview' => $interview
+    //             ]
+    //         ]);
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
+
+    //         Log::error("❌ Gagal memperbarui Form3: {$e->getMessage()}");
+    //         return response()->json([
+    //             'status' => 500,
+    //             'message' => 'Terjadi kesalahan saat memperbarui data.',
+    //             'error' => $e->getMessage()
+    //         ], 500);
+    //     }
+    // }
 
 
 
