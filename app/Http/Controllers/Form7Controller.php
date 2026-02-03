@@ -174,7 +174,9 @@ class Form7Controller extends BaseController
 
     public function getSoalDanJawabanForm7($pkId, $asesiId)
     {
-        // Validasi parameter
+        // =========================
+        // VALIDASI PARAMETER
+        // =========================
         $validator = Validator::make(
             [
                 'pk_id'    => $pkId,
@@ -193,70 +195,67 @@ class Form7Controller extends BaseController
             ], 422);
         }
 
-        // Ambil data dengan relasi lengkap + filter PK
-        $elemen = ElemenForm3::with([
-            
-            // =========================
-            // FILTER KUK BERDASARKAN PK
-            // =========================
-            'kukForm3' => function ($q) use ($pkId) {
-                $q->where('pk_id', $pkId)
-                ->orderByRaw('CAST(SUBSTRING_INDEX(no_kuk, ".", 1) AS UNSIGNED)')
-                ->orderByRaw('CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(no_kuk, ".", 2), ".", -1) AS UNSIGNED)')
-                ->orderByRaw('CAST(SUBSTRING_INDEX(no_kuk, ".", -1) AS UNSIGNED)');
-            },
+        // =========================
+        // AMBIL DATA (STRUKTUR SAMA DENGAN getSoalForm7)
+        // =========================
+        $elemen = ElemenForm3::where('pk_id', $pkId)
+            ->whereHas('kukForm3.iukForm3.soalForm7', function ($q) use ($pkId) {
+                $q->where('pk_id', $pkId);
+            })
+            ->with([
+                'kukForm3' => function ($q) use ($pkId, $asesiId) {
+                    $q->where('pk_id', $pkId)
+                        ->whereHas('iukForm3.soalForm7', function ($q) use ($pkId) {
+                            $q->where('pk_id', $pkId);
+                        })
+                        ->orderByRaw('CAST(SUBSTRING_INDEX(no_kuk, ".", 1) AS UNSIGNED)')
+                        ->orderByRaw('CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(no_kuk, ".", 2), ".", -1) AS UNSIGNED)')
+                        ->orderByRaw('CAST(SUBSTRING_INDEX(no_kuk, ".", -1) AS UNSIGNED)')
+                        ->with([
+                            'iukForm3' => function ($q) use ($pkId, $asesiId) {
+                                $q->where('pk_id', $pkId)
+                                    ->orderByRaw('CAST(SUBSTRING_INDEX(no_iuk, ".", 1) AS UNSIGNED)')
+                                    ->orderByRaw('CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(no_iuk, ".", 2), ".", -1) AS UNSIGNED)')
+                                    ->orderByRaw('CAST(SUBSTRING_INDEX(no_iuk, ".", -1) AS UNSIGNED)')
+                                    ->with([
+                                        'soalForm7' => function ($q) use ($pkId, $asesiId) {
+                                            $q->where('pk_id', $pkId)
+                                                ->orderBy('id', 'asc')
+                                                ->select('id', 'pk_id', 'iuk_form3_id', 'sumber_form')
+                                                ->with([
+                                                    'jawabanForm7' => function ($q) use ($asesiId) {
+                                                        $q->where('asesi_id', $asesiId)
+                                                        ->select(
+                                                            'id',
+                                                            'asesi_id',
+                                                            'asesor_id',
+                                                            'soal_form7_id',
+                                                            'keputusan',
+                                                            'created_at',
+                                                            'updated_at'
+                                                        );
+                                                    }
+                                                ]);
+                                        }
+                                    ]);
+                            }
+                        ]);
+                }
+            ])
+            ->orderBy('no_elemen_form_3', 'asc')
+            ->get();
 
-            // =========================
-            // FILTER IUK BERDASARKAN PK
-            // =========================
-            'kukForm3.iukForm3' => function ($q) use ($pkId) {
-                $q->where('pk_id', $pkId)
-                ->orderByRaw('CAST(SUBSTRING_INDEX(no_iuk, ".", 1) AS UNSIGNED)')
-                ->orderByRaw('CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(no_iuk, ".", 2), ".", -1) AS UNSIGNED)')
-                ->orderByRaw('CAST(SUBSTRING_INDEX(no_iuk, ".", -1) AS UNSIGNED)');
-            },
-
-            // =========================
-            // FILTER SOAL BERDASARKAN PK
-            // =========================
-            'kukForm3.iukForm3.soalForm7' => function ($query) use ($pkId) {
-                $query->where('pk_id', $pkId)
-                    ->orderBy('id', 'asc')
-                    ->select('id', 'pk_id', 'iuk_form3_id', 'sumber_form');
-            },
-
-            // ================================
-            // FILTER JAWABAN FORM 7 BERDASARKAN ASES
-            // ================================
-            'kukForm3.iukForm3.soalForm7.jawabanForm7' => function ($query) use ($asesiId) {
-                $query->where('asesi_id', $asesiId)
-                    ->select('id', 'asesi_id', 'asesor_id', 'soal_form7_id', 'keputusan', 'created_at', 'updated_at');
-            }
-
-        ])
-        // ============
-        // FILTER ELEMEN
-        // ============
-        ->where('pk_id', $pkId)
-        ->orderBy('no_elemen_form_3', 'asc')
-        ->get();
-
-
-        // ===========================
-        // KONVERSI JAWABAN -> SINGLE
-        // ===========================
+        // =========================
+        // KONVERSI JAWABAN → SINGLE OBJECT
+        // =========================
         $elemen->each(function ($el) {
             $el->kukForm3->each(function ($kuk) {
                 $kuk->iukForm3->each(function ($iuk) {
                     $iuk->soalForm7->each(function ($soal) {
 
-                        if ($soal->jawabanForm7 && $soal->jawabanForm7->count() > 0) {
-                            $soal->jawaban_form_7 = $soal->jawabanForm7->first();
-                        } else {
-                            $soal->jawaban_form_7 = null;
-                        }
+                        $soal->jawaban_form_7 = $soal->jawabanForm7->first() ?? null;
 
-                        // Hapus relasi lama agar tidak muncul ganda
+                        // bersihkan relasi asli
                         $soal->setRelation('jawabanForm7', null);
                         unset($soal->jawabanForm7);
                     });
@@ -264,12 +263,15 @@ class Form7Controller extends BaseController
             });
         });
 
-
+        // =========================
+        // RESPONSE
+        // =========================
         return response()->json([
             'status' => 'success',
             'data'   => $elemen
         ]);
     }
+
 
 
 
