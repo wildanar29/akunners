@@ -1224,35 +1224,35 @@ class Form5Controller extends BaseController
 						Log::info("Form 4d sudah ada, tidak membuat ulang.");
 					}
 
-					// ===== FORM 6 =====
-					$isForm6Exist = $this->formService->isFormExistSingle(
-						$form1Data->asesi_id,
-						$form1Data->pk_id,
-						'form_6'
-					);
+					// // ===== FORM 6 =====
+					// $isForm6Exist = $this->formService->isFormExistSingle(
+					// 	$form1Data->asesi_id,
+					// 	$form1Data->pk_id,
+					// 	'form_6'
+					// );
 
-					if (!$isForm6Exist) {
-						Log::info("Form 6 belum ada, membuat form 6...");
-						$form6 = $this->formService->inputForm6(
-							$form1Data->pk_id,
-							$form1Data->asesi_id,
-							$form1Data->asesi_name,
-							$form1Data->asesor_id,
-							$form1Data->asesor_name,
-							$form1Data->no_reg
-						);
+					// if (!$isForm6Exist) {
+					// 	Log::info("Form 6 belum ada, membuat form 6...");
+					// 	$form6 = $this->formService->inputForm6(
+					// 		$form1Data->pk_id,
+					// 		$form1Data->asesi_id,
+					// 		$form1Data->asesi_name,
+					// 		$form1Data->asesor_id,
+					// 		$form1Data->asesor_name,
+					// 		$form1Data->no_reg
+					// 	);
 
-						$this->formService->createProgresDanTrack(
-							$form6->form_6_id,
-							'form_6',
-							'InAssessment',
-							$form1Data->asesi_id,
-							$form1Data->form_1_id,
-							'Form 6 sudah dapat diisi oleh Asesor.'
-						);
-					} else {
-						Log::info("Form 6 sudah ada, tidak membuat ulang.");
-					}
+					// 	$this->formService->createProgresDanTrack(
+					// 		$form6->form_6_id,
+					// 		'form_6',
+					// 		'InAssessment',
+					// 		$form1Data->asesi_id,
+					// 		$form1Data->form_1_id,
+					// 		'Form 6 sudah dapat diisi oleh Asesor.'
+					// 	);
+					// } else {
+					// 	Log::info("Form 6 sudah ada, tidak membuat ulang.");
+					// }
 
 					// ===== FORM 7 =====
 					$isForm7Exist = $this->formService->isFormExistSingle(

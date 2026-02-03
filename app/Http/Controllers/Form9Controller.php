@@ -302,80 +302,229 @@ class Form9Controller extends BaseController
     /**
      * Proses jawaban sesuai subject (asesor / asesi)
      */
+    // private function processAnswersBySubject($form9Id, array $answers, $subject)
+    // {
+    //     $form9 = Form9::with(['asesi', 'asesor', 'answers'])
+    //         ->where('form_9_id', $form9Id)
+    //         ->first();
+    //     Log::info($form9);
+
+    //     // Jika tidak ditemukan
+    //     if (!$form9) {
+    //         \Log::error("Form9 dengan ID {$form9Id} tidak ditemukan.");
+    //         return null;
+    //     }
+
+    //     // Ambil data form1 berdasarkan form9
+    //     Log::info("Mengambil form1Id dari form9Id: {$form9Id} dan asesi_id: {$form9->asesi_id}");
+    //     $form1Id = $this->formService->getParentFormIdByFormIdAndAsesiId($form9Id, $form9->asesi_id, 'form_9');
+    //     $form1   = $this->formService->getParentDataByFormId($form1Id);
+    //     Log::info("Ditemukan form1:", ['form1' => $form1]);
+
+    //     // Tentukan user_id berdasarkan subject
+    //     $userId = null;
+    //     if ($subject === 'asesi') {
+    //         $userId = $form1->asesi_id ?? null;
+    //     } elseif ($subject === 'asesor') {
+    //         $userId = $form1->asesor_id ?? null;
+    //     }
+
+    //     foreach ($answers as $q) {
+    //         $question = \App\Models\Form9Question::find($q['question_id']);
+    //         if (!$question || $question->subject !== $subject) {
+    //             continue;
+    //         }
+
+    //         // 🔹 Data dasar untuk disimpan
+    //         $baseData = [
+    //             'user_id' => $userId, // ✅ gunakan user_id sesuai subject
+    //         ];
+
+    //         // 🔹 Tambahkan answer_text kalau ada
+    //         if (isset($q['answer_text'])) {
+    //             $baseData['answer_text'] = $q['answer_text'];
+    //         }
+
+    //         // 🔹 Tambahkan is_checked hanya untuk asesi
+    //         if ($subject === 'asesi' && array_key_exists('is_checked', $q)) {
+    //             $baseData['is_checked'] = $q['is_checked'] ? 1 : 0;
+    //         }
+
+    //         // ✅ Simpan jawaban utama
+    //         if (!isset($q['sub_questions']) || empty($q['sub_questions'])) {
+    //             Form9Answer::updateOrCreate(
+    //                 [
+    //                     'form_9_id' => $form9Id,
+    //                     'question_id' => $q['question_id'],
+    //                     'sub_question_id' => null,
+    //                 ],
+    //                 $baseData
+    //             );
+    //         }
+
+    //         // ✅ Simpan jawaban sub-question (jika ada)
+    //         if (!empty($q['sub_questions'])) {
+    //             foreach ($q['sub_questions'] as $sq) {
+    //                 Form9Answer::updateOrCreate(
+    //                     [
+    //                         'form_9_id' => $form9Id,
+    //                         'question_id' => $q['question_id'],
+    //                         'sub_question_id' => $sq['sub_question_id'],
+    //                     ],
+    //                     [
+    //                         'answer_text' => $sq['answer_text'] ?? null,
+    //                         'user_id' => $userId,
+
+    //                         // hanya asesor yang boleh isi notes
+    //                         'notes' => ($subject === 'asesor')
+    //                             ? ($sq['notes'] ?? null)
+    //                             : null,
+    //                     ]
+    //                 );
+    //             }
+    //         }
+    //     }
+    // }
+
     private function processAnswersBySubject($form9Id, array $answers, $subject)
     {
+        // =========================
+        // 1. Ambil Form 9 + Relasi
+        // =========================
         $form9 = Form9::with(['asesi', 'asesor', 'answers'])
             ->where('form_9_id', $form9Id)
             ->first();
-        Log::info($form9);
 
-        // Jika tidak ditemukan
+        Log::info('Form9 Data:', ['form9' => $form9]);
+
         if (!$form9) {
-            \Log::error("Form9 dengan ID {$form9Id} tidak ditemukan.");
+            Log::error("Form9 dengan ID {$form9Id} tidak ditemukan.");
             return null;
         }
 
-        // Ambil data form1 berdasarkan form9
-        Log::info("Mengambil form1Id dari form9Id: {$form9Id} dan asesi_id: {$form9->asesi_id}");
-        $form1Id = $this->formService->getParentFormIdByFormIdAndAsesiId($form9Id, $form9->asesi_id, 'form_9');
-        $form1   = $this->formService->getParentDataByFormId($form1Id);
-        Log::info("Ditemukan form1:", ['form1' => $form1]);
+        // =========================
+        // 2. Ambil Parent Form 1
+        // =========================
+        Log::info("Mengambil form1Id dari form9Id: {$form9Id}, asesi_id: {$form9->asesi_id}");
 
-        // Tentukan user_id berdasarkan subject
-        $userId = null;
-        if ($subject === 'asesi') {
-            $userId = $form1->asesi_id ?? null;
-        } elseif ($subject === 'asesor') {
-            $userId = $form1->asesor_id ?? null;
+        $form1Id = $this->formService
+            ->getParentFormIdByFormIdAndAsesiId($form9Id, $form9->asesi_id, 'form_9');
+
+        $form1Data = $this->formService->getParentDataByFormId($form1Id);
+
+        Log::info('Form1 Data:', ['form1' => $form1Data]);
+
+        if (!$form1Data) {
+            Log::error("Form1 tidak ditemukan untuk form9Id {$form9Id}");
+            return null;
         }
 
+        // =========================
+        // 3. Tentukan user_id
+        // =========================
+        $userId = null;
+
+        if ($subject === 'asesi') {
+            $userId = $form1Data->asesi_id ?? null;
+        } elseif ($subject === 'asesor') {
+            $userId = $form1Data->asesor_id ?? null;
+        }
+
+        // =========================
+        // 4. 🔥 KHUSUS ASESOR:
+        //    Buat Form 6 jika belum ada
+        // =========================
+        if ($subject === 'asesor') {
+
+            $isForm6Exist = $this->formService->isFormExistSingle(
+                $form1Data->asesi_id,
+                $form1Data->pk_id,
+                'form_6'
+            );
+
+            if (!$isForm6Exist) {
+                Log::info("Form 6 belum ada, membuat Form 6...");
+
+                $form6 = $this->formService->inputForm6(
+                    $form1Data->pk_id,
+                    $form1Data->asesi_id,
+                    $form1Data->asesi_name,
+                    $form1Data->asesor_id,
+                    $form1Data->asesor_name,
+                    $form1Data->no_reg
+                );
+
+                $this->formService->createProgresDanTrack(
+                    $form6->form_6_id,
+                    'form_6',
+                    'InAssessment',
+                    $form1Data->asesi_id,
+                    $form1Data->form_1_id,
+                    'Form 6 sudah dapat diisi oleh Asesor.'
+                );
+            } else {
+                Log::info("Form 6 sudah ada, tidak membuat ulang.");
+            }
+        }
+
+        // =========================
+        // 5. Simpan Jawaban Form 9
+        // =========================
         foreach ($answers as $q) {
+
             $question = \App\Models\Form9Question::find($q['question_id']);
+
+            // Skip jika question tidak sesuai subject
             if (!$question || $question->subject !== $subject) {
                 continue;
             }
 
-            // 🔹 Data dasar untuk disimpan
+            // -------------------------
+            // Data dasar jawaban
+            // -------------------------
             $baseData = [
-                'user_id' => $userId, // ✅ gunakan user_id sesuai subject
+                'user_id' => $userId,
             ];
 
-            // 🔹 Tambahkan answer_text kalau ada
             if (isset($q['answer_text'])) {
                 $baseData['answer_text'] = $q['answer_text'];
             }
 
-            // 🔹 Tambahkan is_checked hanya untuk asesi
+            // is_checked hanya untuk asesi
             if ($subject === 'asesi' && array_key_exists('is_checked', $q)) {
                 $baseData['is_checked'] = $q['is_checked'] ? 1 : 0;
             }
 
-            // ✅ Simpan jawaban utama
+            // -------------------------
+            // Jawaban utama (tanpa sub)
+            // -------------------------
             if (!isset($q['sub_questions']) || empty($q['sub_questions'])) {
                 Form9Answer::updateOrCreate(
                     [
-                        'form_9_id' => $form9Id,
-                        'question_id' => $q['question_id'],
+                        'form_9_id'       => $form9Id,
+                        'question_id'     => $q['question_id'],
                         'sub_question_id' => null,
                     ],
                     $baseData
                 );
             }
 
-            // ✅ Simpan jawaban sub-question (jika ada)
+            // -------------------------
+            // Jawaban sub-question
+            // -------------------------
             if (!empty($q['sub_questions'])) {
                 foreach ($q['sub_questions'] as $sq) {
                     Form9Answer::updateOrCreate(
                         [
-                            'form_9_id' => $form9Id,
-                            'question_id' => $q['question_id'],
+                            'form_9_id'       => $form9Id,
+                            'question_id'     => $q['question_id'],
                             'sub_question_id' => $sq['sub_question_id'],
                         ],
                         [
                             'answer_text' => $sq['answer_text'] ?? null,
-                            'user_id' => $userId,
+                            'user_id'     => $userId,
 
-                            // hanya asesor yang boleh isi notes
+                            // notes hanya boleh diisi asesor
                             'notes' => ($subject === 'asesor')
                                 ? ($sq['notes'] ?? null)
                                 : null,
@@ -384,7 +533,10 @@ class Form9Controller extends BaseController
                 }
             }
         }
+
+        return true;
     }
+
 
 
 
