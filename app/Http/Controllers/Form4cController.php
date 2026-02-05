@@ -43,48 +43,55 @@ class Form4cController extends BaseController
 
     public function getAllPertanyaanForm4c(Request $request)
     {
-        // Validasi agar pk_id wajib diisi dan harus berupa integer
+        // =========================
+        // Validasi
+        // =========================
         $validator = Validator::make($request->all(), [
             'pk_id' => 'required|integer',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
-                'status' => false,
+                'status'  => false,
                 'message' => 'Validasi gagal',
-                'errors' => $validator->errors(),
+                'errors'  => $validator->errors(),
             ], 422);
         }
 
-        // Query dengan relasi
-        $query = PertanyaanForm4c::with([
-            'question.questionChoices.choice'
-        ])->orderBy('urutan');
+        // =========================
+        // Query (SOAL DIACAK)
+        // =========================
+        $data = PertanyaanForm4c::with([
+                'question.questionChoices.choice'
+            ])
+            ->whereHas('iuk', function ($q) use ($request) {
+                $q->where('pk_id', $request->pk_id);
+            })
+            ->inRandomOrder()
+            ->get();
 
-        // Filter berdasarkan pk_id
-        $query->whereHas('iuk', function ($q) use ($request) {
-            $q->where('pk_id', $request->pk_id);
-        });
-
-        $data = $query->get()->shuffle();
-
-        // Format ulang data agar hanya field yang dibutuhkan saja yang tampil
-        $filtered = $data->map(function ($item) {
+        // =========================
+        // Mapping ulang + RESET urutan
+        // =========================
+        $filtered = $data->values()->map(function ($item, $index) {
             return [
-                'id' => $item->id,
-                'iuk_form_3_id' => $item->iuk_form_3_id,
-                'urutan' => $item->urutan,
+                'id'             => $item->id,
+                'iuk_form_3_id'  => $item->iuk_form_3_id,
+
+                // ⬇️ urutan DIUBAH sesuai urutan acak
+                'urutan'         => $index + 1,
+
                 'question' => [
-                    'id' => $item->question->id,
+                    'id'            => $item->question->id,
                     'question_text' => $item->question->question_text,
                     'question_choices' => $item->question->questionChoices->map(function ($qc) {
                         return [
-                            'id' => $qc->id,
+                            'id'         => $qc->id,
                             'is_correct' => $qc->is_correct,
                             'choice' => [
-                                'id' => $qc->choice->id,
+                                'id'           => $qc->choice->id,
                                 'choice_label' => $qc->choice->choice_label,
-                                'choice_text' => $qc->choice->choice_text,
+                                'choice_text'  => $qc->choice->choice_text,
                             ]
                         ];
                     })
@@ -92,12 +99,17 @@ class Form4cController extends BaseController
             ];
         });
 
+        // =========================
+        // Response
+        // =========================
         return response()->json([
-            'status' => true,
+            'status'  => true,
             'message' => 'Data pertanyaan berhasil diambil',
-            'data' => $filtered,
+            // 'total'   => $filtered->count(),
+            'data'    => $filtered,
         ]);
     }
+
 
     public function storeJawabanForm4c(Request $request)
     {
