@@ -238,8 +238,20 @@ class Form3Controller extends BaseController
                     foreach ($kuk->iukForm3 as $index => $iuk) {
                         if ($index > 0) $html .= '<tr>';
 
-                        $metode = $metodeMap[$iuk->group_no] ?? '-';
-                        $perangkat = $perangkatMap[$iuk->group_no] ?? '-';
+                        $groupNos = preg_split('/[^A-Z0-9]+/', $iuk->group_no);
+                        $metode = collect($groupNos)
+                            ->map(fn ($g) => $metodeMap[$g] ?? null)
+                            ->filter()
+                            ->implode('/');
+
+                        $perangkat = collect($groupNos)
+                            ->map(fn ($g) => $perangkatMap[$g] ?? null)
+                            ->filter()
+                            ->implode('/');
+
+                        $perangkat = $perangkat !== '' ? $perangkat : '-';
+                        // $metode = $metodeMap[$iuk->group_no] ?? '-';
+                        // $perangkat = $perangkatMap[$iuk->group_no] ?? '-';
 
                         $html .= '<td>' . htmlspecialchars($iuk->no_iuk . ' - ' . $iuk->iuk_name) . '</td>
                                 <td class="center">' . htmlspecialchars($metode) . '</td>
