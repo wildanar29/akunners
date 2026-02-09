@@ -181,39 +181,41 @@ class Form10Controller extends BaseController
                 ], 404);
             }
 
-            $pkId = $form10->pk_id;
-            $daftarTilikId = $form10->daftar_tilik_id;
-            $asesiId = $form10->asesi_id;
-            $asesorId = $form10->asesor_id;
+            $pkId           = $form10->pk_id;
+            $daftarTilikId  = $form10->daftar_tilik_id;
+            $asesiId        = $form10->asesi_id;
+            $asesorId       = $form10->asesor_id;
 
-            // Cek apakah jawaban sudah diinisialisasi
+            // ----------------------------------------------------
+            // Inisialisasi jawaban jika belum ada
+            // ----------------------------------------------------
             $exists = JawabanDaftarTilik::where('form_10_id', $form10Id)
                 ->where('daftar_tilik_id', $daftarTilikId)
                 ->where('asesi_id', $asesiId)
                 ->exists();
 
-            // Jika belum, inisialisasi dari kegiatan_daftar_tilik
             if (!$exists) {
                 $kegiatanList = KegiatanDaftarTilik::where('pk_id', $pkId)
                     ->where('daftar_tilik_id', $daftarTilikId)
-                    ->where(function ($query) {
-                        $query->where('isTitle', 0)
-                            ->orWhereNull('isTitle');
+                    ->where(function ($q) {
+                        $q->where('isTitle', 0)
+                        ->orWhereNull('isTitle');
                     })
                     ->get();
 
                 $insertData = [];
+
                 foreach ($kegiatanList as $kegiatan) {
                     $insertData[] = [
-                        'form_10_id' => $form10Id,
-                        'daftar_tilik_id' => $daftarTilikId,
+                        'form_10_id'               => $form10Id,
+                        'daftar_tilik_id'          => $daftarTilikId,
                         'kegiatan_daftar_tilik_id' => $kegiatan->id,
-                        'asesi_id' => $asesiId,
-                        'asesor_id' => $asesorId,
-                        'dilakukan' => 0,
-                        'catatan' => null,
-                        'created_at' => Carbon::now(),
-                        'updated_at' => Carbon::now(),
+                        'asesi_id'                 => $asesiId,
+                        'asesor_id'                => $asesorId,
+                        'dilakukan'                => 0,
+                        'catatan'                  => null,
+                        'created_at'               => Carbon::now(),
+                        'updated_at'               => Carbon::now(),
                     ];
                 }
 
@@ -222,51 +224,165 @@ class Form10Controller extends BaseController
                 }
             }
 
-            // Ambil semua kegiatan terlebih dahulu
+            // ----------------------------------------------------
+            // Ambil seluruh kegiatan
+            // ----------------------------------------------------
             $kegiatanAll = KegiatanDaftarTilik::where('pk_id', $pkId)
                 ->where('daftar_tilik_id', $daftarTilikId)
                 ->orderBy('urutan')
                 ->get();
 
-            // Fungsi rekursif untuk membangun tree
+            // ----------------------------------------------------
+            // Builder tree + is_mandatory
+            // ----------------------------------------------------
             $buildTree = function ($parentId) use (&$buildTree, $kegiatanAll) {
                 return $kegiatanAll
                     ->where('parent_id', $parentId)
                     ->map(function ($item) use (&$buildTree) {
+
+                        // Tentukan mandatory
+                        $isMandatory = true;
+
+                        if ($item->isTitle == 1) {
+                            $isMandatory = false;
+                        } elseif ($item->isIgnore == 1) {
+                            $isMandatory = false;
+                        }
+
                         return [
-                            'id' => $item->id,
-                            'pk_id' => $item->pk_id,
-                            'daftar_tilik_id' => $item->daftar_tilik_id,
-                            'parent_id' => $item->parent_id,
-                            'kegiatan' => $item->kegiatan,
-                            'urutan' => $item->urutan,
-                            'isTitle' => $item->isTitle,
-                            'created_at' => $item->created_at,
-                            'updated_at' => $item->updated_at,
-                            // panggil rekursif di sini:
-                            'children' => $buildTree($item->id)
+                            'id'               => $item->id,
+                            'pk_id'            => $item->pk_id,
+                            'daftar_tilik_id'  => $item->daftar_tilik_id,
+                            'parent_id'        => $item->parent_id,
+                            'kegiatan'         => $item->kegiatan,
+                            'urutan'           => $item->urutan,
+                            'isTitle'          => (bool) $item->isTitle,
+                            'isIgnore'         => (bool) $item->isIgnore,
+                            'is_mandatory'     => $isMandatory,
+                            'created_at'       => $item->created_at,
+                            'updated_at'       => $item->updated_at,
+                            'children'         => $buildTree($item->id),
                         ];
                     })
                     ->values();
             };
 
-            // Bangun tree mulai dari root (parent_id = null)
+            // Root tree
             $soal = $buildTree(null);
 
             return response()->json([
                 'success' => true,
-                'data' => $soal,
+                'data'    => $soal,
             ], 200);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal mengambil list soal.',
-                'error' => $e->getMessage(),
+                'error'   => $e->getMessage(),
             ], 500);
         }
     }
 
+
+    // VERSI BENER NYA YANG TERAKHIR
+    // public function getSoalList($form10Id)
+    // {
+    //     try {
+    //         $form10 = Form10::find($form10Id);
+
+    //         if (!$form10) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'message' => 'Data Form 10 tidak ditemukan.'
+    //             ], 404);
+    //         }
+
+    //         $pkId = $form10->pk_id;
+    //         $daftarTilikId = $form10->daftar_tilik_id;
+    //         $asesiId = $form10->asesi_id;
+    //         $asesorId = $form10->asesor_id;
+
+    //         // Cek apakah jawaban sudah diinisialisasi
+    //         $exists = JawabanDaftarTilik::where('form_10_id', $form10Id)
+    //             ->where('daftar_tilik_id', $daftarTilikId)
+    //             ->where('asesi_id', $asesiId)
+    //             ->exists();
+
+    //         // Jika belum, inisialisasi dari kegiatan_daftar_tilik
+    //         if (!$exists) {
+    //             $kegiatanList = KegiatanDaftarTilik::where('pk_id', $pkId)
+    //                 ->where('daftar_tilik_id', $daftarTilikId)
+    //                 ->where(function ($query) {
+    //                     $query->where('isTitle', 0)
+    //                         ->orWhereNull('isTitle');
+    //                 })
+    //                 ->get();
+
+    //             $insertData = [];
+    //             foreach ($kegiatanList as $kegiatan) {
+    //                 $insertData[] = [
+    //                     'form_10_id' => $form10Id,
+    //                     'daftar_tilik_id' => $daftarTilikId,
+    //                     'kegiatan_daftar_tilik_id' => $kegiatan->id,
+    //                     'asesi_id' => $asesiId,
+    //                     'asesor_id' => $asesorId,
+    //                     'dilakukan' => 0,
+    //                     'catatan' => null,
+    //                     'created_at' => Carbon::now(),
+    //                     'updated_at' => Carbon::now(),
+    //                 ];
+    //             }
+
+    //             if (!empty($insertData)) {
+    //                 JawabanDaftarTilik::insert($insertData);
+    //             }
+    //         }
+
+    //         // Ambil semua kegiatan terlebih dahulu
+    //         $kegiatanAll = KegiatanDaftarTilik::where('pk_id', $pkId)
+    //             ->where('daftar_tilik_id', $daftarTilikId)
+    //             ->orderBy('urutan')
+    //             ->get();
+
+    //         // Fungsi rekursif untuk membangun tree
+    //         $buildTree = function ($parentId) use (&$buildTree, $kegiatanAll) {
+    //             return $kegiatanAll
+    //                 ->where('parent_id', $parentId)
+    //                 ->map(function ($item) use (&$buildTree) {
+    //                     return [
+    //                         'id' => $item->id,
+    //                         'pk_id' => $item->pk_id,
+    //                         'daftar_tilik_id' => $item->daftar_tilik_id,
+    //                         'parent_id' => $item->parent_id,
+    //                         'kegiatan' => $item->kegiatan,
+    //                         'urutan' => $item->urutan,
+    //                         'isTitle' => $item->isTitle,
+    //                         'created_at' => $item->created_at,
+    //                         'updated_at' => $item->updated_at,
+    //                         // panggil rekursif di sini:
+    //                         'children' => $buildTree($item->id)
+    //                     ];
+    //                 })
+    //                 ->values();
+    //         };
+
+    //         // Bangun tree mulai dari root (parent_id = null)
+    //         $soal = $buildTree(null);
+
+    //         return response()->json([
+    //             'success' => true,
+    //             'data' => $soal,
+    //         ], 200);
+
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Gagal mengambil list soal.',
+    //             'error' => $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
 
     // public function getSoalList($form10Id)
     // {
@@ -448,7 +564,8 @@ class Form10Controller extends BaseController
             $validator = Validator::make($request->all(), [
                 'jawaban'   => 'required|array',
                 'jawaban.*.kegiatan_daftar_tilik_id' => 'required|integer|exists:kegiatan_daftar_tilik,id',
-                'jawaban.*.dilakukan' => 'required|boolean',
+                // 'jawaban.*.dilakukan' => 'required|boolean',
+                'jawaban.*.dilakukan' => 'nullable|boolean',
                 'jawaban.*.catatan'   => 'nullable|string',
             ]);
 
