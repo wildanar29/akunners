@@ -119,7 +119,7 @@ class Form4cController extends BaseController
             'asesi_id' => 'required|integer|exists:users,user_id',
             'jawaban' => 'required|array',
             'jawaban.*.pertanyaan_form4c_id' => 'required|integer|exists:pertanyaan_form4c,id',
-            'jawaban.*.question_choice_id' => 'required|integer|exists:question_choice,id',
+            'jawaban.*.question_choice_id' => 'nullable|integer|exists:question_choice,id',
             'jawaban.*.catatan' => 'nullable|string',
         ]);
 
@@ -173,23 +173,36 @@ class Form4cController extends BaseController
                     continue;
                 }
 
-                $questionChoice = \App\Models\QuestionChoice::with('choice')->find($item['question_choice_id']);
+                // DEFAULT: jawaban dianggap SALAH
+                $choiceLabel = null;
+                $isCorrect = false;
+                $questionChoiceId = null;
 
-                if (!$questionChoice || !$questionChoice->choice) {
-                    throw new \Exception("Choice data not found for question_choice_id: {$item['question_choice_id']}");
+                // Jika jawaban diisi
+                if (!empty($item['question_choice_id'])) {
+
+                    $questionChoice = \App\Models\QuestionChoice::with('choice')
+                        ->find($item['question_choice_id']);
+
+                    if ($questionChoice && $questionChoice->choice) {
+                        $questionChoiceId = $questionChoice->id;
+                        $choiceLabel = $questionChoice->choice->choice_label;
+                        $isCorrect = (bool) $questionChoice->is_correct;
+                    }
                 }
 
                 JawabanForm4c::create([
                     'form_1_id' => $request->form_1_id,
                     'user_id' => $request->asesi_id,
                     'pertanyaan_form4c_id' => $item['pertanyaan_form4c_id'],
-                    'question_choice_id' => $item['question_choice_id'],
+                    'question_choice_id' => $questionChoiceId,
                     'catatan' => $item['catatan'] ?? null,
-                    'choice_label' => $questionChoice->choice->choice_label,
-                    'is_correct' => $questionChoice->is_correct,
+                    'choice_label' => $choiceLabel,
+                    'is_correct' => $isCorrect, // NULL → FALSE
                     'attempt' => $currentAttempt,
                 ]);
             }
+
 
             DB::commit();
 
