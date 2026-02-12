@@ -4,10 +4,6 @@
     <meta charset="utf-8">
     <title>Sertifikat Kompetensi Keperawatan</title>
     <style>
-        /*
-         * Responsive Certificate Styling
-         * Using relative units for proportionality
-         */
         @page {
             size: A4 landscape;
             margin: 1cm;
@@ -16,20 +12,15 @@
         body {
             font-family: 'Times New Roman', serif;
             text-align: center;
-            background-color: #fbfaf5; /* Cream background */
+            background-color: #fbfaf5;
             margin: 0;
             position: relative;
             box-sizing: border-box;
-            border: 2px solid #c5a880; /* Thinner border */
+            border: 2px solid #c5a880;
             min-height: 98vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center; /* Centers content vertically */
-            align-items: center; /* Centers content horizontally */
             padding: 2% 3%;
         }
 
-        /* 👇 Watermark transparan */
         body::after {
             content: "";
             position: absolute;
@@ -39,7 +30,7 @@
             height: 50%;
             background: url('{{ public_path("logo.png") }}') no-repeat center;
             background-size: contain;
-            opacity: 0.1; /* lebih halus */
+            opacity: 0.1;
             transform: translate(-50%, -50%);
             z-index: 0;
         }
@@ -55,12 +46,12 @@
             z-index: 2;
         }
 
-        /* Simplified Ornaments for a cleaner look */
         .ornament {
             position: absolute;
             opacity: 0.1;
             z-index: -1;
         }
+
         .ornament.top-left {
             width: 15vw;
             height: 15vw;
@@ -69,6 +60,7 @@
             top: -7vw;
             left: -7vw;
         }
+
         .ornament.bottom-right {
             width: 15vw;
             height: 15vw;
@@ -77,8 +69,7 @@
             bottom: -7vw;
             right: -7vw;
         }
-        
-        /* Main content container for perfect centering */
+
         .main-content {
             flex-grow: 1;
             display: flex;
@@ -88,103 +79,66 @@
             width: 100%;
         }
 
-        /* Title and text styling */
         h1 {
-            font-size: 4vw; /* Slightly larger */
+            font-size: 4vw;
             margin-bottom: 1vw;
             letter-spacing: 0.2vw;
             color: #2c2c2c;
         }
 
         h2 {
-            font-size: 2.2vw; /* Slightly larger */
+            font-size: 2.2vw;
             margin-bottom: 2vw;
             color: #444;
         }
 
         .nama {
-            font-size: 3.2vw; /* Slightly larger */
+            font-size: 3.2vw;
             font-weight: bold;
             margin: 1.5vw 0 2vw;
             text-decoration: underline;
         }
 
         .description {
-            font-size: 1.8vw; /* Slightly larger */
+            font-size: 1.8vw;
             width: 80%;
             margin: 0 auto 1vw;
             line-height: 1.5;
         }
 
         .date-range {
-            font-size: 1.8vw; /* Slightly larger */
+            font-size: 1.8vw;
             margin-top: 0.6vw;
         }
 
         .status {
             margin-top: 2.5vw;
-            font-size: 3vw; /* Slightly larger */
+            font-size: 3vw;
             font-weight: bold;
             letter-spacing: 0.2vw;
         }
 
-        .status.green {
-            color: #006400; /* hijau */
-        }
-
-        .status.red {
-            color: #e60000; /* merah */
-        }
+        .status.green { color: #006400; }
+        .status.red { color: #e60000; }
 
         .gelar {
             margin-top: 2.5vw;
-            font-size: 1.8vw; /* Slightly larger */
+            font-size: 1.8vw;
         }
 
-        /* Footer styling */
         .footer {
             margin-top: 6vw;
             text-align: center;
             width: 100%;
         }
 
-        .signature-block {
-            width: 40%;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        
-        .signature-image {
-            width: 120px;   /* atur lebar sesuai kebutuhan */
-            height: auto;   /* biar proporsional */
-        }
-
-        /* Space for signature */
-        .signature-space {
-            margin-top: 20px;
-            text-align: center; /* supaya gambar ada di tengah */
-        }
-
-        .signature-name {
-            font-weight: bold;
-            font-size: 1.8vw; /* Slightly larger */
-            border-top: 1px solid #000;
-            padding-top: 0.6vw;
-        }
-
-        .signature-title {
-            font-size: 1.5vw; /* Slightly larger */
-            color: #333;
-            margin-top: 0.4vw;
-        }
-
         .logo {
             position: absolute;
-            top: 20px;   /* jarak dari atas */
-            left: 20px;  /* jarak dari kiri */
-            width: 100px; /* ukuran logo */
+            top: 20px;
+            left: 20px;
+            width: 100px;
             height: auto;
-            z-index: 2;  /* supaya di atas background */
+            z-index: 2;
         }
 
         .nomor-surat {
@@ -197,140 +151,92 @@
             z-index: 2;
         }
 
-        /* Container for the lines on the left side */
-        .left-lines {
-            position: absolute;
-            top: 0;
-            left: 10px; /* distance from the left edge */
-            height: 100%;
-            display: flex;
-            flex-direction: row; /* arrange side-by-side */
-            gap: 10px; /* space between lines */
-        }
-
-        /* Container for the lines on the right side */
-        .yellow-lines {
-            position: absolute;
-            top: 0;
-            right: 50px; /* distance from the right edge */
-            height: 100%;
-            display: flex;
-            z-index: 0;
-            flex-direction: row; /* arrange side-by-side */
-            gap: 10px; /* space between lines */
-        }
-
-        .blue-lines {
-            position: absolute;
-            top: 0;
-            right: 80px; /* distance from the right edge */
-            height: 100%;
-            display: flex;
-            z-index: 0;
-            flex-direction: row; /* arrange side-by-side */
-            gap: 10px; /* space between lines */
-        }
-
-        .red-lines {
-            position: absolute;
-            top: 0;
-            right: 120px; /* distance from the right edge */
-            height: 100%;
-            display: flex;
-            z-index: 0;
-            flex-direction: row; /* arrange side-by-side */
-            gap: 10px; /* space between lines */
-        }
-
-        /* General styling for the vertical lines */
         .line {
             width: 20px;
             height: 100%;
         }
 
-        .status.red {
-            color: #e60000; /* merah */
-        }
-        .status.green {
-            color: #006400; /* hijau */
+        .line.yellow { background:#B09B5C; opacity:0.3; }
+        .line.red { background:#BA2822; opacity:0.3; }
+        .line.blue { background:#153584; opacity:0.3; }
+
+        .blue-lines {
+            position:absolute; top:0; right:80px; height:100%;
+            display:flex; gap:10px;
         }
 
-        /* Colors for the lines */
-        .line.yellow {
-            background: #B09B5C; /* yellow */
-            z-index: 0;          /* paling belakang */
-            position: relative;
-            opacity: 0.3; /* makin kecil makin transparan (0–1) */
+        .yellow-lines {
+            position:absolute; top:0; right:50px; height:100%;
+            display:flex; gap:10px;
         }
 
-        .line.red {
-            background: #BA2822; /* red */
-            z-index: 0;          /* paling belakang */
-            position: relative;
-            opacity: 0.3; /* makin kecil makin transparan (0–1) */
+        .red-lines {
+            position:absolute; top:0; right:120px; height:100%;
+            display:flex; gap:10px;
         }
-
-        .line.blue {
-            background: #153584; /* biru */
-            z-index: 0;          /* paling belakang */
-            position: relative;  /* wajib biar z-index berfungsi */
-            opacity: 0.3; /* makin kecil makin transparan (0–1) */
-        }
-
 
     </style>
 </head>
 <body>
+
     <div class="ornament top-left"></div>
     <div class="ornament bottom-right"></div>
-    
-    <img src="{{ public_path('logo.png') }}" alt="Logo RS Immanuel" class="logo">
+
+    <img src="{{ public_path('logo.png') }}" class="logo">
     <div class="nomor-surat">No: {{ $nomor_surat ?? '-' }}</div>
 
-    <div class="blue-lines">
-        <div class="line blue"></div>
+    <div class="blue-lines"><div class="line blue"></div></div>
+    <div class="yellow-lines"><div class="line yellow"></div></div>
+    <div class="red-lines"><div class="line red"></div></div>
 
-    </div>
-    
-    <div class="yellow-lines">
-        <div class="line yellow"></div>
-    </div>
-
-    <div class="red-lines">
-        <div class="line red"></div>
-    </div>
-    
-    
     <div class="main-content">
         <h1>SERTIFIKAT<br>KOMPETENSI KEPERAWATAN</h1>
         <h2>Diberikan Kepada :</h2>
-    
+
         <div class="nama">{{ $nama }}</div>
-    
+
         <p class="description">
             Telah Mengikuti <strong>Asesmen Kompetensi Perawat</strong>
         </p>
+
         <p class="date-range">
-            pada Tanggal <strong>{{ $tanggal_mulai ?? '-' }}</strong> s/d <strong>{{ $tanggal_selesai ?? '-' }}</strong> dan dinyatakan:
+            pada Tanggal <strong>{{ $tanggal_mulai ?? '-' }}</strong>
+            s/d <strong>{{ $tanggal_selesai ?? '-' }}</strong>
+            dan dinyatakan:
         </p>
-    
+
         <div class="status {{ ($status ?? 'KOMPETEN') === 'BELUM KOMPETEN' ? 'red' : 'green' }}">
             {{ strtoupper($status ?? 'KOMPETEN') }}
         </div>
-            
+
         <p class="gelar">
-            Sebagai <strong>{{ $gelar ?? '-' }}</strong> di Area Keperawatan <strong>Rumah Sakit Immanuel</strong>
+            Sebagai <strong>{{ $gelar ?? '-' }}</strong>
+            di Area Keperawatan <strong>Rumah Sakit Immanuel</strong>
         </p>
     </div>
 
+    <!-- FOOTER (HANYA DIREKTUR, TANPA QR) -->
     <div class="footer">
-        <div class="signature-block">
-            <div class="signature-space">
-                <img src="{{ public_path('ttd.png') }}" alt="Tanda Tangan" class="signature-image">
-            </div>
-            <div class="signature-name">dr. DAVID SANTOSO, M.M.</div>
-            <div class="signature-title">Direktur Utama RS Immanuel</div>
-        </div>
+
+        <table style="width:100%; margin-top:60px; text-align:center;">
+            <tr>
+                <td style="vertical-align:top;">
+
+                    <!-- QR DISENGAJA TIDAK DITAMPILKAN -->
+
+                    <div style="margin-top:80px; border-top:1px solid #000; width:350px; margin-left:auto; margin-right:auto; padding-top:6px; font-weight:bold;">
+                        dr. DAVID SANTOSO, M.M.
+                    </div>
+
+                    <div style="font-size:14px; margin-top:4px;">
+                        Direktur Utama RS Immanuel
+                    </div>
+
+                </td>
+            </tr>
+        </table>
+
     </div>
+
 </body>
 </html>

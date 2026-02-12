@@ -198,9 +198,14 @@ class ProgressController extends Controller
             /** ===============================================================
              * 🔹 Ambil progres utama
              * =============================================================== */
+            // $progresUtama = KompetensiProgres::where('form_id', $item->form_1_id)
+            //     ->select('id', 'form_id', 'status', 'user_id')
+            //     ->first();
             $progresUtama = KompetensiProgres::where('form_id', $item->form_1_id)
+                ->where('user_id', $asesi_id)
                 ->select('id', 'form_id', 'status', 'user_id')
                 ->first();
+
 
             if ($progresUtama) {
                 $item->status_utama = $progresUtama->status;
@@ -221,6 +226,7 @@ class ProgressController extends Controller
              * 🔹 Ambil progres anak + TITLE (FIXED)
              * =============================================================== */
             $progres = KompetensiProgres::where('parent_form_id', $item->form_1_id)
+                ->where('user_id', $asesi_id)
                 ->select('id', 'form_id', 'status', 'user_id', 'parent_form_id')
                 ->get()
                 ->map(function ($prog) use ($pk_id, $formTitleMap, $daftarTilikMap) {

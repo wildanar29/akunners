@@ -263,7 +263,12 @@ class AsesorController extends Controller
 			// =====================
 			// 2️⃣ Update atau buat progres
 			// =====================
-			$progres = KompetensiProgres::where('form_id', $form->form_1_id)->first();
+			// $progres = KompetensiProgres::where('form_id', $form->form_1_id)->first();
+			$progres = KompetensiProgres::where('form_id', $form->form_1_id)
+				->where('user_id', $form->asesi_id)
+				->whereNull('parent_form_id')
+				->first();
+
 			if ($progres) {
 				$progres->status = 'Approved';
 				$progres->save();

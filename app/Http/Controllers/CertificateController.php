@@ -11,17 +11,22 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use App\Models\KompetensiPk;
 use App\Models\BidangModel;
+use App\Models\UserRole;
 use App\Models\Form6;
+use App\Models\User;
+use App\Models\DataAsesorModel;
 use App\Models\SertifikatPk;
 use App\Models\TranskripNilaiPk;
 use App\Models\ElemenForm3;
 use App\Service\FormService;
 use Carbon\Carbon;
+use Milon\Barcode\DNS2D;
+// use Milon\Barcode\Facades\DNS2DFacade as DNS2D;
+
 
 Carbon::setLocale('id'); // set global
 class CertificateController extends Controller
 {
-    
     protected $formService;
 
     public function __construct(FormService $formService)
@@ -31,13 +36,7 @@ class CertificateController extends Controller
 
     public function generate(Request $request)
     {
-        Log::info("=== START GENERATE SERTIFIKAT ===");
-        Log::debug("Input request:", $request->all());
-
         $form_1_id = $request->input('form_1_id', null);
-
-        Log::debug("Form 1 ID diterima:", ['form_1_id' => $form_1_id]);
-
         // Cek sertifikat existing
         $existing = SertifikatPk::where('form_1_id', $form_1_id)->first();
         if ($existing) {
@@ -51,8 +50,6 @@ class CertificateController extends Controller
 
         $data = ['form_1_id' => $form_1_id];
 
-        // Ambil Form 1
-        Log::info("Mengambil data Form1...");
         $form1 = $this->formService->getParentDataByFormId($data['form_1_id']);
 
         if (!$form1) {
@@ -60,15 +57,9 @@ class CertificateController extends Controller
             return response()->json(['message' => 'Form1 tidak ditemukan'], 404);
         }
 
-        Log::debug("Data Form1:", (array) $form1);
-
-        // Ambil progress
-        Log::info("Mengambil data progress Form1...");
         $progress = $this->formService->getProgresSingleByParentFormId($data['form_1_id']);
-        Log::debug("Progress Form1:", (array) $progress);
 
         $form6Progress = collect($progress)->firstWhere('form_type', 'form_6');
-        Log::debug("Progress Form6 ditemukan:", ['form6Progress' => $form6Progress]);
 
         if (!$form6Progress) {
             Log::warning("FORM 6 belum selesai → form6Progress NULL");
@@ -88,7 +79,9 @@ class CertificateController extends Controller
 
         // Hitung final result
         Log::info("Menghitung final result...");
-        $finalResult = $this->formService->getFinalResultByPkIdAndAsesiId($form1['pk_id'], $form1->asesi_id ?? null);
+        $finalResult = $this->formService
+            ->getFinalResultByPkIdAndAsesiId($form1['pk_id'], $form1->asesi_id ?? null);
+
         Log::debug("Final result:", (array) $finalResult);
 
         $finalOnly = collect($finalResult)->pluck('final')->all();
@@ -98,24 +91,19 @@ class CertificateController extends Controller
         $total   = count($finalOnly);
         $persenK = $total > 0 ? ($jumlahK / $total) * 100 : 0;
 
-        Log::debug("Statistik final:", [
-            'jumlah_K' => $jumlahK,
-            'total'    => $total,
-            'persen_K' => $persenK
-        ]);
 
         $overallFinal = $persenK >= 80 ? 'KOMPETEN' : 'BELUM KOMPETEN';
-        Log::info("Status akhir keseluruhan: {$overallFinal}");
 
         // Bangun data sertifikat
         $kompetensi = KompetensiPk::find($form1['pk_id']);
-        Log::debug("Kompetensi PK:", optional($kompetensi)->toArray() ?? []);
+
 
         if (!$kompetensi) {
             Log::error("Kompetensi PK dengan pk_id {$form1['pk_id']} tidak ditemukan!");
         }
 
         $data['nama']            = strtoupper($form1->asesi_name);
+        $data['nama_asesor']     = strtoupper($form1->asesor_name ?? 'ASESOR');
         $data['tanggal_mulai']   = Carbon::parse($form1->updated_at)->translatedFormat('d F Y');
         $data['tanggal_selesai'] = $form6EndedAt;
         $data['status']          = $overallFinal;
@@ -124,29 +112,79 @@ class CertificateController extends Controller
 
         Log::debug("DATA SERTIFIKAT:", $data);
 
+        
 
         // ======== TRANSAKSI =============
         DB::beginTransaction();
         try {
+
+            Log::info("Membuat transkrip nilai terlebih dahulu...");
+            $this->createTranskripNilai(
+                $form1->pk_id,
+                $form1->asesi_id,
+                $form1->form_1_id
+            );
+
             Log::info("Generate nomor surat...");
             [$nomorUrut, $nomorSurat] = SertifikatPk::generateNomorSurat();
             $data['nomor_surat'] = $nomorSurat;
 
-            Log::debug("Nomor urut / surat:", [
-                'nomor_urut'  => $nomorUrut,
-                'nomor_surat' => $nomorSurat
-            ]);
+            $barcodePayload = [
+                'nomor_surat' => $data['nomor_surat'],
+                'nama'        => $data['nama'],
+                'gelar'       => $data['gelar'],
+                'status'      => $data['status'],
+            ];
+
+            $data['barcode_data'] = json_encode($barcodePayload, JSON_UNESCAPED_UNICODE);
 
             // Buat nama file aman
             $safeNama  = preg_replace('/[^A-Za-z0-9\-]/', '_', $data['nama']);
             $safeNomor = preg_replace('/[^A-Za-z0-9\-]/', '_', $nomorSurat);
             $fileName  = "sertifikat_{$safeNama}_{$safeNomor}.pdf";
 
-            Log::debug("Nama file PDF:", ['fileName' => $fileName]);
-
             $year = Carbon::now()->year;
-            Log::debug("Tahun saat ini:", ['year' => $year]);
             $path = "sertifikat/{$year}/{$fileName}";
+
+            // ================== QR CODE ==================
+            $dns2d = new DNS2D();
+            $dns2d->setStorPath(storage_path('framework/barcodes'));
+
+            // QR Direktur
+            $barcodeDirekturPayload = [
+                'nomor_surat' => $data['nomor_surat'],
+                'nama'        => $data['nama'],
+                'gelar'       => $data['gelar'],
+                'status'      => $data['status'],
+                'penandatangan' => 'Direktur Utama RS Immanuel',
+            ];
+
+            $data['barcode_direktur'] = $dns2d->getBarcodePNG(
+                json_encode($barcodeDirekturPayload, JSON_UNESCAPED_UNICODE),
+                'QRCODE',
+                5,
+                5
+            );
+
+            // QR Asesor
+            $barcodeAsesorPayload = [
+                'nomor_surat' => $data['nomor_surat'],
+                'nama'        => $data['nama'],
+                'asesor'      => $data['nama_asesor'],
+                'pk'          => $data['gelar'],
+                'penandatangan' => 'Asesor Kompetensi',
+            ];
+
+            $data['barcode_asesor'] = $dns2d->getBarcodePNG(
+                json_encode($barcodeAsesorPayload, JSON_UNESCAPED_UNICODE),
+                'QRCODE',
+                5,
+                5
+            );
+            // =====================================================
+
+
+            // =====================================================
 
             // Generate PDF
             Log::info("Membuat file PDF...");
@@ -155,7 +193,6 @@ class CertificateController extends Controller
             // Simpan PDF
             Storage::disk('public')->put($path, $pdf->output());
             Log::info("PDF berhasil disimpan!", ['path' => $path]);
-
 
             // Simpan DB
             Log::info("Menyimpan metadata sertifikat ke DB...");
@@ -174,7 +211,6 @@ class CertificateController extends Controller
             ]);
 
             Log::debug("Data sertifikat tersimpan:", $sertifikat->toArray());
-
 
             // Update Form1
             if ($form1->status === 'Approved') {
@@ -370,7 +406,6 @@ class CertificateController extends Controller
         ]);
     }
 
-
     public function getListSertifikat(Request $request)
     {
         try {
@@ -436,46 +471,181 @@ class CertificateController extends Controller
         }
     }
 
+    // public function getTranskripNilai(Request $request)
+    // {
+    //     // ✅ Validasi
+    //     $validator = Validator::make($request->all(), [
+    //         'pk_id'    => 'required|integer|min:1',
+    //         'asesi_id' => 'required|integer|min:1',
+    //         'form_1_id'=> 'required|integer|min:1',
+    //     ]);
 
-    public function getTranskripNilai(Request $request)
+    //     if ($validator->fails()) {
+    //         return response()->json([
+    //             'status' => 'error',
+    //             'errors' => $validator->errors(),
+    //         ], 422);
+    //     }
+
+    //     $pkId    = $request->input('pk_id');
+    //     $asesiId = $request->input('asesi_id');
+    //     $form1Id = $request->input('form_1_id');
+
+    //     // Cek apakah sudah ada transkrip
+    //     $existing = TranskripNilaiPk::where('pk_id', $pkId)
+    //         ->where('asesi_id', $asesiId)
+    //         ->first();
+
+    //     if ($existing) {
+    //         return response()->json([
+    //             'message' => 'Transkrip nilai sudah dibuat sebelumnya',
+    //             'data'    => $existing,
+    //         ], 400);
+    //     }
+
+    //     // Tentukan ekspresi casting sesuai driver DB
+    //     $driver = DB::getDriverName();
+    //     $orderExpr = $driver === 'mysql'
+    //         ? 'CAST(no_elemen_form_3 AS UNSIGNED)'
+    //         : 'CAST(no_elemen_form_3 AS INTEGER)';
+
+    //     // ✅ Query ambil data nested
+    //     $data = ElemenForm3::with([
+    //         'kukForm3.iukForm3.soalForm7.jawabanForm7' => function ($q) use ($asesiId) {
+    //             $q->where('asesi_id', $asesiId);
+    //         }
+    //     ])
+    //     ->where('pk_id', $pkId)
+    //     ->whereHas('kukForm3.iukForm3.soalForm7.jawabanForm7', function ($q) use ($asesiId) {
+    //         $q->where('asesi_id', $asesiId);
+    //     })
+    //     ->orderByRaw("$orderExpr ASC")
+    //     ->get();
+
+    //     if ($data->isEmpty()) {
+    //         return response()->json([
+    //             'status'  => 'not_found',
+    //             'message' => "Data tidak ditemukan untuk pk_id: $pkId dan asesi_id: $asesiId",
+    //         ], 404);
+    //     }
+
+    //     // ✅ Hitung nilai final hanya di level Elemen
+    //     $elemenFinal = $data->map(function ($elemen) {
+    //         $jumlahKuk = $elemen->kukForm3->count();
+    //         $jumlahK   = 0;
+
+    //         foreach ($elemen->kukForm3 as $kuk) {
+    //             $totalIuk = $kuk->iukForm3->count();
+    //             $jumlahKIuk = 0;
+
+    //             foreach ($kuk->iukForm3 as $iuk) {
+    //                 $totalSoal = $iuk->soalForm7->count();
+    //                 $jumlahKSoal = 0;
+
+    //                 foreach ($iuk->soalForm7 as $soal) {
+    //                     foreach ($soal->jawabanForm7 as $jawaban) {
+    //                         if ($jawaban->keputusan === 'K') {
+    //                             $jumlahKSoal++;
+    //                         }
+    //                     }
+    //                 }
+
+    //                 $iukFinal = ($totalSoal > 0 && ($jumlahKSoal / $totalSoal) >= 0.5) ? 'K' : 'BK';
+    //                 if ($iukFinal === 'K') $jumlahKIuk++;
+    //             }
+
+    //             $kukFinal = ($totalIuk > 0 && ($jumlahKIuk / $totalIuk) >= 0.5) ? 'K' : 'BK';
+    //             if ($kukFinal === 'K') $jumlahK++;
+    //         }
+
+    //         $elemenFinal = ($jumlahKuk > 0 && ($jumlahK / $jumlahKuk) >= 0.5) ? 'K' : 'BK';
+
+    //         return [
+    //             'no_elemen_form_3' => $elemen->no_elemen_form_3,
+    //             'nama_elemen'      => $elemen->isi_elemen,
+    //             'final'            => $elemenFinal,
+    //         ];
+    //     });
+
+    //     // Ambil info tambahan
+    //     $form1 = BidangModel::find($form1Id);
+    //     $asesiName = $form1 ? strtoupper($form1->asesi_name) : '-';
+    //     $kompetensi = KompetensiPk::find($pkId);
+    //     // Generate nomor dokumen
+    //     [$nomorUrut, $nomorDokumen] = TranskripNilaiPk::generateNomorDokumen();
+
+    //     // Buat nama file aman
+    //     $safeNama  = preg_replace('/[^A-Za-z0-9\-]/', '_', $asesiName);
+    //     $safeNomor = preg_replace('/[^A-Za-z0-9\-]/', '_', $nomorDokumen);
+    //     $fileName  = "transkrip_{$safeNama}_{$safeNomor}.pdf";
+    //     $path = 'transkrip/' . $fileName;
+
+    //     // ✅ Pastikan data dilempar sebagai array
+    //     $pdf = Pdf::loadView('transkrip.nilai', [
+    //         'nama'        => $asesiName,
+    //         'gelar'       => $kompetensi->nama_level ?? '-',
+    //         'data'        => $elemenFinal->toArray(),
+    //         'nomor'       => $nomorDokumen,
+    //         'asesor_name' => $form1->asesor_name ?? '-', // ✅ kirim ke view
+    //     ]);
+
+
+    //     DB::beginTransaction();
+    //     try {
+    //         // Simpan file PDF
+    //         Storage::disk('public')->put($path, $pdf->output());
+
+    //         // Simpan metadata
+    //         $transkrip = TranskripNilaiPk::create([
+    //             'asesi_id'        => $asesiId,
+    //             'form_1_id'       => $form1->form_1_id,
+    //             'pk_id'           => $pkId,
+    //             'nomor_urut'      => $nomorUrut,
+    //             'nomor_dokumen'   => $nomorDokumen,
+    //             'nama'            => $asesiName,
+    //             'gelar'           => $kompetensi->nama_level ?? '-',
+    //             'status'          => 'Selesai',
+    //             'tanggal_mulai'   => $form1 ? $form1->updated_at : Carbon::now(),
+    //             'tanggal_selesai' => Carbon::now(),
+    //             'file_path'       => $path,
+    //         ]);
+
+    //         DB::commit();
+
+    //         return response()->json([
+    //             'message'      => 'Transkrip nilai berhasil disimpan',
+    //             'preview_url'  => url("storage/{$path}"),
+    //             'data'         => $transkrip,
+    //             'nomor_dokumen'=> $nomorDokumen,
+    //             'asesor_name' => $form1->asesor_name ?? '-', // tambah ini
+    //         ]);
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
+    //         if (Storage::disk('public')->exists($path)) {
+    //             Storage::disk('public')->delete($path);
+    //         }
+    //         return response()->json([
+    //             'message' => 'Gagal menyimpan transkrip nilai',
+    //             'error'   => $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
+
+    private function createTranskripNilai(int $pkId, int $asesiId, int $form1Id)
     {
-        // ✅ Validasi
-        $validator = Validator::make($request->all(), [
-            'pk_id'    => 'required|integer|min:1',
-            'asesi_id' => 'required|integer|min:1',
-            'form_1_id'=> 'required|integer|min:1',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        $pkId    = $request->input('pk_id');
-        $asesiId = $request->input('asesi_id');
-        $form1Id = $request->input('form_1_id');
-
-        // Cek apakah sudah ada transkrip
         $existing = TranskripNilaiPk::where('pk_id', $pkId)
             ->where('asesi_id', $asesiId)
             ->first();
 
         if ($existing) {
-            return response()->json([
-                'message' => 'Transkrip nilai sudah dibuat sebelumnya',
-                'data'    => $existing,
-            ], 400);
+            throw new \Exception('Transkrip nilai sudah dibuat sebelumnya');
         }
 
-        // Tentukan ekspresi casting sesuai driver DB
         $driver = DB::getDriverName();
         $orderExpr = $driver === 'mysql'
             ? 'CAST(no_elemen_form_3 AS UNSIGNED)'
             : 'CAST(no_elemen_form_3 AS INTEGER)';
 
-        // ✅ Query ambil data nested
         $data = ElemenForm3::with([
             'kukForm3.iukForm3.soalForm7.jawabanForm7' => function ($q) use ($asesiId) {
                 $q->where('asesi_id', $asesiId);
@@ -489,14 +659,15 @@ class CertificateController extends Controller
         ->get();
 
         if ($data->isEmpty()) {
-            return response()->json([
-                'status'  => 'not_found',
-                'message' => "Data tidak ditemukan untuk pk_id: $pkId dan asesi_id: $asesiId",
-            ], 404);
+            throw new \Exception("Data elemen tidak ditemukan");
         }
 
-        // ✅ Hitung nilai final hanya di level Elemen
+        // ===========================
+        // HITUNG NILAI FINAL
+        // ===========================
+
         $elemenFinal = $data->map(function ($elemen) {
+
             $jumlahKuk = $elemen->kukForm3->count();
             $jumlahK   = 0;
 
@@ -524,81 +695,116 @@ class CertificateController extends Controller
                 if ($kukFinal === 'K') $jumlahK++;
             }
 
-            $elemenFinal = ($jumlahKuk > 0 && ($jumlahK / $jumlahKuk) >= 0.5) ? 'K' : 'BK';
+            $status = ($jumlahKuk > 0 && ($jumlahK / $jumlahKuk) >= 0.5)
+                ? 'KOMPETEN'
+                : 'BELUM KOMPETEN';
+
 
             return [
                 'no_elemen_form_3' => $elemen->no_elemen_form_3,
                 'nama_elemen'      => $elemen->isi_elemen,
-                'final'            => $elemenFinal,
+                'final'            => $status,
             ];
         });
 
-        // Ambil info tambahan
         $form1 = BidangModel::find($form1Id);
-        $asesiName = $form1 ? strtoupper($form1->asesi_name) : '-';
+        $asesiName  = strtoupper($form1->asesi_name ?? '-');
+        $asesorName = strtoupper($form1->asesor_name ?? 'ASESOR');
+        Log::info($form1);
+        $userAsesor = DataAsesorModel::where('user_id', $form1->asesor_id)->first();
+        Log::info('ini asesor');
+        Log::info($userAsesor);
+        $asesorReg = $userAsesor->no_reg;
         $kompetensi = KompetensiPk::find($pkId);
-        // Generate nomor dokumen
+
         [$nomorUrut, $nomorDokumen] = TranskripNilaiPk::generateNomorDokumen();
 
-        // Buat nama file aman
+        $dns2d = new DNS2D();
+        $dns2d->setStorPath(storage_path('framework/barcodes'));
+
+        // ===============================
+        // QR ASESOR
+        // ===============================
+        $barcodeAsesor = $dns2d->getBarcodePNG(
+            json_encode([
+                'nomor_dokumen' => $nomorDokumen,
+                'nama_asesi'    => $asesiName,
+                'asesor'        => $asesorName,
+                'kompetensi'    => $kompetensi->nama_level ?? '-',
+                'jenis'         => 'Transkrip Nilai',
+                'penandatangan' => 'Asesor Kompetensi'
+            ], JSON_UNESCAPED_UNICODE),
+            'QRCODE',
+            5,
+            5
+        );
+
+        // ===============================
+        // BIDANG (DUMMY DATA SEMENTARA)
+        // ===============================
+
+        // 🔥 Data dummy sementara
+        // 🔥 Data dummy sementara
+        $bidangName       = 'SRI WAHYUNI, S.Kep., Ns., M.Kep.';
+        $bidangJabatan    = 'Kepala Bidang Keperawatan';
+        $bidangReg        = 'REG-KEP-001-2025';
+
+        // $asesorReg        = 'REG-ASESOR-015-2025';
+
+
+        $barcodeBidang = $dns2d->getBarcodePNG(
+            json_encode([
+                'nomor_dokumen' => $nomorDokumen,
+                'nama_asesi'    => $asesiName,
+                'kompetensi'    => $kompetensi->nama_level ?? '-',
+                'bidang'        => $bidangName,
+                'jabatan'       => $bidangJabatan,
+                'jenis'         => 'Transkrip Nilai',
+                'penandatangan' => 'Bidang Keperawatan'
+            ], JSON_UNESCAPED_UNICODE),
+            'QRCODE',
+            5,
+            5
+        );
+
+        // ===============================
+
         $safeNama  = preg_replace('/[^A-Za-z0-9\-]/', '_', $asesiName);
         $safeNomor = preg_replace('/[^A-Za-z0-9\-]/', '_', $nomorDokumen);
         $fileName  = "transkrip_{$safeNama}_{$safeNomor}.pdf";
         $path = 'transkrip/' . $fileName;
 
-        // ✅ Pastikan data dilempar sebagai array
         $pdf = Pdf::loadView('transkrip.nilai', [
-            'nama'        => $asesiName,
-            'gelar'       => $kompetensi->nama_level ?? '-',
-            'data'        => $elemenFinal->toArray(),
-            'nomor'       => $nomorDokumen,
-            'asesor_name' => $form1->asesor_name ?? '-', // ✅ kirim ke view
+            'nama'            => $asesiName,
+            'gelar'           => $kompetensi->nama_level ?? '-',
+            'data'            => $elemenFinal->toArray(),
+            'nomor'           => $nomorDokumen,
+            'asesor_name'     => $asesorName,
+            'asesor_reg'      => $asesorReg,
+            'bidang_name'     => $bidangName,
+            'bidang_jabatan'  => $bidangJabatan,
+            'bidang_reg'      => $bidangReg,
+            'barcode_asesor'  => $barcodeAsesor,
+            'barcode_bidang'  => $barcodeBidang,
         ]);
 
 
-        DB::beginTransaction();
-        try {
-            // Simpan file PDF
-            Storage::disk('public')->put($path, $pdf->output());
+        Storage::disk('public')->put($path, $pdf->output());
 
-            // Simpan metadata
-            $transkrip = TranskripNilaiPk::create([
-                'asesi_id'        => $asesiId,
-                'form_1_id'       => $form1->form_1_id,
-                'pk_id'           => $pkId,
-                'nomor_urut'      => $nomorUrut,
-                'nomor_dokumen'   => $nomorDokumen,
-                'nama'            => $asesiName,
-                'gelar'           => $kompetensi->nama_level ?? '-',
-                'status'          => 'Selesai',
-                'tanggal_mulai'   => $form1 ? $form1->updated_at : Carbon::now(),
-                'tanggal_selesai' => Carbon::now(),
-                'file_path'       => $path,
-            ]);
-
-            DB::commit();
-
-            return response()->json([
-                'message'      => 'Transkrip nilai berhasil disimpan',
-                'preview_url'  => url("storage/{$path}"),
-                'data'         => $transkrip,
-                'nomor_dokumen'=> $nomorDokumen,
-                'asesor_name' => $form1->asesor_name ?? '-', // tambah ini
-            ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            if (Storage::disk('public')->exists($path)) {
-                Storage::disk('public')->delete($path);
-            }
-            return response()->json([
-                'message' => 'Gagal menyimpan transkrip nilai',
-                'error'   => $e->getMessage(),
-            ], 500);
-        }
+        return TranskripNilaiPk::create([
+            'asesi_id'        => $asesiId,
+            'form_1_id'       => $form1Id,
+            'pk_id'           => $pkId,
+            'nomor_urut'      => $nomorUrut,
+            'nomor_dokumen'   => $nomorDokumen,
+            'nama'            => $asesiName,
+            'gelar'           => $kompetensi->nama_level ?? '-',
+            'status'          => 'Selesai',
+            'tanggal_mulai'   => $form1->updated_at ?? Carbon::now(),
+            'tanggal_selesai' => Carbon::now(),
+            'file_path'       => $path,
+        ]);
     }
-
-
-
 
 
 

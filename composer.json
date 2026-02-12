@@ -19,6 +19,7 @@
         "laravel/tinker": "^2.10",
         "league/flysystem": "^3.29",
         "league/flysystem-local": "^3.29",
+        "milon/barcode": "^12.0",
         "predis/predis": "^2.3",
         "symfony/http-client": "^7.3",
         "symfony/postmark-mailer": "^7.1",

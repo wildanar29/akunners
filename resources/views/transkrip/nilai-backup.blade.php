@@ -91,6 +91,8 @@
             text-align: right;
         }
 
+        /* SIGNATURE AREA */
+
         .signature-wrapper {
             width: 100%;
             margin-top: 70px;
@@ -114,8 +116,8 @@
         }
 
         .signature-title {
-            font-size: 12px;
-            font-weight: bold;
+            font-size: 12px;      /* Lebih besar */
+            font-weight: bold;    /* Bold */
             margin-bottom: 8px;
         }
 
@@ -147,12 +149,11 @@
     </div>
 
     <table class="data-table">
-        <thead> 
+        <thead>
             <tr>
-                <th style="width:20%;">NO ELEMEN</th>
-                <th style="width:80%;">JUDUL ELEMEN KOMPETENSI</th>
-
-                {{-- <th style="width:20%;">Status Kompetensi</th> --}}
+                <th style="width:15%;">No. Elemen</th>
+                <th style="width:65%;">Kompetensi</th>
+                <th style="width:20%;">Status Kompetensi</th>
             </tr>
         </thead>
         <tbody>
@@ -160,8 +161,7 @@
             <tr>
                 <td style="text-align:center">{{ $row['no_elemen_form_3'] }}</td>
                 <td>{{ $row['nama_elemen'] }}</td>
-
-                {{-- <td style="text-align:center">{{ $row['final'] }}</td> --}}
+                <td style="text-align:center">{{ $row['final'] }}</td>
             </tr>
             @endforeach
         </tbody>
