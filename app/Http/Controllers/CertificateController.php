@@ -364,6 +364,36 @@ class CertificateController extends Controller
         ]);
     }
 
+    public function approveHumasRSI(Request $request, $form_1_id)
+    {
+        // Update status Form1 jadi Completed
+        $form1 = $this->formService->getParentDataByFormId($form_1_id);
+
+        if (!$form1) {
+            return response()->json(['message' => 'Form1 tidak ditemukan'], 404);
+        }
+
+        $this->formService->updateForm1($form_1_id, 'Completed');
+        $this->formService->updateProgresDanTrack(
+            $form_1_id,
+            'form_1',
+            'Completed',
+            Auth::id(),
+            'Sertifikat Asesmen telah disetujui oleh HUMAS RSI'
+        );
+
+        // Kirim notifikasi ke user
+        $this->formService->KirimNotifikasiKeUser(
+            $this->formService->findUser($form1->asesi_id),
+            'Sertifikat Asesmen',
+            'Sertifikat sudah dapat diunduh.'
+        );
+
+        return response()->json([
+            'message' => 'Form1 dan progres berhasil diupdate ke Completed'
+        ]);
+    }
+    
     public function getSertifikatByPkId($pk_id)
     {
         $userId = auth()->id();
