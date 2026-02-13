@@ -13,6 +13,7 @@ use App\Models\KompetensiPk;
 use App\Models\BidangModel;
 use App\Models\UserRole;
 use App\Models\Form6;
+use App\Models\KompetensiProgres;
 use App\Models\User;
 use App\Models\DataAsesorModel;
 use App\Models\SertifikatPk;
@@ -211,25 +212,35 @@ class CertificateController extends Controller
             ]);
 
             Log::debug("Data sertifikat tersimpan:", $sertifikat->toArray());
+            // $statusForm1 = $this->formService
+            //     ->getStatusByParentFormIdAndType($data['form_1_id'], 'form_1')
+            //     ->first();
 
+            $progres = KompetensiProgres::where('form_id', $data['form_1_id'])
+				->where('user_id', $form1->asesi_id)
+				->whereNull('parent_form_id')
+				->first();
+            
+            Log::info($progres);
             // Update Form1
-            if ($form1->status === 'Approved') {
+            if ($progres->status === 'Approved') {
                 Log::info("Update progress Form1 jadi Completed...");
 
-                $this->formService->updateForm1($form1->form_1_id, 'Completed');
-                $this->formService->updateProgresDanTrack(
-                    $form1->form_1_id,
-                    'form_1',
-                    'Completed',
-                    Auth::id(),
-                    'Sertifikat Asesmen dibuat dan dikirim ke Asesi'
-                );
+                // ini nnti dipindahin ke HUMAS
+                // $this->formService->updateForm1($form1->form_1_id, 'Completed');
+                // $this->formService->updateProgresDanTrack(
+                //     $form1->form_1_id,
+                //     'form_1',
+                //     'Completed',
+                //     Auth::id(),
+                //     'Sertifikat Asesmen dibuat dan dikirim ke Asesi'
+                // );
 
-                $this->formService->KirimNotifikasiKeUser(
-                    $this->formService->findUser($form1->asesi_id),
-                    'Sertifikat Asesmen',
-                    'Sertifikat sudah dapat diunduh.'
-                );
+                // $this->formService->KirimNotifikasiKeUser(
+                //     $this->formService->findUser($form1->asesi_id),
+                //     'Sertifikat Asesmen',
+                //     'Sertifikat sudah dapat diunduh.'
+                // );
             }
 
             DB::commit();
@@ -355,10 +366,9 @@ class CertificateController extends Controller
 
     public function getSertifikatByPkId($pk_id)
     {
-        // Ambil user yang sedang login
         $userId = auth()->id();
 
-        // Validasi pk_id
+        // ================= VALIDASI PK_ID =================
         $validator = Validator::make(
             ['pk_id' => $pk_id],
             ['pk_id' => 'required|integer|exists:kompetensi_pk,pk_id']
@@ -371,7 +381,34 @@ class CertificateController extends Controller
             ], 422);
         }
 
-        // Ambil 1 data sertifikat (bukan array)
+
+        // ================= AMBIL FORM 1 =================
+        // $form1 = $this->formService
+        //     ->getForm1ByAsesiIdAndPkId($userId,$pk_id);
+
+        // if (!$form1) {
+        //     return response()->json([
+        //         'message' => 'Form 1 tidak ditemukan'
+        //     ], 404);
+        // }
+        $form1 = BidangModel::where('asesi_id', $userId)
+                    ->where('pk_id', $pk_id)
+                    ->first();
+
+        $progres = KompetensiProgres::where('form_id', $form1->form_1_id)
+            ->where('user_id', $form1->asesi_id)
+            ->whereNull('parent_form_id')
+            ->first();
+
+        // ================= CEK STATUS FORM 1 =================
+        if (!in_array($progres->status, ['Completed'])) {
+            return response()->json([
+                'message' => 'Sertifikat belum tersedia karena proses asesmen belum selesai',
+                'status_form_1' => $form1->status
+            ], 400);
+        }
+
+        // ================= AMBIL SERTIFIKAT =================
         $sertifikat = SertifikatPk::where('asesi_id', $userId)
             ->where('pk_id', $pk_id)
             ->first();
@@ -382,7 +419,6 @@ class CertificateController extends Controller
             ], 404);
         }
 
-        // Format object data
         $previewUrl = url('storage/' . $sertifikat->file_path);
 
         $data = [
@@ -399,12 +435,12 @@ class CertificateController extends Controller
             'preview_url'     => $previewUrl,
         ];
 
-
         return response()->json([
             'message' => 'Detail sertifikat berhasil diambil',
             'data'    => $data,
         ]);
     }
+
 
     public function getListSertifikat(Request $request)
     {

@@ -141,7 +141,7 @@
     <div class="nomor-surat">No: {{ $nomor }}</div>
 
     <div class="main-content">
-        <h2>Transkrip Nilai</h2>
+        <h2>Daftar Kompetensi</h2>
         <p><strong>Nama:</strong> {{ $nama }}</p>
         <p><strong>Kompetensi:</strong> {{ $gelar }}</p>
     </div>

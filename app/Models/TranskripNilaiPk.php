@@ -62,7 +62,7 @@ class TranskripNilaiPk extends Model
         $tahun = date('Y');
         $bulan = $bulanRomawi[date('n')];
 
-        // ambil nomor urut terakhir dari tahun berjalan
+        // Ambil nomor urut terakhir di tahun berjalan
         $last = self::whereYear('created_at', $tahun)
             ->orderBy('nomor_urut', 'desc')
             ->first();
@@ -70,9 +70,10 @@ class TranskripNilaiPk extends Model
         $nomorUrut = $last ? $last->nomor_urut + 1 : 1;
         $nomorUrutStr = str_pad($nomorUrut, 3, '0', STR_PAD_LEFT);
 
-        // format nomor dokumen
-        $nomorDokumen = "{$nomorUrutStr}/TNP/{$bulan}/{$tahun}";
+        // Format nomor dokumen khusus Transkrip Nilai
+        $nomorDokumen = "{$nomorUrutStr}/TNP-RSI/{$bulan}/{$tahun}";
 
         return [$nomorUrut, $nomorDokumen];
     }
+
 }
