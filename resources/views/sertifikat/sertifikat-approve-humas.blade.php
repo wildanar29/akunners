@@ -126,8 +126,9 @@
             font-size: 1.8vw;
         }
 
+        /* FOOTER */
         .footer {
-            margin-top: 6vw;
+            margin-top: 4vw; /* lebih dekat dari sebelumnya */
             text-align: center;
             width: 100%;
         }
@@ -175,12 +176,29 @@
             display:flex; gap:10px;
         }
 
+        /* QR Styling */
         .qr-img {
-            margin-bottom: 1vw;
+            margin-top: 0.5vw;     /* tidak terlalu jauh dari atas */
+            margin-bottom: 0.8vw;  /* jarak kecil sebelum tanda tangan */
+        }
+
+        .ttd-line {
+            border-top: 1px solid #000;
+            width: 350px;
+            margin-left: auto;
+            margin-right: auto;
+            padding-top: 6px;
+            font-weight: bold;
+        }
+
+        .jabatan {
+            font-size: 14px;
+            margin-top: 4px;
         }
 
     </style>
 </head>
+
 <body>
 
     <div class="ornament top-left"></div>
@@ -219,24 +237,23 @@
         </p>
     </div>
 
-    <!-- FOOTER DIREKTUR DENGAN QR -->
+    <!-- FOOTER DIREKTUR -->
     <div class="footer">
-        <table style="width:100%; margin-top:60px; text-align:center;">
+        <table style="width:100%; text-align:center;">
             <tr>
-                <td style="vertical-align:top;">
+                <td>
 
-                    {{-- QR CODE DIREKTUR --}}
                     @if(!empty($barcode_direktur))
                         <div class="qr-img">
-                            <img src="data:image/png;base64,{{ $barcode_direktur }}" width="120">
+                            <img src="data:image/png;base64,{{ $barcode_direktur }}" width="110">
                         </div>
                     @endif
 
-                    <div style="border-top:1px solid #000; width:350px; margin-left:auto; margin-right:auto; padding-top:6px; font-weight:bold;">
+                    <div class="ttd-line">
                         dr. DAVID SANTOSO, M.M.
                     </div>
 
-                    <div style="font-size:14px; margin-top:4px;">
+                    <div class="jabatan">
                         Direktur Utama RS Immanuel
                     </div>
 
