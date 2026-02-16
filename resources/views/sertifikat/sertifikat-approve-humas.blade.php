@@ -244,16 +244,21 @@
                 <td>
 
                     @if(!empty($barcode_direktur))
-                        <div class="qr-img">
-                            <img src="data:image/png;base64,{{ $barcode_direktur }}" width="110">
+                        <div style="padding-bottom:12px;">
+                            <img src="data:image/png;base64,{{ $barcode_direktur }}" width="105">
                         </div>
                     @endif
 
-                    <div class="ttd-line">
+                    <div style="
+                        border-top:1px solid #000;
+                        width:350px;
+                        margin:15px auto 0 auto;
+                        padding-top:6px;
+                        font-weight:bold;">
                         dr. DAVID SANTOSO, M.M.
                     </div>
 
-                    <div class="jabatan">
+                    <div style="font-size:14px; margin-top:4px;">
                         Direktur Utama RS Immanuel
                     </div>
 
@@ -261,6 +266,7 @@
             </tr>
         </table>
     </div>
+
 
 </body>
 </html>
