@@ -474,15 +474,9 @@ class CertificateController extends Controller
             // ==========================
             $sertifikat->update([
                 'file_path'    => $path,
-                'approved_at'  => Carbon::now(),
-                'approved_by'  => auth()->id(),
+                'updated_at'  => Carbon::now(),
             ]);
 
-            $transkrip->update([
-                'status'       => 'Approved',
-                'approved_at'  => Carbon::now(),
-                'approved_by'  => auth()->id(),
-            ]);
 
             // ==========================
             // Update Status Form & Progress
@@ -493,7 +487,7 @@ class CertificateController extends Controller
                 $form_1_id,
                 'form_1',
                 'Completed',
-                auth()->id(),
+                $form1->asesi_id,
                 'Sertifikat & Transkrip telah disetujui HUMAS dan ditandatangani QR Code'
             );
 
