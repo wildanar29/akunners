@@ -400,7 +400,7 @@ class CertificateController extends Controller
             // ==========================
             // Ambil Transkrip Nilai
             // ==========================
-            $transkrip = TranskripNilaiAkunners::where('form_1_id', $form_1_id)->first();
+            $transkrip = TranskripNilaiPk::where('form_1_id', $form_1_id)->first();
 
             if (!$transkrip) {
                 return response()->json(['message' => 'Transkrip nilai belum dibuat'], 400);
