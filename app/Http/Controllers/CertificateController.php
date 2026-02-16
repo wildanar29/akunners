@@ -418,7 +418,7 @@ class CertificateController extends Controller
                 'gelar'        => $sertifikat->gelar,
                 'status'       => $sertifikat->status,
                 'penandatangan'=> 'Direktur Utama RS Immanuel',
-                'approved_at'  => now()->toDateTimeString(),
+                'approved_at'  => Carbon::now()->toDateTimeString(),
             ];
 
             $barcodeAsesorPayload = [
@@ -427,7 +427,7 @@ class CertificateController extends Controller
                 'asesor'       => strtoupper($form1->asesor_name ?? 'ASESOR'),
                 'pk'           => $sertifikat->gelar,
                 'penandatangan'=> 'Asesor Kompetensi',
-                'approved_at'  => now()->toDateTimeString(),
+                'approved_at'  => Carbon::now()->toDateTimeString(),
             ];
 
             $data = [
@@ -474,13 +474,13 @@ class CertificateController extends Controller
             // ==========================
             $sertifikat->update([
                 'file_path'    => $path,
-                'approved_at'  => now(),
+                'approved_at'  => Carbon::now(),
                 'approved_by'  => auth()->id(),
             ]);
 
             $transkrip->update([
                 'status'       => 'Approved',
-                'approved_at'  => now(),
+                'approved_at'  => Carbon::now(),
                 'approved_by'  => auth()->id(),
             ]);
 
