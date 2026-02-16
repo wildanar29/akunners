@@ -373,36 +373,165 @@ class CertificateController extends Controller
     // }
     public function approveHumasRSI(Request $request, $form_1_id)
     {
+        Log::info("HUMAS RSI approve sertifikat form_1_id: {$form_1_id}");
 
-        Log::info("HUMAS RSI menyetujui sertifikat untuk form_1_id: {$form_1_id}");
-        // Update status Form1 jadi Completed
-        $form1 = $this->formService->getParentDataByFormId($form_1_id);
+        DB::beginTransaction();
 
-        if (!$form1) {
-            return response()->json(['message' => 'Form1 tidak ditemukan'], 404);
+        try {
+
+            // ==========================
+            // Ambil Form1
+            // ==========================
+            $form1 = $this->formService->getParentDataByFormId($form_1_id);
+
+            if (!$form1) {
+                return response()->json(['message' => 'Form1 tidak ditemukan'], 404);
+            }
+
+            // ==========================
+            // Ambil Data Sertifikat
+            // ==========================
+            $sertifikat = SertifikatPk::where('form_1_id', $form_1_id)->first();
+
+            if (!$sertifikat) {
+                return response()->json(['message' => 'Sertifikat belum digenerate'], 400);
+            }
+
+            // ==========================
+            // Ambil Transkrip Nilai
+            // ==========================
+            $transkrip = TranskripNilaiAkunners::where('form_1_id', $form_1_id)->first();
+
+            if (!$transkrip) {
+                return response()->json(['message' => 'Transkrip nilai belum dibuat'], 400);
+            }
+
+            // ==========================
+            // Siapkan Data QR
+            // ==========================
+            $dns2d = new DNS2D();
+            $dns2d->setStorPath(storage_path('framework/barcodes'));
+
+            $barcodeDirekturPayload = [
+                'nomor_surat'  => $sertifikat->nomor_surat,
+                'nama'         => $sertifikat->nama,
+                'gelar'        => $sertifikat->gelar,
+                'status'       => $sertifikat->status,
+                'penandatangan'=> 'Direktur Utama RS Immanuel',
+                'approved_at'  => now()->toDateTimeString(),
+            ];
+
+            $barcodeAsesorPayload = [
+                'nomor_surat'  => $sertifikat->nomor_surat,
+                'nama'         => $sertifikat->nama,
+                'asesor'       => strtoupper($form1->asesor_name ?? 'ASESOR'),
+                'pk'           => $sertifikat->gelar,
+                'penandatangan'=> 'Asesor Kompetensi',
+                'approved_at'  => now()->toDateTimeString(),
+            ];
+
+            $data = [
+                'nama'            => $sertifikat->nama,
+                'nama_asesor'     => strtoupper($form1->asesor_name ?? 'ASESOR'),
+                'tanggal_mulai'   => Carbon::parse($sertifikat->tanggal_mulai)->translatedFormat('d F Y'),
+                'tanggal_selesai' => $sertifikat->tanggal_selesai
+                                        ? Carbon::parse($sertifikat->tanggal_selesai)->translatedFormat('d F Y')
+                                        : null,
+                'status'          => $sertifikat->status,
+                'gelar'           => $sertifikat->gelar,
+                'nomor_surat'     => $sertifikat->nomor_surat,
+
+                // QR CODE
+                'barcode_direktur' => $dns2d->getBarcodePNG(
+                    json_encode($barcodeDirekturPayload, JSON_UNESCAPED_UNICODE),
+                    'QRCODE',
+                    5,
+                    5
+                ),
+                'barcode_asesor' => $dns2d->getBarcodePNG(
+                    json_encode($barcodeAsesorPayload, JSON_UNESCAPED_UNICODE),
+                    'QRCODE',
+                    5,
+                    5
+                ),
+            ];
+
+            // ==========================
+            // Regenerate PDF dengan QR
+            // ==========================
+            $year = Carbon::now()->year;
+            $safeNama  = preg_replace('/[^A-Za-z0-9\-]/', '_', $sertifikat->nama);
+            $safeNomor = preg_replace('/[^A-Za-z0-9\-]/', '_', $sertifikat->nomor_surat);
+            $fileName  = "sertifikat_{$safeNama}_{$safeNomor}.pdf";
+            $path      = "sertifikat/{$year}/{$fileName}";
+
+            $pdf = Pdf::loadView('sertifikat.keperawatan', $data);
+
+            Storage::disk('public')->put($path, $pdf->output());
+
+            // ==========================
+            // Update Database
+            // ==========================
+            $sertifikat->update([
+                'file_path'    => $path,
+                'approved_at'  => now(),
+                'approved_by'  => auth()->id(),
+            ]);
+
+            $transkrip->update([
+                'status'       => 'Approved',
+                'approved_at'  => now(),
+                'approved_by'  => auth()->id(),
+            ]);
+
+            // ==========================
+            // Update Status Form & Progress
+            // ==========================
+            $this->formService->updateForm1($form_1_id, 'Completed');
+
+            $this->formService->updateProgresDanTrack(
+                $form_1_id,
+                'form_1',
+                'Completed',
+                auth()->id(),
+                'Sertifikat & Transkrip telah disetujui HUMAS dan ditandatangani QR Code'
+            );
+
+            // ==========================
+            // Kirim Notifikasi
+            // ==========================
+            $this->formService->KirimNotifikasiKeUser(
+                $this->formService->findUser($form1->asesi_id),
+                'Sertifikat Asesmen',
+                'Sertifikat sudah disetujui dan dapat diunduh.'
+            );
+
+            DB::commit();
+
+            Log::info("=== APPROVE HUMAS BERHASIL ===");
+
+            return response()->json([
+                'message'     => 'Sertifikat & Transkrip berhasil di-approve dan ditandatangani QR',
+                'preview_url' => url("storage/{$path}")
+            ]);
+
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+
+            Log::error("ERROR APPROVE HUMAS:", [
+                'message' => $e->getMessage(),
+                'trace'   => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'message' => 'Gagal approve sertifikat',
+                'error'   => $e->getMessage(),
+            ], 500);
         }
-
-        $this->formService->updateForm1($form_1_id, 'Completed');
-        $this->formService->updateProgresDanTrack(
-            $form_1_id,
-            'form_1',
-            'Completed',
-            $form1->asesi_id,
-            'Sertifikat Asesmen telah disetujui oleh HUMAS RSI'
-        );
-
-        // Kirim notifikasi ke user
-        $this->formService->KirimNotifikasiKeUser(
-            $this->formService->findUser($form1->asesi_id),
-            'Sertifikat Asesmen',
-            'Sertifikat sudah dapat diunduh.'
-        );
-
-        return response()->json([
-            'message' => 'Form1 dan progres berhasil diupdate ke Completed'
-        ]);
     }
-    
+
+        
     public function getSertifikatByPkId($pk_id)
     {
         $userId = auth()->id();
