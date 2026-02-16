@@ -373,6 +373,8 @@ class CertificateController extends Controller
     // }
     public function approveHumasRSI(Request $request, $form_1_id)
     {
+
+        Log::info("HUMAS RSI menyetujui sertifikat untuk form_1_id: {$form_1_id}");
         // Update status Form1 jadi Completed
         $form1 = $this->formService->getParentDataByFormId($form_1_id);
 
