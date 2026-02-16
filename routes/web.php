@@ -297,11 +297,12 @@ $router->get('/sertifikat/get/{pk_id}', 'CertificateController@getSertifikatByPk
 $router->get('/sertifikat/list', 'CertificateController@getListSertifikat');
 $router->post('/sertifikat/transkrip-nilai', 'CertificateController@getTranskripNilai');
 
-$router->post('/sertifikat/approve-humas/{form_1_id}', 'CertificateController@approveHumasRSI');
+
 //Notifikasi 
 $router->get('/send-notification-to-bidang', action: 'NotificationController@notifikasiPengajuankeBidang');
 });// buat Authentikasi
 
+$router->post('/sertifikat/approve-humas/{form_1_id}', 'CertificateController@approveHumasRSI');
 
 $router->post('/user/update-role', 'BidangController@updateUserRole');
 
