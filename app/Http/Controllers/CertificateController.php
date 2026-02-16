@@ -387,7 +387,7 @@ class CertificateController extends Controller
             $form_1_id,
             'form_1',
             'Completed',
-            Auth::id(),
+            $form1->asesi_id,
             'Sertifikat Asesmen telah disetujui oleh HUMAS RSI'
         );
 
