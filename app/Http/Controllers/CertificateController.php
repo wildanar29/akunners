@@ -906,6 +906,7 @@ class CertificateController extends Controller
         });
 
         $form1 = BidangModel::find($form1Id);
+        $nikAsesi = User::find($form1->asesi_id)->nik ?? '-';
         $asesiName  = strtoupper($form1->asesi_name ?? '-');
         $asesorName = strtoupper($form1->asesor_name ?? 'ASESOR');
         Log::info($form1);
@@ -930,7 +931,8 @@ class CertificateController extends Controller
                 'asesor'        => $asesorName,
                 'kompetensi'    => $kompetensi->nama_level ?? '-',
                 'jenis'         => 'Transkrip Nilai',
-                'penandatangan' => 'Asesor Kompetensi'
+                'penandatangan' => 'Asesor Kompetensi',
+                'nik_asesi'     => $nikAsesi
             ], JSON_UNESCAPED_UNICODE),
             'QRCODE',
             5,
@@ -984,6 +986,7 @@ class CertificateController extends Controller
             'bidang_reg'      => $bidangReg,
             'barcode_asesor'  => $barcodeAsesor,
             'barcode_bidang'  => $barcodeBidang,
+            'nik_asesi'       => $nikAsesi
         ]);
 
 

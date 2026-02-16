@@ -143,8 +143,10 @@
     <div class="main-content">
         <h2>Daftar Kompetensi</h2>
         <p><strong>Nama:</strong> {{ $nama }}</p>
+        <p><strong>NIK:</strong> {{ $nik_asesi ?? '-' }}</p>
         <p><strong>Kompetensi:</strong> {{ $gelar }}</p>
     </div>
+
 
     <table class="data-table">
         <thead> 
