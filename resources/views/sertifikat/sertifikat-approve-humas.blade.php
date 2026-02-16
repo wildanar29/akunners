@@ -3,7 +3,6 @@
 <head>
     <meta charset="utf-8">
     <title>Sertifikat Kompetensi Keperawatan</title>
-
     <style>
         @page {
             size: A4 landscape;
@@ -31,7 +30,7 @@
             height: 50%;
             background: url('{{ public_path("logo.png") }}') no-repeat center;
             background-size: contain;
-            opacity: 0.08;
+            opacity: 0.1;
             transform: translate(-50%, -50%);
             z-index: 0;
         }
@@ -47,61 +46,90 @@
             z-index: 2;
         }
 
+        .ornament {
+            position: absolute;
+            opacity: 0.1;
+            z-index: -1;
+        }
+
+        .ornament.top-left {
+            width: 15vw;
+            height: 15vw;
+            background-color: #1a3d7c;
+            border-radius: 50%;
+            top: -7vw;
+            left: -7vw;
+        }
+
+        .ornament.bottom-right {
+            width: 15vw;
+            height: 15vw;
+            background-color: #c5a880;
+            border-radius: 50%;
+            bottom: -7vw;
+            right: -7vw;
+        }
+
         .main-content {
-            position: relative;
-            z-index: 3;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
         }
 
         h1 {
-            font-size: 42px;
-            margin-bottom: 10px;
-            letter-spacing: 2px;
+            font-size: 4vw;
+            margin-bottom: 1vw;
+            letter-spacing: 0.2vw;
+            color: #2c2c2c;
         }
 
         h2 {
-            font-size: 22px;
-            margin-bottom: 30px;
+            font-size: 2.2vw;
+            margin-bottom: 2vw;
+            color: #444;
         }
 
         .nama {
-            font-size: 32px;
+            font-size: 3.2vw;
             font-weight: bold;
-            margin: 20px 0;
+            margin: 1.5vw 0 2vw;
             text-decoration: underline;
         }
 
         .description {
-            font-size: 18px;
+            font-size: 1.8vw;
             width: 80%;
-            margin: auto;
-            line-height: 1.6;
+            margin: 0 auto 1vw;
+            line-height: 1.5;
         }
 
         .date-range {
-            font-size: 18px;
-            margin-top: 10px;
+            font-size: 1.8vw;
+            margin-top: 0.6vw;
         }
 
         .status {
-            margin-top: 30px;
-            font-size: 28px;
+            margin-top: 2.5vw;
+            font-size: 3vw;
             font-weight: bold;
+            letter-spacing: 0.2vw;
         }
 
         .status.green { color: #006400; }
         .status.red { color: #e60000; }
 
         .gelar {
-            margin-top: 30px;
-            font-size: 18px;
+            margin-top: 2.5vw;
+            font-size: 1.8vw;
         }
 
         .footer {
-            margin-top: 80px;
+            margin-top: 6vw;
             text-align: center;
             width: 100%;
-            position: relative;
-            z-index: 3;
         }
 
         .logo {
@@ -109,6 +137,8 @@
             top: 20px;
             left: 20px;
             width: 100px;
+            height: auto;
+            z-index: 2;
         }
 
         .nomor-surat {
@@ -117,35 +147,53 @@
             right: 20px;
             font-size: 14px;
             font-weight: bold;
+            color: #333;
+            z-index: 2;
         }
 
-        .qr {
-            margin-bottom: 10px;
+        .line {
+            width: 20px;
+            height: 100%;
         }
 
-        .ttd {
-            border-top: 1px solid #000;
-            width: 350px;
-            margin: 10px auto 0 auto;
-            padding-top: 6px;
-            font-weight: bold;
+        .line.yellow { background:#B09B5C; opacity:0.3; }
+        .line.red { background:#BA2822; opacity:0.3; }
+        .line.blue { background:#153584; opacity:0.3; }
+
+        .blue-lines {
+            position:absolute; top:0; right:80px; height:100%;
+            display:flex; gap:10px;
         }
 
-        .jabatan {
-            font-size: 14px;
-            margin-top: 4px;
+        .yellow-lines {
+            position:absolute; top:0; right:50px; height:100%;
+            display:flex; gap:10px;
+        }
+
+        .red-lines {
+            position:absolute; top:0; right:120px; height:100%;
+            display:flex; gap:10px;
+        }
+
+        .qr-img {
+            margin-bottom: 1vw;
         }
 
     </style>
 </head>
-
 <body>
+
+    <div class="ornament top-left"></div>
+    <div class="ornament bottom-right"></div>
 
     <img src="{{ public_path('logo.png') }}" class="logo">
     <div class="nomor-surat">No: {{ $nomor_surat ?? '-' }}</div>
 
-    <div class="main-content">
+    <div class="blue-lines"><div class="line blue"></div></div>
+    <div class="yellow-lines"><div class="line yellow"></div></div>
+    <div class="red-lines"><div class="line red"></div></div>
 
+    <div class="main-content">
         <h1>SERTIFIKAT<br>KOMPETENSI KEPERAWATAN</h1>
         <h2>Diberikan Kepada :</h2>
 
@@ -169,27 +217,32 @@
             Sebagai <strong>{{ $gelar ?? '-' }}</strong>
             di Area Keperawatan <strong>Rumah Sakit Immanuel</strong>
         </p>
-
     </div>
 
     <!-- FOOTER DIREKTUR DENGAN QR -->
     <div class="footer">
+        <table style="width:100%; margin-top:60px; text-align:center;">
+            <tr>
+                <td style="vertical-align:top;">
 
-        {{-- QR CODE DIREKTUR --}}
-        @if(!empty($barcode_direktur))
-            <div class="qr">
-                <img src="data:image/png;base64,{{ $barcode_direktur }}" width="120">
-            </div>
-        @endif
+                    {{-- QR CODE DIREKTUR --}}
+                    @if(!empty($barcode_direktur))
+                        <div class="qr-img">
+                            <img src="data:image/png;base64,{{ $barcode_direktur }}" width="120">
+                        </div>
+                    @endif
 
-        <div class="ttd">
-            dr. DAVID SANTOSO, M.M.
-        </div>
+                    <div style="border-top:1px solid #000; width:350px; margin-left:auto; margin-right:auto; padding-top:6px; font-weight:bold;">
+                        dr. DAVID SANTOSO, M.M.
+                    </div>
 
-        <div class="jabatan">
-            Direktur Utama RS Immanuel
-        </div>
+                    <div style="font-size:14px; margin-top:4px;">
+                        Direktur Utama RS Immanuel
+                    </div>
 
+                </td>
+            </tr>
+        </table>
     </div>
 
 </body>
