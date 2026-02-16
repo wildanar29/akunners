@@ -465,7 +465,7 @@ class CertificateController extends Controller
             $fileName  = "sertifikat_{$safeNama}_{$safeNomor}.pdf";
             $path      = "sertifikat/{$year}/{$fileName}";
 
-            $pdf = Pdf::loadView('sertifikat.keperawatan', $data);
+            $pdf = Pdf::loadView('sertifikat.sertifikat-approve-humas', $data);
 
             Storage::disk('public')->put($path, $pdf->output());
 
