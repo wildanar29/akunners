@@ -225,11 +225,11 @@
                     <!-- QR DISENGAJA TIDAK DITAMPILKAN -->
 
                     <div style="margin-top:80px; border-top:1px solid #000; width:350px; margin-left:auto; margin-right:auto; padding-top:6px; font-weight:bold;">
-                        dr. DAVID SANTOSO, M.M.
+                        {{ $nama_direktur ?? '-' }}
                     </div>
 
                     <div style="font-size:14px; margin-top:4px;">
-                        Direktur Utama RS Immanuel
+                        {{ $jabatan_direktur ?? 'Direktur Utama' }}
                     </div>
 
                 </td>

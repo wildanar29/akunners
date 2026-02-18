@@ -13,6 +13,7 @@ use App\Models\KompetensiPk;
 use App\Models\BidangModel;
 use App\Models\UserRole;
 use App\Models\Form6;
+use App\Models\Pejabat;
 use App\Models\KompetensiProgres;
 use App\Models\User;
 use App\Models\DataAsesorModel;
@@ -114,6 +115,21 @@ class CertificateController extends Controller
         Log::debug("DATA SERTIFIKAT:", $data);
 
         
+        // ===============================
+        // AMBIL DIREKTUR UTAMA (DINAMIS)
+        // ===============================
+
+        $direktur = Pejabat::jabatan('Direktur Utama RS Immanuel')
+            ->aktif()
+            ->first();
+
+        if (!$direktur) {
+            throw new \Exception('Direktur Utama aktif tidak ditemukan');
+        }
+
+        $data['nama_direktur']    = strtoupper($direktur->nama ?? '-');
+        $data['jabatan_direktur'] = $direktur->jabatan ?? '-';
+        $data['reg_direktur']     = $direktur->no_reg ?? '-';
 
         // ======== TRANSAKSI =============
         DB::beginTransaction();
@@ -153,12 +169,15 @@ class CertificateController extends Controller
 
             // QR Direktur
             $barcodeDirekturPayload = [
-                'nomor_surat' => $data['nomor_surat'],
-                'nama'        => $data['nama'],
-                'gelar'       => $data['gelar'],
-                'status'      => $data['status'],
-                'penandatangan' => 'Direktur Utama RS Immanuel',
+                'nomor_surat'   => $data['nomor_surat'],
+                'nama'          => $data['nama'],
+                'gelar'         => $data['gelar'],
+                'status'        => $data['status'],
+                'direktur'      => $data['nama_direktur'],
+                'jabatan'       => $data['jabatan_direktur'],
+                'penandatangan' => $data['jabatan_direktur'],
             ];
+
 
             $data['barcode_direktur'] = $dns2d->getBarcodePNG(
                 json_encode($barcodeDirekturPayload, JSON_UNESCAPED_UNICODE),
@@ -940,14 +959,21 @@ class CertificateController extends Controller
         );
 
         // ===============================
-        // BIDANG (DUMMY DATA SEMENTARA)
+        // BIDANG (DINAMIS DARI DATABASE)
         // ===============================
 
-        // 🔥 Data dummy sementara
-        // 🔥 Data dummy sementara
-        $bidangName       = 'SRI WAHYUNI, S.Kep., Ns., M.Kep.';
-        $bidangJabatan    = 'Kepala Bidang Keperawatan';
-        $bidangReg        = 'REG-KEP-001-2025';
+        $kabid = Pejabat::jabatan('Kepala Bidang Keperawatan')
+            ->aktif()
+            ->first();
+
+        if (!$kabid) {
+            throw new \Exception('Kepala Bidang Keperawatan aktif tidak ditemukan');
+        }
+
+        $bidangName    = strtoupper($kabid->nama ?? '-');
+        $bidangJabatan = $kabid->jabatan ?? '-';
+        $bidangReg     = $kabid->no_reg ?? '-';
+
 
         // $asesorReg        = 'REG-ASESOR-015-2025';
 
