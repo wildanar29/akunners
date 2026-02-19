@@ -1169,73 +1169,219 @@ class FormService
 	}
 
 	public function getFinalResultByPkIdAndAsesiId($pkId, $asesiId)
-    {
-        $data = ElemenForm3::with([
-            'kukForm3' => function ($q) use ($asesiId) {
-                $q->orderBy('no_kuk', 'asc')
-                ->with([
-                    'iukForm3' => function ($q2) use ($asesiId) {
-                        $q2->orderBy('no_iuk', 'asc')
-                            ->with([
-                                'soalForm7' => function ($q3) use ($asesiId) {
-                                    $q3->select('id', 'iuk_form3_id')
-                                        ->with([
-                                            'jawabanForm7' => function ($q4) use ($asesiId) {
-                                                $q4->select('id', 'soal_form7_id', 'keputusan', 'asesi_id')
-                                                    ->where('asesi_id', $asesiId);
-                                            }
-                                        ]);
-                                }
-                            ]);
-                    }
-                ]);
-            }
-        ])
-        ->where('pk_id', $pkId)
-        ->whereHas('kukForm3.iukForm3.soalForm7.jawabanForm7', function ($q) use ($asesiId) {
-            $q->where('asesi_id', $asesiId);
-        })
-        ->orderBy('no_elemen_form_3', 'asc')
-        ->get();
+	{
+		$data = ElemenForm3::with([
+			'kukForm3' => function ($q) use ($asesiId, $pkId) {
+				$q->where('pk_id', $pkId)
+				->orderBy('no_kuk', 'asc')
+				->with([
+					'iukForm3' => function ($q2) use ($asesiId, $pkId) {
+						$q2->where('pk_id', $pkId)
+							->select(
+								'iuk_form3_id',
+								'no_kuk',
+								'no_iuk',
+								'iuk_name',
+								'pk_id',
+								'group_no'
+							)
+							->orderBy('no_iuk', 'asc')
+							->with([
+								'soalForm7' => function ($q3) use ($asesiId) {
+									$q3->select('id', 'iuk_form3_id')
+										->with([
+											'jawabanForm7' => function ($q4) use ($asesiId) {
+												$q4->select(
+														'id',
+														'soal_form7_id',
+														'keputusan',
+														'asesi_id'
+													)
+													->where('asesi_id', $asesiId);
+											}
+										]);
+								}
+							]);
+					}
+				]);
+			}
+		])
+		->where('pk_id', $pkId)
+		->whereHas('kukForm3.iukForm3.soalForm7.jawabanForm7', function ($q) use ($asesiId) {
+			$q->where('asesi_id', $asesiId);
+		})
+		->orderBy('no_elemen_form_3', 'asc')
+		->get();
 
-        if ($data->isEmpty()) {
-            return null;
-        }
+		if ($data->isEmpty()) {
+			\Log::warning('Tidak ada data ditemukan untuk perhitungan', [
+				'pk_id' => $pkId,
+				'asesi_id' => $asesiId
+			]);
+			return null;
+		}
 
-        // Hitung nilai
-        $data->transform(function ($elemen) {
-            $elemen->kukForm3->transform(function ($kuk) {
-                $kuk->iukForm3->transform(function ($iuk) {
-                    $totalSoal = $iuk->soalForm7->count();
-                    $jumlahK   = 0;
+		foreach ($data as $elemen) {
 
-                    foreach ($iuk->soalForm7 as $soal) {
-                        foreach ($soal->jawabanForm7 as $jawaban) {
-                            if ($jawaban->keputusan === 'K') {
-                                $jumlahK++;
-                            }
-                        }
-                    }
+			foreach ($elemen->kukForm3 as $kuk) {
 
-                    $iuk->final = ($totalSoal > 0 && ($jumlahK / $totalSoal) >= 0.5) ? 'K' : 'BK';
-                    return $iuk;
-                });
+				foreach ($kuk->iukForm3 as $iuk) {
 
-                $totalIuk = $kuk->iukForm3->count();
-                $jumlahK  = $kuk->iukForm3->where('final', 'K')->count();
+					$totalSoal    = $iuk->soalForm7->count();
+					$totalJawaban = 0;
+					$jumlahK      = 0;
 
-                $kuk->final = ($totalIuk > 0 && ($jumlahK / $totalIuk) >= 0.5) ? 'K' : 'BK';
-                return $kuk;
-            });
+					foreach ($iuk->soalForm7 as $soal) {
 
-            $totalKuk = $elemen->kukForm3->count();
-            $jumlahK  = $elemen->kukForm3->where('final', 'K')->count();
+						$jumlahJawabanSoal = $soal->jawabanForm7->count();
+						$totalJawaban += $jumlahJawabanSoal;
 
-            $elemen->final = ($totalKuk > 0 && ($jumlahK / $totalKuk) >= 0.5) ? 'K' : 'BK';
-            return $elemen;
-        });
+						foreach ($soal->jawabanForm7 as $jawaban) {
+							if ($jawaban->keputusan === 'K') {
+								$jumlahK++;
+							}
+						}
+					}
 
-        return $data;
-    }
+					// 🔎 LOG KONDISI DETAIL
+					if ($totalSoal === 0) {
+
+						\Log::warning('IUK TANPA SOAL', [
+							'pk_id'         => $pkId,
+							'elemen'        => $elemen->no_elemen_form_3,
+							'kuk'           => $kuk->no_kuk,
+							'no_iuk'        => $iuk->no_iuk,
+							'iuk_id'        => $iuk->iuk_form3_id,
+							'total_jawaban' => $totalJawaban,
+						]);
+
+					} elseif ($totalSoal > 0 && $totalJawaban === 0) {
+
+						\Log::warning('IUK ADA SOAL TAPI TIDAK ADA JAWABAN', [
+							'pk_id'       => $pkId,
+							'elemen'      => $elemen->no_elemen_form_3,
+							'kuk'         => $kuk->no_kuk,
+							'no_iuk'      => $iuk->no_iuk,
+							'iuk_id'      => $iuk->iuk_form3_id,
+							'total_soal'  => $totalSoal,
+						]);
+
+					} elseif ($totalSoal === 0 && $totalJawaban > 0) {
+
+						\Log::error('ANOMALI: TIDAK ADA SOAL TAPI ADA JAWABAN', [
+							'pk_id'         => $pkId,
+							'elemen'        => $elemen->no_elemen_form_3,
+							'kuk'           => $kuk->no_kuk,
+							'no_iuk'        => $iuk->no_iuk,
+							'iuk_id'        => $iuk->iuk_form3_id,
+							'total_jawaban' => $totalJawaban,
+						]);
+					}
+
+					\Log::info('RINGKASAN IUK', [
+						'pk_id'         => $pkId,
+						'elemen'        => $elemen->no_elemen_form_3,
+						'kuk'           => $kuk->no_kuk,
+						'no_iuk'        => $iuk->no_iuk,
+						'iuk_id'        => $iuk->iuk_form3_id,
+						'total_soal'    => $totalSoal,
+						'total_jawaban' => $totalJawaban,
+						'jumlah_K'      => $jumlahK,
+					]);
+
+					$persen = $totalSoal > 0 ? ($jumlahK / $totalSoal) : 0;
+					$iuk->final = ($totalSoal > 0 && $persen >= 0.5) ? 'K' : 'BK';
+				}
+
+				$totalIuk = $kuk->iukForm3->count();
+				$jumlahK  = $kuk->iukForm3->where('final', 'K')->count();
+				$persen   = $totalIuk > 0 ? ($jumlahK / $totalIuk) : 0;
+
+				$kuk->final = ($totalIuk > 0 && $persen >= 0.5) ? 'K' : 'BK';
+			}
+
+			$totalKuk = $elemen->kukForm3->count();
+			$jumlahK  = $elemen->kukForm3->where('final', 'K')->count();
+			$persen   = $totalKuk > 0 ? ($jumlahK / $totalKuk) : 0;
+
+			$elemen->final = ($totalKuk > 0 && $persen >= 0.5) ? 'K' : 'BK';
+		}
+
+		return $data;
+	}
+
+
+
+
+
+	// public function getFinalResultByPkIdAndAsesiId($pkId, $asesiId)
+    // {
+    //     $data = ElemenForm3::with([
+    //         'kukForm3' => function ($q) use ($asesiId) {
+    //             $q->orderBy('no_kuk', 'asc')
+    //             ->with([
+    //                 'iukForm3' => function ($q2) use ($asesiId) {
+    //                     $q2->orderBy('no_iuk', 'asc')
+    //                         ->with([
+    //                             'soalForm7' => function ($q3) use ($asesiId) {
+    //                                 $q3->select('id', 'iuk_form3_id')
+    //                                     ->with([
+    //                                         'jawabanForm7' => function ($q4) use ($asesiId) {
+    //                                             $q4->select('id', 'soal_form7_id', 'keputusan', 'asesi_id')
+    //                                                 ->where('asesi_id', $asesiId);
+    //                                         }
+    //                                     ]);
+    //                             }
+    //                         ]);
+    //                 }
+    //             ]);
+    //         }
+    //     ])
+    //     ->where('pk_id', $pkId)
+    //     ->whereHas('kukForm3.iukForm3.soalForm7.jawabanForm7', function ($q) use ($asesiId) {
+    //         $q->where('asesi_id', $asesiId);
+    //     })
+    //     ->orderBy('no_elemen_form_3', 'asc')
+    //     ->get();
+
+    //     if ($data->isEmpty()) {
+    //         return null;
+    //     }
+
+    //     // Hitung nilai
+    //     $data->transform(function ($elemen) {
+    //         $elemen->kukForm3->transform(function ($kuk) {
+    //             $kuk->iukForm3->transform(function ($iuk) {
+    //                 $totalSoal = $iuk->soalForm7->count();
+    //                 $jumlahK   = 0;
+
+    //                 foreach ($iuk->soalForm7 as $soal) {
+    //                     foreach ($soal->jawabanForm7 as $jawaban) {
+    //                         if ($jawaban->keputusan === 'K') {
+    //                             $jumlahK++;
+    //                         }
+    //                     }
+    //                 }
+
+    //                 $iuk->final = ($totalSoal > 0 && ($jumlahK / $totalSoal) >= 0.5) ? 'K' : 'BK';
+    //                 return $iuk;
+    //             });
+
+    //             $totalIuk = $kuk->iukForm3->count();
+    //             $jumlahK  = $kuk->iukForm3->where('final', 'K')->count();
+
+    //             $kuk->final = ($totalIuk > 0 && ($jumlahK / $totalIuk) >= 0.5) ? 'K' : 'BK';
+    //             return $kuk;
+    //         });
+
+    //         $totalKuk = $elemen->kukForm3->count();
+    //         $jumlahK  = $elemen->kukForm3->where('final', 'K')->count();
+
+    //         $elemen->final = ($totalKuk > 0 && ($jumlahK / $totalKuk) >= 0.5) ? 'K' : 'BK';
+    //         return $elemen;
+    //     });
+
+    //     return $data;
+    // }
 
 }

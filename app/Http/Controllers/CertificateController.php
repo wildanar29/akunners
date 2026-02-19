@@ -77,14 +77,11 @@ class CertificateController extends Controller
             $form6EndedAt = null;
         }
 
-        Log::debug("Tanggal selesai Form6:", ['tanggal_selesai' => $form6EndedAt]);
 
-        // Hitung final result
-        Log::info("Menghitung final result...");
+
         $finalResult = $this->formService
             ->getFinalResultByPkIdAndAsesiId($form1['pk_id'], $form1->asesi_id ?? null);
 
-        Log::debug("Final result:", (array) $finalResult);
 
         $finalOnly = collect($finalResult)->pluck('final')->all();
         $counts    = collect($finalOnly)->countBy();
@@ -112,7 +109,6 @@ class CertificateController extends Controller
         $data['gelar']           = $kompetensi->nama_level ?? null;
         $data['nomor_surat']     = '-';
 
-        Log::debug("DATA SERTIFIKAT:", $data);
 
         
         // ===============================
@@ -135,14 +131,13 @@ class CertificateController extends Controller
         DB::beginTransaction();
         try {
 
-            Log::info("Membuat transkrip nilai terlebih dahulu...");
             $this->createTranskripNilai(
                 $form1->pk_id,
                 $form1->asesi_id,
                 $form1->form_1_id
             );
 
-            Log::info("Generate nomor surat...");
+
             [$nomorUrut, $nomorSurat] = SertifikatPk::generateNomorSurat();
             $data['nomor_surat'] = $nomorSurat;
 
@@ -207,15 +202,15 @@ class CertificateController extends Controller
             // =====================================================
 
             // Generate PDF
-            Log::info("Membuat file PDF...");
+
             $pdf = Pdf::loadView('sertifikat.keperawatan', $data);
 
             // Simpan PDF
             Storage::disk('public')->put($path, $pdf->output());
-            Log::info("PDF berhasil disimpan!", ['path' => $path]);
+
 
             // Simpan DB
-            Log::info("Menyimpan metadata sertifikat ke DB...");
+
             $sertifikat = SertifikatPk::create([
                 'asesi_id'        => $form1->asesi_id,
                 'form_1_id'       => $data['form_1_id'],
@@ -230,7 +225,7 @@ class CertificateController extends Controller
                 'file_path'       => $path,
             ]);
 
-            Log::debug("Data sertifikat tersimpan:", $sertifikat->toArray());
+
             // $statusForm1 = $this->formService
             //     ->getStatusByParentFormIdAndType($data['form_1_id'], 'form_1')
             //     ->first();
@@ -240,7 +235,7 @@ class CertificateController extends Controller
 				->whereNull('parent_form_id')
 				->first();
             
-            Log::info($progres);
+
             // Update Form1
             if ($progres->status === 'Approved') {
                 Log::info("Update progress Form1 jadi Completed...");
@@ -263,7 +258,7 @@ class CertificateController extends Controller
             }
 
             DB::commit();
-            Log::info("=== BERHASIL GENERATE SERTIFIKAT ===");
+
 
             return response()->json([
                 'message'     => 'Sertifikat berhasil disimpan',
