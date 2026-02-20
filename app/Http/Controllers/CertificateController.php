@@ -1028,6 +1028,297 @@ class CertificateController extends Controller
         ]);
     }
 
+    public function previewSertifikatByFormId(Request $request)
+    {
+        $form_1_id = $request->input('form_1_id');
 
+        if (!$form_1_id) {
+            return response()->json(['message' => 'form_1_id wajib diisi'], 422);
+        }
+
+        $form1 = $this->formService->getParentDataByFormId($form_1_id);
+
+        if (!$form1) {
+            return response()->json(['message' => 'Form1 tidak ditemukan'], 404);
+        }
+
+        // ===============================
+        // Ambil Progress
+        // ===============================
+        $progress = $this->formService
+            ->getProgresSingleByParentFormId($form_1_id);
+
+        $form6Progress = collect($progress)
+            ->firstWhere('form_type', 'form_6');
+
+        $form6EndedAt = $form6Progress && isset($form6Progress['updated_at'])
+            ? Carbon::parse($form6Progress['updated_at'])
+                ->translatedFormat('d F Y')
+            : null;
+
+        // ===============================
+        // Hitung Final Result
+        // ===============================
+        $finalResult = $this->formService
+            ->getFinalResultByPkIdAndAsesiId(
+                $form1['pk_id'],
+                $form1->asesi_id ?? null
+            );
+
+        $finalOnly = collect($finalResult)->pluck('final')->all();
+        $counts    = collect($finalOnly)->countBy();
+
+        $jumlahK = $counts->get('K', 0);
+        $total   = count($finalOnly);
+        $persenK = $total > 0 ? ($jumlahK / $total) * 100 : 0;
+
+        $overallFinal = $persenK >= 80
+            ? 'KOMPETEN'
+            : 'BELUM KOMPETEN';
+
+        // ===============================
+        // Ambil Kompetensi
+        // ===============================
+        $kompetensi = KompetensiPk::find($form1['pk_id']);
+
+        // ===============================
+        // Ambil Direktur Aktif
+        // ===============================
+        $direktur = Pejabat::jabatan('Direktur Utama RS Immanuel')
+            ->aktif()
+            ->first();
+
+        if (!$direktur) {
+            return response()->json([
+                'message' => 'Direktur aktif tidak ditemukan'
+            ], 500);
+        }
+
+        // ===============================
+        // Bangun Data View
+        // ===============================
+        $data = [
+            'nama'              => strtoupper($form1->asesi_name),
+            'nama_asesor'       => strtoupper($form1->asesor_name ?? 'ASESOR'),
+            'tanggal_mulai'     => Carbon::parse($form1->updated_at)
+                                        ->translatedFormat('d F Y'),
+            'tanggal_selesai'   => $form6EndedAt,
+            'status'            => $overallFinal,
+            'gelar'             => $kompetensi->nama_level ?? null,
+            'nomor_surat'       => 'PREVIEW',
+            'nama_direktur'     => strtoupper($direktur->nama ?? '-'),
+            'jabatan_direktur'  => $direktur->jabatan ?? '-',
+            'reg_direktur'      => $direktur->no_reg ?? '-',
+        ];
+
+        // ===============================
+        // QR CODE (Preview Only)
+        // ===============================
+        $dns2d = new DNS2D();
+        $dns2d->setStorPath(storage_path('framework/barcodes'));
+
+        $barcodePayload = [
+            'preview' => true,
+            'nama'    => $data['nama'],
+            'status'  => $data['status'],
+        ];
+
+        $data['barcode_direktur'] = $dns2d->getBarcodePNG(
+            json_encode($barcodePayload, JSON_UNESCAPED_UNICODE),
+            'QRCODE',
+            5,
+            5
+        );
+
+        $data['barcode_asesor'] = $data['barcode_direktur'];
+
+        // ===============================
+        // Generate PDF (Tanpa Simpan)
+        // ===============================
+        $pdf = Pdf::loadView('sertifikat.keperawatan', $data);
+
+        return $pdf->stream('preview-sertifikat.pdf');
+    }
+
+    public function previewTranskrip(Request $request)
+    {
+        // $pkId     = $request->input('pk_id');
+        // $asesiId  = $request->input('asesi_id');
+
+        $form1Id  = $request->input('form_1_id');
+        $form1     = BidangModel::find($form1Id);
+        $pkId      = $form1->pk_id ?? null;
+        $asesiId   = $form1->asesi_id ?? null;
+
+        if (!$form1Id) {
+            return response()->json([
+                'message' => 'form_1_id wajib diisi'
+            ], 422);
+        }
+
+        $driver = DB::getDriverName();
+        $orderExpr = $driver === 'mysql'
+            ? 'CAST(no_elemen_form_3 AS UNSIGNED)'
+            : 'CAST(no_elemen_form_3 AS INTEGER)';
+
+        $data = ElemenForm3::with([
+            'kukForm3.iukForm3.soalForm7.jawabanForm7' => function ($q) use ($asesiId) {
+                $q->where('asesi_id', $asesiId);
+            }
+        ])
+        ->where('pk_id', $pkId)
+        ->whereHas('kukForm3.iukForm3.soalForm7.jawabanForm7', function ($q) use ($asesiId) {
+            $q->where('asesi_id', $asesiId);
+        })
+        ->orderByRaw("$orderExpr ASC")
+        ->get();
+
+        if ($data->isEmpty()) {
+            return response()->json([
+                'message' => 'Data elemen tidak ditemukan'
+            ], 404);
+        }
+
+        // ===========================
+        // HITUNG NILAI FINAL
+        // ===========================
+
+        $elemenFinal = $data->map(function ($elemen) {
+
+            $jumlahKuk = $elemen->kukForm3->count();
+            $jumlahK   = 0;
+
+            foreach ($elemen->kukForm3 as $kuk) {
+
+                $totalIuk = $kuk->iukForm3->count();
+                $jumlahKIuk = 0;
+
+                foreach ($kuk->iukForm3 as $iuk) {
+
+                    $totalSoal = $iuk->soalForm7->count();
+                    $jumlahKSoal = 0;
+
+                    foreach ($iuk->soalForm7 as $soal) {
+                        foreach ($soal->jawabanForm7 as $jawaban) {
+                            if ($jawaban->keputusan === 'K') {
+                                $jumlahKSoal++;
+                            }
+                        }
+                    }
+
+                    $iukFinal = ($totalSoal > 0 && ($jumlahKSoal / $totalSoal) >= 0.5)
+                        ? 'K'
+                        : 'BK';
+
+                    if ($iukFinal === 'K') $jumlahKIuk++;
+                }
+
+                $kukFinal = ($totalIuk > 0 && ($jumlahKIuk / $totalIuk) >= 0.5)
+                    ? 'K'
+                    : 'BK';
+
+                if ($kukFinal === 'K') $jumlahK++;
+            }
+
+            $status = ($jumlahKuk > 0 && ($jumlahK / $jumlahKuk) >= 0.5)
+                ? 'KOMPETEN'
+                : 'BELUM KOMPETEN';
+
+            return [
+                'no_elemen_form_3' => $elemen->no_elemen_form_3,
+                'nama_elemen'      => $elemen->isi_elemen,
+                'final'            => $status,
+            ];
+        });
+
+        // ===========================
+        // Ambil Data Master
+        // ===========================
+
+        $form1      = BidangModel::find($form1Id);
+        $kompetensi = KompetensiPk::find($pkId);
+
+        if (!$form1) {
+            return response()->json(['message' => 'Form1 tidak ditemukan'], 404);
+        }
+
+        $nikAsesi    = User::find($form1->asesi_id)->nik ?? '-';
+        $asesiName   = strtoupper($form1->asesi_name ?? '-');
+        $asesorName  = strtoupper($form1->asesor_name ?? 'ASESOR');
+
+        $userAsesor  = DataAsesorModel::where('user_id', $form1->asesor_id)->first();
+        $asesorReg   = $userAsesor->no_reg ?? '-';
+
+        // ===========================
+        // NOMOR DOKUMEN PREVIEW
+        // ===========================
+
+        $nomorDokumen = 'PREVIEW-TRANSKRIP';
+
+        // ===========================
+        // QR CODE (Preview Only)
+        // ===========================
+
+        $dns2d = new DNS2D();
+        $dns2d->setStorPath(storage_path('framework/barcodes'));
+
+        $barcodeAsesor = $dns2d->getBarcodePNG(
+            json_encode([
+                'preview'       => true,
+                'nama_asesi'    => $asesiName,
+                'asesor'        => $asesorName,
+                'kompetensi'    => $kompetensi->nama_level ?? '-',
+                'jenis'         => 'Transkrip Nilai',
+            ], JSON_UNESCAPED_UNICODE),
+            'QRCODE',
+            5,
+            5
+        );
+
+        $kabid = Pejabat::jabatan('Kepala Bidang Keperawatan')
+            ->aktif()
+            ->first();
+
+        if (!$kabid) {
+            return response()->json([
+                'message' => 'Kepala Bidang aktif tidak ditemukan'
+            ], 500);
+        }
+
+        $barcodeBidang = $dns2d->getBarcodePNG(
+            json_encode([
+                'preview'    => true,
+                'nama_asesi' => $asesiName,
+                'bidang'     => strtoupper($kabid->nama),
+                'jenis'      => 'Transkrip Nilai',
+            ], JSON_UNESCAPED_UNICODE),
+            'QRCODE',
+            5,
+            5
+        );
+
+        // ===========================
+        // GENERATE PDF (TANPA SIMPAN)
+        // ===========================
+
+        $pdf = Pdf::loadView('transkrip.nilai', [
+            'nama'            => $asesiName,
+            'gelar'           => $kompetensi->nama_level ?? '-',
+            'data'            => $elemenFinal->toArray(),
+            'nomor'           => $nomorDokumen,
+            'asesor_name'     => $asesorName,
+            'asesor_reg'      => $asesorReg,
+            'bidang_name'     => strtoupper($kabid->nama ?? '-'),
+            'bidang_jabatan'  => $kabid->jabatan ?? '-',
+            'bidang_reg'      => $kabid->no_reg ?? '-',
+            'barcode_asesor'  => $barcodeAsesor,
+            'barcode_bidang'  => $barcodeBidang,
+            'nik_asesi'       => $nikAsesi
+        ]);
+
+        return $pdf->stream('preview-transkrip.pdf');
+    }
+
+        
 
 }

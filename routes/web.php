@@ -303,6 +303,9 @@ $router->get('/send-notification-to-bidang', action: 'NotificationController@not
 });// buat Authentikasi
 
 $router->post('/sertifikat/approve-humas/{form_1_id}', 'CertificateController@approveHumasRSI');
+$router->get('/sertifikat/preview', 'CertificateController@previewSertifikatByFormId');
+$router->get('/transkrip/preview', 'CertificateController@previewTranskrip');
+
 
 $router->post('/user/update-role', 'BidangController@updateUserRole');
 
