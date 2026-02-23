@@ -1028,7 +1028,7 @@ class CertificateController extends Controller
         ]);
     }
 
-    public function previewSertifikatByFormId($form_1_id)
+    public function renderSertifikatPreview($form_1_id)
     {
         $form_1_id = $form_1_id;
 
@@ -1141,7 +1141,7 @@ class CertificateController extends Controller
         return view('sertifikat.keperawatan', $data);
     }
 
-    public function previewTranskrip($form_1_id)
+    public function renderTranskripPreview($form_1_id)
     {
         $form1Id = $form_1_id;
     
@@ -1329,6 +1329,31 @@ class CertificateController extends Controller
         return view('transkrip.nilai', $viewData);
     }
 
+    public function previewSertifikatByFormId($form_1_id)
+    {
+        if (!$form_1_id) {
+            return response()->json(['message' => 'form_1_id wajib diisi'], 422);
+        }
+
+        $previewUrl = url("preview/sertifikat/{$form_1_id}");
+
+        return response()->json([
+            'preview_url' => $previewUrl
+        ]);
+    }
+
+    public function previewTranskrip($form_1_id)
+    {
+        if (!$form_1_id) {
+            return response()->json(['message' => 'form_1_id wajib diisi'], 422);
+        }
+
+        $previewUrl = url("preview/transkrip/{$form_1_id}");
+
+        return response()->json([
+            'preview_url' => $previewUrl
+        ]);
+    }
         
 
 }
