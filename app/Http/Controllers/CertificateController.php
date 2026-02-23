@@ -1332,27 +1332,39 @@ class CertificateController extends Controller
     public function previewSertifikatByFormId($form_1_id)
     {
         if (!$form_1_id) {
-            return response()->json(['message' => 'form_1_id wajib diisi'], 422);
+            return response()->json([
+                'message' => 'form_1_id wajib diisi',
+                'data'    => null
+            ], 422);
         }
 
         $previewUrl = url("preview/sertifikat/{$form_1_id}");
 
         return response()->json([
-            'preview_url' => $previewUrl
-        ]);
+            'message' => 'Preview sertifikat berhasil dibuat',
+            'data'    => [
+                'preview_url' => $previewUrl
+            ]
+        ], 200);
     }
 
     public function previewTranskrip($form_1_id)
     {
         if (!$form_1_id) {
-            return response()->json(['message' => 'form_1_id wajib diisi'], 422);
+            return response()->json([
+                'message' => 'form_1_id wajib diisi',
+                'data'    => null
+            ], 422);
         }
 
         $previewUrl = url("preview/transkrip/{$form_1_id}");
 
         return response()->json([
-            'preview_url' => $previewUrl
-        ]);
+            'message' => 'Preview transkrip berhasil dibuat',
+            'data'    => [
+                'preview_url' => $previewUrl
+            ]
+        ], 200);
     }
         
 
