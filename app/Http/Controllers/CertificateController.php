@@ -1028,9 +1028,9 @@ class CertificateController extends Controller
         ]);
     }
 
-    public function previewSertifikatByFormId(Request $request)
+    public function previewSertifikatByFormId($form_1_id)
     {
-        $form_1_id = $request->input('form_1_id');
+        $form_1_id = $form_1_id;
 
         if (!$form_1_id) {
             return response()->json(['message' => 'form_1_id wajib diisi'], 422);
@@ -1141,10 +1141,10 @@ class CertificateController extends Controller
         return view('sertifikat.keperawatan', $data);
     }
 
-    public function previewTranskrip(Request $request)
+    public function previewTranskrip($form_1_id)
     {
-        $form1Id = $request->input('form_1_id');
-
+        $form1Id = $form_1_id;
+    
         if (!$form1Id) {
             return response()->json([
                 'message' => 'form_1_id wajib diisi'
@@ -1321,10 +1321,10 @@ class CertificateController extends Controller
         // MODE PDF ATAU WEBVIEW
         // ===========================
 
-        if ($request->has('pdf')) {
-            $pdf = Pdf::loadView('transkrip.nilai', $viewData);
-            return $pdf->stream('preview-transkrip.pdf');
-        }
+        // if ($request->has('pdf')) {
+        //     $pdf = Pdf::loadView('transkrip.nilai', $viewData);
+        //     return $pdf->stream('preview-transkrip.pdf');
+        // }
 
         return view('transkrip.nilai', $viewData);
     }
