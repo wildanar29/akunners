@@ -3,6 +3,13 @@
 <head>
     <meta charset="utf-8">
     <title>Sertifikat Kompetensi Keperawatan</title>
+
+    @php
+        $logoPath = public_path('logo.png');
+        $logoBase64 = file_exists($logoPath)
+            ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
+            : null;
+    @endphp
     <style>
         @page {
             size: A4 landscape;
@@ -28,7 +35,7 @@
             left: 50%;
             width: 50%;
             height: 50%;
-            background: url('{{ public_path("logo.png") }}') no-repeat center;
+            background: url('{{ $logoBase64 }}') no-repeat center;
             background-size: contain;
             opacity: 0.1;
             transform: translate(-50%, -50%);
@@ -182,7 +189,7 @@
     <div class="ornament top-left"></div>
     <div class="ornament bottom-right"></div>
 
-    <img src="{{ public_path('logo.png') }}" class="logo">
+    <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('logo.png'))) }}" class="logo">
     <div class="nomor-surat">No: {{ $nomor_surat ?? '-' }}</div>
 
     <div class="blue-lines"><div class="line blue"></div></div>

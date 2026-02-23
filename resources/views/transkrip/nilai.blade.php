@@ -4,6 +4,12 @@
     <meta charset="utf-8">
     <title>Transkrip Nilai</title>
 
+    @php
+        $logoPath = public_path('logo.png');
+        $logoBase64 = file_exists($logoPath)
+            ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
+            : null;
+    @endphp
     <style>
         @page {
             size: F4 portrait;
@@ -29,7 +35,7 @@
             left: 50%;
             width: 50%;
             height: 50%;
-            background: url('{{ public_path("logo.png") }}') no-repeat center;
+            background: url('{{ $logoBase64 }}') no-repeat center;
             background-size: contain;
             opacity: 0.08;
             transform: translate(-50%, -50%);
@@ -137,7 +143,9 @@
 
 <body>
 
-    <img src="{{ public_path('logo.png') }}" class="logo">
+    @if($logoBase64)
+        <img src="{{ $logoBase64 }}" class="logo">
+    @endif
     <div class="nomor-surat">No: {{ $nomor }}</div>
 
     <div class="main-content">

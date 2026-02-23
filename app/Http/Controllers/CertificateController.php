@@ -1137,24 +1137,34 @@ class CertificateController extends Controller
         // ===============================
         $pdf = Pdf::loadView('sertifikat.keperawatan', $data);
 
-        return $pdf->stream('preview-sertifikat.pdf');
+        // return $pdf->stream('preview-sertifikat.pdf');
+        return view('sertifikat.keperawatan', $data);
     }
 
     public function previewTranskrip(Request $request)
     {
-        // $pkId     = $request->input('pk_id');
-        // $asesiId  = $request->input('asesi_id');
-
-        $form1Id  = $request->input('form_1_id');
-        $form1     = BidangModel::find($form1Id);
-        $pkId      = $form1->pk_id ?? null;
-        $asesiId   = $form1->asesi_id ?? null;
+        $form1Id = $request->input('form_1_id');
 
         if (!$form1Id) {
             return response()->json([
                 'message' => 'form_1_id wajib diisi'
             ], 422);
         }
+
+        $form1 = BidangModel::find($form1Id);
+
+        if (!$form1) {
+            return response()->json([
+                'message' => 'Form1 tidak ditemukan'
+            ], 404);
+        }
+
+        $pkId    = $form1->pk_id;
+        $asesiId = $form1->asesi_id;
+
+        // ===========================
+        // QUERY DATA ELEMEN
+        // ===========================
 
         $driver = DB::getDriverName();
         $orderExpr = $driver === 'mysql'
@@ -1232,31 +1242,22 @@ class CertificateController extends Controller
         });
 
         // ===========================
-        // Ambil Data Master
+        // DATA MASTER
         // ===========================
 
-        $form1      = BidangModel::find($form1Id);
         $kompetensi = KompetensiPk::find($pkId);
 
-        if (!$form1) {
-            return response()->json(['message' => 'Form1 tidak ditemukan'], 404);
-        }
+        $nikAsesi   = User::find($form1->asesi_id)->nik ?? '-';
+        $asesiName  = strtoupper($form1->asesi_name ?? '-');
+        $asesorName = strtoupper($form1->asesor_name ?? 'ASESOR');
 
-        $nikAsesi    = User::find($form1->asesi_id)->nik ?? '-';
-        $asesiName   = strtoupper($form1->asesi_name ?? '-');
-        $asesorName  = strtoupper($form1->asesor_name ?? 'ASESOR');
-
-        $userAsesor  = DataAsesorModel::where('user_id', $form1->asesor_id)->first();
-        $asesorReg   = $userAsesor->no_reg ?? '-';
-
-        // ===========================
-        // NOMOR DOKUMEN PREVIEW
-        // ===========================
+        $userAsesor = DataAsesorModel::where('user_id', $form1->asesor_id)->first();
+        $asesorReg  = $userAsesor->no_reg ?? '-';
 
         $nomorDokumen = 'PREVIEW-TRANSKRIP';
 
         // ===========================
-        // QR CODE (Preview Only)
+        // QR CODE
         // ===========================
 
         $dns2d = new DNS2D();
@@ -1264,11 +1265,11 @@ class CertificateController extends Controller
 
         $barcodeAsesor = $dns2d->getBarcodePNG(
             json_encode([
-                'preview'       => true,
-                'nama_asesi'    => $asesiName,
-                'asesor'        => $asesorName,
-                'kompetensi'    => $kompetensi->nama_level ?? '-',
-                'jenis'         => 'Transkrip Nilai',
+                'preview'    => true,
+                'nama_asesi' => $asesiName,
+                'asesor'     => $asesorName,
+                'kompetensi' => $kompetensi->nama_level ?? '-',
+                'jenis'      => 'Transkrip Nilai',
             ], JSON_UNESCAPED_UNICODE),
             'QRCODE',
             5,
@@ -1298,10 +1299,10 @@ class CertificateController extends Controller
         );
 
         // ===========================
-        // GENERATE PDF (TANPA SIMPAN)
+        // SIAPKAN DATA UNTUK VIEW
         // ===========================
 
-        $pdf = Pdf::loadView('transkrip.nilai', [
+        $viewData = [
             'nama'            => $asesiName,
             'gelar'           => $kompetensi->nama_level ?? '-',
             'data'            => $elemenFinal->toArray(),
@@ -1314,9 +1315,18 @@ class CertificateController extends Controller
             'barcode_asesor'  => $barcodeAsesor,
             'barcode_bidang'  => $barcodeBidang,
             'nik_asesi'       => $nikAsesi
-        ]);
+        ];
 
-        return $pdf->stream('preview-transkrip.pdf');
+        // ===========================
+        // MODE PDF ATAU WEBVIEW
+        // ===========================
+
+        if ($request->has('pdf')) {
+            $pdf = Pdf::loadView('transkrip.nilai', $viewData);
+            return $pdf->stream('preview-transkrip.pdf');
+        }
+
+        return view('transkrip.nilai', $viewData);
     }
 
         

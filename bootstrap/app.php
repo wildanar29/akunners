@@ -42,7 +42,8 @@ $app->alias('redis', \Illuminate\Support\Facades\Redis::class);
 $app->register(Laravel\Tinker\TinkerServiceProvider::class);
 $app->register(Barryvdh\DomPDF\ServiceProvider::class);
 
-
+$app->configure('view');
+$app->register(Illuminate\View\ViewServiceProvider::class);
 
 // Aktifkan sesi
 $app->register(Illuminate\Session\SessionServiceProvider::class);
@@ -166,6 +167,10 @@ $app->router->group([
     'namespace' => 'App\Http\Controllers',
 ], function ($router) {
     require __DIR__.'/../routes/web.php';
+});
+
+$app->bind('path.public', function() {
+    return __DIR__ . '/../public';
 });
 
 return $app;
