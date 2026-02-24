@@ -17,6 +17,11 @@ return [
             'visibility' => 'public',
         ],
 
+        'akunners_files' => [
+            'driver' => 'local',
+            'root' => storage_path('app/public'),
+            'visibility' => 'private',
+        ],
     ],
 
 ];

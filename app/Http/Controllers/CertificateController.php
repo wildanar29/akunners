@@ -326,6 +326,7 @@ class CertificateController extends Controller
             ], 404);
         }
 
+        // dd(Storage::disk('public')->path(''));
         // Pastikan file ada
         if (!Storage::disk('public')->exists($sertifikat->file_path)) {
             return response()->json([
