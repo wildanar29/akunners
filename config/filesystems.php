@@ -19,7 +19,7 @@ return [
 
         'akunners_files' => [
             'driver' => 'local',
-            'root' => storage_path('app/public'),
+            'root' => env('AKUNNERS_STORAGE_PATH'),
             'visibility' => 'private',
         ],
     ],
