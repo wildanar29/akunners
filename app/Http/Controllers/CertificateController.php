@@ -317,31 +317,54 @@ class CertificateController extends Controller
 
     public function viewSertifikatByFormId($form_1_id)
     {
-        // Cari sertifikat berdasarkan form_1_id
         $sertifikat = SertifikatPk::where('form_1_id', $form_1_id)->first();
 
         if (!$sertifikat) {
             return response()->json([
-                'message' => 'Sertifikat untuk form ini tidak ditemukan'
+                'status' => 'error',
+                'message' => 'Sertifikat untuk form ini tidak ditemukan',
             ], 404);
         }
 
-        // dd(Storage::disk('public')->path(''));
-        // Pastikan file ada
-        if (!Storage::disk('public')->exists($sertifikat->file_path)) {
+        $disk = Storage::disk('public');
+
+        $debug = [
+            'base_path'      => base_path(),
+            'storage_path'   => storage_path(),
+            'disk_root'      => config('filesystems.disks.public.root'),
+            'db_file_path'   => $sertifikat->file_path,
+            'full_path'      => $disk->path($sertifikat->file_path),
+            'file_exists'    => $disk->exists($sertifikat->file_path),
+        ];
+
+        if (!$disk->exists($sertifikat->file_path)) {
             return response()->json([
-                'message' => 'File sertifikat tidak ditemukan'
+                'status'  => 'error',
+                'message' => 'File sertifikat tidak ditemukan',
+                'debug'   => $debug,
             ], 404);
         }
 
-        // Ambil konten file
-        $file = Storage::disk('public')->get($sertifikat->file_path);
-        $mime = Storage::disk('public')->mimeType($sertifikat->file_path);
+        try {
+            $file = $disk->get($sertifikat->file_path);
+            $mime = $disk->mimeType($sertifikat->file_path);
 
-        // Tampilkan file sebagai response
-        return response($file, 200)
-            ->header('Content-Type', $mime)
-            ->header('Content-Disposition', 'inline; filename="' . basename($sertifikat->file_path) . '"');
+            return response($file, 200)
+                ->header('Content-Type', $mime)
+                ->header(
+                    'Content-Disposition',
+                    'inline; filename="' . basename($sertifikat->file_path) . '"'
+                );
+
+        } catch (\Throwable $e) {
+
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Gagal membaca file',
+                'error'   => $e->getMessage(),
+                'debug'   => $debug,
+            ], 500);
+        }
     }
 
     public function getSertifikatByUserId($user_id)
