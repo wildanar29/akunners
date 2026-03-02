@@ -1431,7 +1431,8 @@ class CertificateController extends Controller
 
         $nikAsesi   = User::find($form1->asesi_id)->nik ?? '-';
         $asesiName  = strtoupper($form1->asesi_name ?? '-');
-        $asesorName = strtoupper($form1->asesor_name ?? 'ASESOR');
+        // $asesorName = ($form1->asesor_name ?? 'ASESOR');
+        $asesorName = User::find($form1->asesor_id)->nama ?? 'ASESOR';
 
         $userAsesor = DataAsesorModel::where('user_id', $form1->asesor_id)->first();
         $asesorReg  = $userAsesor->no_reg ?? '-';
