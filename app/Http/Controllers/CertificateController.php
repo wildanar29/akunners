@@ -15,7 +15,7 @@ use App\Models\UserRole;
 use App\Models\Form6;
 use App\Models\Pejabat;
 use App\Models\KompetensiProgres;
-use App\Models\User;
+use App\Models\DaftarUser;
 use App\Models\DataAsesorModel;
 use App\Models\SertifikatPk;
 use App\Models\TranskripNilaiPk;
@@ -1102,9 +1102,9 @@ class CertificateController extends Controller
         });
 
         $form1 = BidangModel::find($form1Id);
-        $nikAsesi = User::find($form1->asesi_id)->nik ?? '-';
+        $nikAsesi = DaftarUser::find($form1->asesi_id)->nik ?? '-';
         $asesiName  = strtoupper($form1->asesi_name ?? '-');
-        $asesorName = strtoupper($form1->asesor_name ?? 'ASESOR');
+        $asesorName = User::find($form1->user_id)->nama ?? '-';
         Log::info($form1);
         $userAsesor = DataAsesorModel::where('user_id', $form1->asesor_id)->first();
         Log::info('ini asesor');
@@ -1429,10 +1429,13 @@ class CertificateController extends Controller
 
         $kompetensi = KompetensiPk::find($pkId);
 
-        $nikAsesi   = User::find($form1->asesi_id)->nik ?? '-';
+        $nikAsesi   = DaftarUser::find($form1->asesi_id)->nik ?? '-';
         $asesiName  = strtoupper($form1->asesi_name ?? '-');
         // $asesorName = ($form1->asesor_name ?? 'ASESOR');
-        $asesorName = User::find($form1->asesor_id)->nama ?? 'ASESOR';
+        $asesorName = DaftarUser::find($form1->asesor_id)->nama ?? 'ASESOR';
+        log::info('form1 asesor id: ' . $form1->asesor_id);
+        Log::info('asesor name: ' . $asesorName);
+        // $asesorName = 'testa'; // hardcode dulu biar ga error
 
         $userAsesor = DataAsesorModel::where('user_id', $form1->asesor_id)->first();
         $asesorReg  = $userAsesor->no_reg ?? '-';
