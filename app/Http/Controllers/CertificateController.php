@@ -315,6 +315,46 @@ class CertificateController extends Controller
             ->header('Content-Disposition', 'attachment; filename="' . basename($sertifikat->file_path) . '"');
     }
 
+    public function viewTranskripByFormId($form_1_id)
+    {
+        $transkrip = TranskripNilaiPk::where('form_1_id', $form_1_id)->first();
+
+        if (!$transkrip) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Transkrip nilai untuk form ini tidak ditemukan',
+            ], 404);
+        }
+
+        $disk = Storage::disk('public');
+
+        // Pastikan path relatif
+        $filePath = $transkrip->file_path;
+
+        if (!$disk->exists($filePath)) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'File transkrip tidak ditemukan',
+                'path'    => $disk->path($filePath),
+            ], 404);
+        }
+
+        try {
+            return response()->file(
+                $disk->path($filePath),
+                [
+                    'Content-Disposition' => 'inline; filename="' . basename($filePath) . '"'
+                ]
+            );
+
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Gagal membaca file transkrip',
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
+    }
     public function viewSertifikatByFormId($form_1_id)
     {
         $sertifikat = SertifikatPk::where('form_1_id', $form_1_id)->first();
@@ -363,6 +403,50 @@ class CertificateController extends Controller
                 'message' => 'Gagal membaca file',
                 'error'   => $e->getMessage(),
                 'debug'   => $debug,
+            ], 500);
+        }
+    }
+
+    public function getTranskripByUserId($user_id)
+    {
+        try {
+            // Ambil semua transkrip milik user
+            $transkripList = TranskripNilaiPk::where('asesi_id', $user_id)->get();
+
+            if ($transkripList->isEmpty()) {
+                return response()->json([
+                    'message' => 'Tidak ada transkrip nilai untuk user ini'
+                ], 404);
+            }
+
+            // Mapping struktur response
+            $data = $transkripList->map(function ($transkrip) {
+                return [
+                    'id'              => $transkrip->id,
+                    'form_1_id'       => $transkrip->form_1_id,
+                    'pk_id'           => $transkrip->pk_id,
+                    'nomor_urut'      => $transkrip->nomor_urut,
+                    'nomor_surat'     => $transkrip->nomor_surat,
+                    'nama'            => $transkrip->nama,
+                    'gelar'           => $transkrip->gelar,
+                    'status'          => $transkrip->status,
+                    'tanggal_mulai'   => $transkrip->tanggal_mulai,
+                    'tanggal_selesai' => $transkrip->tanggal_selesai,
+
+                    // Preview via endpoint API (bukan langsung ke storage)
+                    'preview_url'     => url("transkrip/view/{$transkrip->form_1_id}"),
+                ];
+            });
+
+            return response()->json([
+                'message' => 'Daftar transkrip nilai berhasil diambil',
+                'data'    => $data,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Terjadi kesalahan saat mengambil data transkrip nilai',
+                'error'   => $e->getMessage()
             ], 500);
         }
     }
