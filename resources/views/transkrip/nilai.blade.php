@@ -201,7 +201,7 @@
             </div>
 
             <div class="signature-reg">
-                No. Registrasi: {{ $bidang_reg ?? '-' }}
+                NIP: {{ $bidang_reg ?? '-' }}
             </div>
 
         </div>
