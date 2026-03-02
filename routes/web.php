@@ -295,6 +295,7 @@ $router->get('/sertifikat/download/{form_1_id}', 'CertificateController@download
 $router->get('/sertifikat/data/{user_id}', 'CertificateController@getSertifikatByUserId');
 $router->get('/sertifikat/get/{pk_id}', 'CertificateController@getSertifikatByPkId');
 $router->get('/sertifikat/list', 'CertificateController@getListSertifikat');
+$router->get('/transkrip/list', 'CertificateController@getListTranskripNilai');
 $router->post('/sertifikat/transkrip-nilai', 'CertificateController@getTranskripNilai');
 
 

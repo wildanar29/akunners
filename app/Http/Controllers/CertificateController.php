@@ -642,6 +642,80 @@ class CertificateController extends Controller
     }
 
 
+    public function getListTranskripNilai(Request $request)
+    {
+        try {
+            // Ambil parameter filter
+            $status = $request->input('status');
+            $hasTranskrip = $request->boolean('has_transkrip'); // true/false/null
+
+            // Query Form6
+            $query = Form6::query();
+
+            if (!empty($status)) {
+                $query->where('status', $status);
+            }
+
+            $form6List = $query->get();
+
+            // Mapping data + cek transkrip
+            $result = $form6List->map(function ($form6) {
+
+                // Ambil form_1_id dari service
+                $form_1_id = $this->formService
+                    ->getParentFormIdByFormIdAndAsesiId(
+                        $form6->form_6_id,
+                        $form6->asesi_id,
+                        'form_6'
+                    );
+
+                // Cek apakah sudah ada transkrip
+                $existingTranskrip = TranskripNilaiPk::where('form_1_id', $form_1_id)->first();
+
+                return [
+                    'form_6_id'        => $form6->form_6_id,
+                    'form_1_id'        => $form_1_id,
+                    'pk_id'            => $form6->pk_id,
+                    'asesi_id'         => $form6->asesi_id,
+                    'asesi_name'       => $form6->asesi_name,
+                    'status'           => $form6->status,
+                    'created_at'       => $form6->created_at,
+                    'updated_at'       => $form6->updated_at,
+
+                    'transkrip'        => $existingTranskrip ? [
+                        'id'          => $existingTranskrip->id,
+                        'nomor_surat' => $existingTranskrip->nomor_surat,
+                        'preview_url' => url("storage/{$existingTranskrip->file_path}")
+                    ] : null,
+
+                    'sudah_transkrip'  => $existingTranskrip ? true : false,
+                ];
+            });
+
+            // Filter berdasarkan has_transkrip
+            if ($request->has('has_transkrip')) {
+                $result = $result->filter(function ($item) use ($hasTranskrip) {
+                    return $hasTranskrip
+                        ? $item['sudah_transkrip'] === true
+                        : $item['sudah_transkrip'] === false;
+                })->values();
+            }
+
+            return response()->json([
+                'status'  => 200,
+                'message' => 'List Transkrip Nilai berhasil diambil',
+                'data'    => $result
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status'  => 500,
+                'message' => 'Terjadi kesalahan saat mengambil data Transkrip Nilai',
+                'error'   => $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function getListSertifikat(Request $request)
     {
         try {
