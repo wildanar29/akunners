@@ -103,7 +103,7 @@ class CertificateController extends Controller
 
         $data['nama']            = strtoupper($form1->asesi_name);
         $data['nama_asesor']     = strtoupper($form1->asesor_name ?? 'ASESOR');
-        $data['tanggal_mulai']   = Carbon::parse($form1->updated_at)->translatedFormat('d F Y');
+        $data['tanggal_mulai']   = Carbon::parse($form1->asesor_date)->translatedFormat('d F Y');
         $data['tanggal_selesai'] = $form6EndedAt;
         $data['status']          = $overallFinal;
         $data['gelar']           = $kompetensi->nama_level ?? null;
@@ -220,7 +220,7 @@ class CertificateController extends Controller
                 'nama'            => $data['nama'],
                 'gelar'           => $data['gelar'],
                 'status'          => $data['status'],
-                'tanggal_mulai'   => $form1->updated_at,
+                'tanggal_mulai'   => $form1->asesor_date,
                 'tanggal_selesai' => $form6Progress['updated_at'] ?? null,
                 'file_path'       => $path,
             ]);
@@ -1282,7 +1282,7 @@ class CertificateController extends Controller
         $data = [
             'nama'              => strtoupper($form1->asesi_name),
             'nama_asesor'       => strtoupper($form1->asesor_name ?? 'ASESOR'),
-            'tanggal_mulai'     => Carbon::parse($form1->updated_at)
+            'tanggal_mulai'     => Carbon::parse($form1->asesor_date)
                                         ->translatedFormat('d F Y'),
             'tanggal_selesai'   => $form6EndedAt,
             'status'            => $overallFinal,
