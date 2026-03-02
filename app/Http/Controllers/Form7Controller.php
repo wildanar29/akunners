@@ -174,6 +174,18 @@ class Form7Controller extends BaseController
 
     public function getSoalDanJawabanForm7($pkId, $asesiId)
     {
+        Log::info('=== START getSoalDanJawabanForm7 ===');
+        Log::info('Parameter:', [
+            'pk_id'    => $pkId,
+            'asesi_id' => $asesiId
+        ]);
+
+        $form1Data = $this->formService->getForm1ByAsesiIdAndPkId($asesiId, $pkId);
+        $form1Id = $form1Data->form_1_id ?? null;
+        Log::info('Form 1 data retrieved', [
+            'form1_id' => $form1Id,
+            'exists' => $form1Data ? true : false
+        ]);
         // =========================
         // VALIDASI PARAMETER
         // =========================
@@ -189,6 +201,8 @@ class Form7Controller extends BaseController
         );
 
         if ($validator->fails()) {
+            Log::warning('Validation failed', $validator->errors()->toArray());
+
             return response()->json([
                 'status'  => 'error',
                 'message' => $validator->errors()->first()
@@ -196,9 +210,32 @@ class Form7Controller extends BaseController
         }
 
         // =========================
-        // AMBIL DATA (STRUKTUR SAMA DENGAN getSoalForm7)
+        // DEBUG RAW DATA SOAL
         // =========================
-        $elemen = ElemenForm3::where('pk_id', $pkId)
+        $rawSoalCount = DB::table('soal_form7')
+            ->where('pk_id', $pkId)
+            ->count();
+
+        Log::info('Raw soal_form7 count by pk_id', [
+            'pk_id' => $pkId,
+            'total' => $rawSoalCount
+        ]);
+
+        // =========================
+        // AMBIL DATA PREVIEW KEPUTUSAN (FORM 4)
+        // =========================
+        $form4a = $this->getKeputusanForm4aPerIuk($pkId, $form1Id, false); // false untuk tidak menyimpan ke DB
+        $form4b = $this->getKeputusanForm4bPerIuk($pkId, $form1Id, false);
+        $form4c = $this->getKeputusanForm4cPerIuk($pkId, $form1Id, false);
+
+        $form4aData = $form4a->getData()->data ?? [];
+        $form4bData = $form4b->getData()->data ?? [];
+        $form4cData = $form4c->getData()->data ?? [];
+
+        // =========================
+        // QUERY UTAMA
+        // =========================
+        $query = ElemenForm3::where('pk_id', $pkId)
             ->whereHas('kukForm3.iukForm3.soalForm7', function ($q) use ($pkId) {
                 $q->where('pk_id', $pkId);
             })
@@ -225,15 +262,15 @@ class Form7Controller extends BaseController
                                                 ->with([
                                                     'jawabanForm7' => function ($q) use ($asesiId) {
                                                         $q->where('asesi_id', $asesiId)
-                                                        ->select(
-                                                            'id',
-                                                            'asesi_id',
-                                                            'asesor_id',
-                                                            'soal_form7_id',
-                                                            'keputusan',
-                                                            'created_at',
-                                                            'updated_at'
-                                                        );
+                                                            ->select(
+                                                                'id',
+                                                                'asesi_id',
+                                                                'asesor_id',
+                                                                'soal_form7_id',
+                                                                'keputusan',
+                                                                'created_at',
+                                                                'updated_at'
+                                                            );
                                                     }
                                                 ]);
                                         }
@@ -242,20 +279,99 @@ class Form7Controller extends BaseController
                         ]);
                 }
             ])
-            ->orderBy('no_elemen_form_3', 'asc')
-            ->get();
+            ->orderBy('no_elemen_form_3', 'asc');
+
+        Log::info('Generated SQL', [
+            'sql'      => $query->toSql(),
+            'bindings' => $query->getBindings()
+        ]);
+
+        $elemen = $query->get();
+
+        Log::info('Total Elemen Retrieved', [
+            'count' => $elemen->count()
+        ]);
 
         // =========================
-        // KONVERSI JAWABAN → SINGLE OBJECT
+        // PROCESS DATA & PREVIEW LOGIC
         // =========================
-        $elemen->each(function ($el) {
-            $el->kukForm3->each(function ($kuk) {
-                $kuk->iukForm3->each(function ($iuk) {
-                    $iuk->soalForm7->each(function ($soal) {
+        $elemen->each(function ($el) use (
+            $pkId,
+            $asesiId,
+            $form4aData,
+            $form4bData,
+            $form4cData
+        ) {
 
-                        $soal->jawaban_form_7 = $soal->jawabanForm7->first() ?? null;
+            $el->kukForm3->each(function ($kuk) use (
+                $pkId,
+                $asesiId,
+                $form4aData,
+                $form4bData,
+                $form4cData
+            ) {
 
-                        // bersihkan relasi asli
+                $kuk->iukForm3->each(function ($iuk) use (
+                    $pkId,
+                    $asesiId,
+                    $form4aData,
+                    $form4bData,
+                    $form4cData
+                ) {
+
+                    $iuk->soalForm7->each(function ($soal) use (
+                        $asesiId,
+                        $form4aData,
+                        $form4bData,
+                        $form4cData
+                    ) {
+
+                        $existingJawaban = $soal->jawabanForm7->first();
+
+                        if ($existingJawaban) {
+
+                            // =========================
+                            // JIKA SUDAH ADA DI DB
+                            // =========================
+                            $soal->jawaban_form_7 = $existingJawaban;
+
+                        } else {
+
+                            // =========================
+                            // JIKA BELUM ADA → PREVIEW
+                            // =========================
+                            $iukId = $soal->iuk_form3_id;
+                            $keputusanPreview = null;
+
+                            $preview4a = collect($form4aData)
+                                ->firstWhere('iuk_form3_id', $iukId);
+
+                            $preview4b = collect($form4bData)
+                                ->firstWhere('iuk_form3_id', $iukId);
+
+                            $preview4c = collect($form4cData)
+                                ->firstWhere('iuk_form3_id', $iukId);
+
+                            if ($preview4a) {
+                                $keputusanPreview = $preview4a->keputusan ?? null;
+                            } elseif ($preview4b) {
+                                $keputusanPreview = $preview4b->keputusan ?? null;
+                            } elseif ($preview4c) {
+                                $keputusanPreview = $preview4c->keputusan ?? null;
+                            }
+
+                            $soal->jawaban_form_7 = [
+                                'id' => null,
+                                'asesi_id' => $asesiId,
+                                'asesor_id' => null,
+                                'soal_form7_id' => $soal->id,
+                                'keputusan' => $keputusanPreview,
+                                'created_at' => null,
+                                'updated_at' => null,
+                                'is_preview' => true
+                            ];
+                        }
+
                         $soal->setRelation('jawabanForm7', null);
                         unset($soal->jawabanForm7);
                     });
@@ -263,16 +379,13 @@ class Form7Controller extends BaseController
             });
         });
 
-        // =========================
-        // RESPONSE
-        // =========================
+        Log::info('=== END getSoalDanJawabanForm7 ===');
+
         return response()->json([
             'status' => 'success',
             'data'   => $elemen
         ]);
     }
-
-
 
 
 
@@ -304,11 +417,11 @@ class Form7Controller extends BaseController
         ]);
     }
 
-    public function getKeputusanForm4aPerIuk($pkId, $form1Id)
+    public function getKeputusanForm4aPerIuk($pkId, $form1Id, $saveToDatabase = true)
     {
-        // 1. Ambil asesi_id dari Form 1
         $form1Data = $this->formService->getParentDataByFormId($form1Id);
-        $asesiId = $form1Data->asesi_id ?? null;
+
+        $asesiId  = $form1Data->asesi_id ?? null;
         $asesorId = $form1Data->asesor_id ?? null;
 
         if (!$asesiId) {
@@ -318,7 +431,6 @@ class Form7Controller extends BaseController
             ], 404);
         }
 
-        // 2. Ambil semua soal form 7 untuk pkId (hanya sumber_form mengandung 4A)
         $soalForm7List = SoalForm7::where('pk_id', $pkId)
             ->whereRaw("LOWER(sumber_form) LIKE ?", ['%4a%'])
             ->get();
@@ -326,7 +438,7 @@ class Form7Controller extends BaseController
         if ($soalForm7List->isEmpty()) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Tidak ada Soal Form7 dengan sumber_form 4A untuk pkId ini.'
+                'message' => 'Tidak ada Soal Form7 dengan sumber_form 4A.'
             ], 404);
         }
 
@@ -336,41 +448,33 @@ class Form7Controller extends BaseController
 
             $iukId = $soal->iuk_form3_id;
 
-            // ⭐ SESUAIKAN DENGAN MODEL
-            // karena primary key = iuk_form3_id
-            $iukData = IukModel::find($iukId);
-            $noIuk   = $iukData->no_iuk ?? null;
-
-            // 3. Ambil jawaban form 4A untuk IUK ini
             $jawaban = JawabanForm4a::where('form_1_id', $form1Id)
                 ->where('iuk_form3_id', $iukId)
                 ->first();
 
-            if (!$jawaban) {
-                $keputusan = 'BK';
-            } else {
-                $keputusan = $jawaban->pencapaian == 1 ? 'K' : 'BK';
-            }
+            $keputusan = (!$jawaban)
+                ? 'BK'
+                : ($jawaban->pencapaian == 1 ? 'K' : 'BK');
 
             $hasil[] = [
                 'soal_form7_id' => $soal->id,
                 'iuk_form3_id'  => $iukId,
-                'no_iuk'        => $noIuk,       // ✔ sesuai model
-                'pencapaian'    => $jawaban->pencapaian ?? null,
                 'keputusan'     => $keputusan
             ];
 
-            // 4. Simpan ke JawabanForm7
-            JawabanForm7::updateOrCreate(
-                [
-                    'asesi_id'      => $asesiId,
-                    'asesor_id'     => $asesorId,
-                    'soal_form7_id' => $soal->id
-                ],
-                [
-                    'keputusan' => $keputusan
-                ]
-            );
+            // ✅ HANYA SIMPAN JIKA MODE SAVE
+            if ($saveToDatabase) {
+                JawabanForm7::updateOrCreate(
+                    [
+                        'asesi_id'      => $asesiId,
+                        'asesor_id'     => $asesorId,
+                        'soal_form7_id' => $soal->id
+                    ],
+                    [
+                        'keputusan' => $keputusan
+                    ]
+                );
+            }
         }
 
         return response()->json([
@@ -381,11 +485,12 @@ class Form7Controller extends BaseController
 
 
 
-    public function getKeputusanForm4bPerIuk($pkId, $form1Id)
+    public function getKeputusanForm4bPerIuk($pkId, $form1Id, $saveToDatabase = true)
     {
         // 1. Ambil asesi_id dan asesor_id dari Form 1
         $form1Data = $this->formService->getParentDataByFormId($form1Id);
-        $asesiId = $form1Data->asesi_id ?? null;
+
+        $asesiId  = $form1Data->asesi_id ?? null;
         $asesorId = $form1Data->asesor_id ?? null;
 
         if (!$asesiId) {
@@ -410,56 +515,58 @@ class Form7Controller extends BaseController
         $hasil = [];
 
         foreach ($soalForm7List as $soal) {
+
             $iukId = $soal->iuk_form3_id;
 
-            // 🔥 3. Ambil NO IUK dari IukModel
+            // Ambil NO IUK
             $iuk = IukModel::find($iukId);
             $noIuk = $iuk->no_iuk ?? null;
 
-            // 4. Ambil jawaban form 4B untuk IUK ini
+            // 3. Ambil jawaban form 4B untuk IUK ini
             $jawaban = JawabanForm4b::where('form_1_id', $form1Id)
                 ->where('iuk_form3_id', $iukId)
                 ->first();
 
-            if (!$jawaban) {
-                $keputusan = 'BK';
-            } else {
-                $keputusan = $jawaban->pencapaian == 1 ? 'K' : 'BK';
-            }
+            $keputusan = (!$jawaban)
+                ? 'BK'
+                : ($jawaban->pencapaian == 1 ? 'K' : 'BK');
 
             $hasil[] = [
                 'soal_form7_id' => $soal->id,
-                'iuk_form3_id' => $iukId,
-                'no_iuk' => $noIuk,                 // 🔥 ditambahkan di hasil output
-                'pencapaian' => $jawaban->pencapaian ?? null,
-                'keputusan' => $keputusan
+                'iuk_form3_id'  => $iukId,
+                'no_iuk'        => $noIuk,
+                'pencapaian'    => $jawaban->pencapaian ?? null,
+                'keputusan'     => $keputusan
             ];
 
-            // 5. Simpan ke JawabanForm7
-            JawabanForm7::updateOrCreate(
-                [
-                    'asesi_id' => $asesiId,
-                    'asesor_id' => $asesorId,
-                    'soal_form7_id' => $soal->id
-                ],
-                [
-                    'keputusan' => $keputusan
-                ]
-            );
+            // ✅ SIMPAN HANYA JIKA MODE SAVE
+            if ($saveToDatabase) {
+                JawabanForm7::updateOrCreate(
+                    [
+                        'asesi_id'      => $asesiId,
+                        'asesor_id'     => $asesorId,
+                        'soal_form7_id' => $soal->id
+                    ],
+                    [
+                        'keputusan' => $keputusan
+                    ]
+                );
+            }
         }
 
         return response()->json([
             'status' => 'success',
-            'data' => $hasil
+            'data'   => $hasil
         ]);
     }
 
 
-    public function getKeputusanForm4cPerIuk($pkId, $form1Id)
+    public function getKeputusanForm4cPerIuk($pkId, $form1Id, $saveToDatabase = true)
     {
-        // 1. Ambil asesi_id dari form 1
+        // 1. Ambil asesi_id dan asesor_id dari Form 1
         $form1Data = $this->formService->getParentDataByFormId($form1Id);
-        $asesiId = $form1Data->asesi_id ?? null;
+
+        $asesiId  = $form1Data->asesi_id ?? null;
         $asesorId = $form1Data->asesor_id ?? null;
 
         if (!$asesiId) {
@@ -484,15 +591,12 @@ class Form7Controller extends BaseController
         $hasil = [];
 
         foreach ($soalForm7List as $soal) {
+
             $iukId = $soal->iuk_form3_id;
 
-            // ================================
-            // ★ Tambahkan pengambilan no_iuk ★
-            // ================================
+            // Ambil no_iuk
             $iuk = IukModel::find($iukId);
             $noIuk = $iuk->no_iuk ?? null;
-            // ================================
-
 
             // 3. Ambil id pertanyaan_form4c
             $pertanyaanForm4cIds = PertanyaanForm4c::where('iuk_form_3_id', $iukId)
@@ -501,29 +605,34 @@ class Form7Controller extends BaseController
                 ->values()
                 ->toArray();
 
+            // Jika tidak ada pertanyaan → otomatis BK
             if (empty($pertanyaanForm4cIds)) {
+
                 $keputusan = 'BK';
 
                 $hasil[] = [
-                    'soal_form7_id' => $soal->id,
-                    'iuk_form3_id' => $iukId,
-                    'no_iuk' => $noIuk,         // ★ Ditambahkan
-                    'total' => 0,
-                    'benar' => 0,
-                    'persentase_benar' => 0,
-                    'keputusan' => $keputusan
+                    'soal_form7_id'   => $soal->id,
+                    'iuk_form3_id'    => $iukId,
+                    'no_iuk'          => $noIuk,
+                    'total'           => 0,
+                    'benar'           => 0,
+                    'persentase_benar'=> 0,
+                    'keputusan'       => $keputusan
                 ];
 
-                JawabanForm7::updateOrCreate(
-                    [
-                        'asesi_id' => $asesiId,
-                        'asesor_id' => $asesorId,
-                        'soal_form7_id' => $soal->id
-                    ],
-                    [
-                        'keputusan' => $keputusan
-                    ]
-                );
+                // ✅ Simpan hanya jika mode save
+                if ($saveToDatabase) {
+                    JawabanForm7::updateOrCreate(
+                        [
+                            'asesi_id'      => $asesiId,
+                            'asesor_id'     => $asesorId,
+                            'soal_form7_id' => $soal->id
+                        ],
+                        [
+                            'keputusan' => $keputusan
+                        ]
+                    );
+                }
 
                 continue;
             }
@@ -545,97 +654,182 @@ class Form7Controller extends BaseController
                 ->where('is_correct', 1)
                 ->count();
 
-            $persentase = $total > 0 ? round(($benar / $total) * 100, 2) : 0;
+            $persentase = $total > 0
+                ? round(($benar / $total) * 100, 2)
+                : 0;
 
-            // Tentukan keputusan
             $keputusan = $persentase >= 80 ? 'K' : 'BK';
 
-            // Tambahkan hasil
             $hasil[] = [
-                'soal_form7_id' => $soal->id,
-                'iuk_form3_id' => $iukId,
-                'no_iuk' => $noIuk,            // ★ Ditambahkan di sini
-                'total' => $total,
-                'benar' => $benar,
-                'persentase_benar' => $persentase,
-                'keputusan' => $keputusan
+                'soal_form7_id'   => $soal->id,
+                'iuk_form3_id'    => $iukId,
+                'no_iuk'          => $noIuk,
+                'total'           => $total,
+                'benar'           => $benar,
+                'persentase_benar'=> $persentase,
+                'keputusan'       => $keputusan
             ];
 
-            // 6. Simpan ke tabel Form7
-            JawabanForm7::updateOrCreate(
-                [
-                    'asesi_id' => $asesiId,
-                    'asesor_id' => $asesorId,
-                    'soal_form7_id' => $soal->id
-                ],
-                [
-                    'keputusan' => $keputusan
-                ]
-            );
-        }
-
-        return response()->json([
-            'status' => 'success',
-            'data' => $hasil
-        ]);
-    }
-
-    public function getAllKeputusanForm7($pkId, $form1Id)
-    {
-        $form4a = $this->getKeputusanForm4aPerIuk($pkId, $form1Id);
-        $form4b = $this->getKeputusanForm4bPerIuk($pkId, $form1Id);
-        $form4c = $this->getKeputusanForm4cPerIuk($pkId, $form1Id);
-
-        // ambil data form1 agar dapat asesi_id
-        $form1 = BidangModel::find($form1Id);
-        $asesiId = $form1->asesi_id ?? null;
-
-        $form7Id = $this->formService->getFormIdsByParentFormIdAndType(
-            $form1Id,
-            'form_7'
-        );
-
-        if ($form7Id && $asesiId) {
-            DB::beginTransaction();
-            try {
-                // update progres dan track
-                $this->formService->updateProgresDanTrack(
-                    $form7Id,
-                    $form7->form_type ?? 'form_7',
-                    'Submitted',
-                    $asesiId,
-                    'Form 7 telah selesai diproses oleh asesor'
+            // ✅ Simpan hanya jika mode save
+            if ($saveToDatabase) {
+                JawabanForm7::updateOrCreate(
+                    [
+                        'asesi_id'      => $asesiId,
+                        'asesor_id'     => $asesorId,
+                        'soal_form7_id' => $soal->id
+                    ],
+                    [
+                        'keputusan' => $keputusan
+                    ]
                 );
-
-                // kirim notifikasi ke asesi
-                $user = DaftarUser::find($asesiId);
-                if ($user) {
-                    $this->formService->kirimNotifikasiKeUser(
-                        $user,
-                        'Form ' . ($form7->form_type ?? 'form_7') . ' Selesai',
-                        'Form ' . ($form7->form_type ?? 'form_7') . ' dengan ID ' . $form7Id . ' telah berhasil diselesaikan.'
-                    );
-                }
-
-                DB::commit();
-            } catch (\Exception $e) {
-                DB::rollBack();
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Gagal memproses Form 7: ' . $e->getMessage(),
-                ], 500);
             }
         }
 
         return response()->json([
             'status' => 'success',
-            'data' => [
-                'form4a' => $form4a->getData()->data ?? [],
-                'form4b' => $form4b->getData()->data ?? [],
-                'form4c' => $form4c->getData()->data ?? []
-            ]
+            'data'   => $hasil
         ]);
     }
+
+    public function getAllKeputusanForm7($pkId, $form1Id)
+{
+    Log::info('=== START getAllKeputusanForm7 ===', [
+        'pk_id' => $pkId,
+        'form1_id' => $form1Id
+    ]);
+
+    // =========================
+    // AMBIL DATA FORM 4
+    // =========================
+    $form4a = $this->getKeputusanForm4aPerIuk($pkId, $form1Id);
+    $form4b = $this->getKeputusanForm4bPerIuk($pkId, $form1Id);
+    $form4c = $this->getKeputusanForm4cPerIuk($pkId, $form1Id);
+
+    Log::info('Form 4 data retrieved', [
+        'form4a_status' => $form4a->status() ?? null,
+        'form4b_status' => $form4b->status() ?? null,
+        'form4c_status' => $form4c->status() ?? null,
+    ]);
+
+    // =========================
+    // AMBIL DATA FORM1
+    // =========================
+    $form1 = BidangModel::find($form1Id);
+
+    if (!$form1) {
+        Log::warning('Form1 tidak ditemukan', [
+            'form1_id' => $form1Id
+        ]);
+    }
+
+    $asesiId = $form1->asesi_id ?? null;
+
+    Log::info('Form1 data', [
+        'form1_exists' => $form1 ? true : false,
+        'asesi_id' => $asesiId
+    ]);
+
+    // =========================
+    // AMBIL FORM 7 ID
+    // =========================
+    $form7Id = $this->formService->getFormIdsByParentFormIdAndType(
+        $form1Id,
+        'form_7'
+    );
+
+    Log::info('Form7 lookup result', [
+        'form7_id' => $form7Id
+    ]);
+
+    // =========================
+    // PROSES UPDATE PROGRES
+    // =========================
+    if ($form7Id && $asesiId) {
+
+        Log::info('Masuk ke proses update Form 7', [
+            'form7_id' => $form7Id,
+            'asesi_id' => $asesiId
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+
+            Log::info('Memanggil updateProgresDanTrack');
+
+            $this->formService->updateProgresDanTrack(
+                $form7Id,
+                'form_7',
+                'Submitted',
+                $asesiId,
+                'Form 7 telah selesai diproses oleh asesor'
+            );
+
+            Log::info('updateProgresDanTrack berhasil');
+
+            // =========================
+            // KIRIM NOTIFIKASI
+            // =========================
+            $user = DaftarUser::find($asesiId);
+
+            if (!$user) {
+                Log::warning('User tidak ditemukan untuk notifikasi', [
+                    'asesi_id' => $asesiId
+                ]);
+            } else {
+
+                Log::info('Mengirim notifikasi ke user', [
+                    'user_id' => $user->id
+                ]);
+
+                $this->formService->kirimNotifikasiKeUser(
+                    $user,
+                    'Form form_7 Selesai',
+                    'Form form_7 dengan ID ' . $form7Id . ' telah berhasil diselesaikan.'
+                );
+
+                Log::info('Notifikasi berhasil dikirim');
+            }
+
+            DB::commit();
+            Log::info('Transaction commit berhasil');
+
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+
+            Log::error('Exception saat proses Form 7', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal memproses Form 7: ' . $e->getMessage(),
+            ], 500);
+        }
+
+    } else {
+
+        Log::warning('Tidak masuk ke proses update Form 7', [
+            'form7_id' => $form7Id,
+            'asesi_id' => $asesiId
+        ]);
+    }
+
+    Log::info('=== END getAllKeputusanForm7 ===');
+
+    return response()->json([
+        'status' => 'success',
+        'data' => [
+            'form4a' => $form4a->getData()->data ?? [],
+            'form4b' => $form4b->getData()->data ?? [],
+            'form4c' => $form4c->getData()->data ?? []
+        ]
+    ]);
+}
 
     public function ApproveForm7ByAsesi(Request $request, $form7Id)
     {
