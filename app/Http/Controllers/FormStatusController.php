@@ -168,13 +168,13 @@ class FormStatusController extends Controller
             }
 
             // ---------------------------------------------------------
-            // 🔹 Ambil NAMA PK
+            // Ambil Nama PK
             // ---------------------------------------------------------
             $pk = KompetensiPk::find($pk_id);
             $namaPk = $pk ? $pk->nama_level : null;
 
             // ---------------------------------------------------------
-            // Ambil item BidangModel sesuai pk_id
+            // Ambil item BidangModel
             // ---------------------------------------------------------
             $item = BidangModel::where('asesi_id', $asesi_id)
                 ->where('pk_id', $pk_id)
@@ -200,7 +200,7 @@ class FormStatusController extends Controller
             }
 
             // ---------------------------------------------------------
-            // 🔥 HITUNG DURASI ASESMEN
+            // HITUNG DURASI ASESMEN
             // ---------------------------------------------------------
             $endDate = null;
             $endDateStatus = null;
@@ -254,21 +254,47 @@ class FormStatusController extends Controller
             }
 
             // ---------------------------------------------------------
-            // Hitung PROGRESS
+            // 🔥 PERHITUNGAN PROGRESS (MODIFIKASI DI SINI)
             // ---------------------------------------------------------
-            $totalForms = count($status);
             $finishedStatuses = ['Completed', 'Submitted'];
 
-            $finishedCount = collect($status)->filter(function ($value) use ($finishedStatuses) {
-                return in_array($value, $finishedStatuses);
-            })->count();
+            $form6Completed = isset($status['form_6']) 
+                && $status['form_6'] === 'Completed';
+
+            if ($form6Completed) {
+
+                // Jika form_6 Completed → NULL tidak dihitung
+                $filteredStatus = collect($status)
+                    ->filter(function ($value) {
+                        return !is_null($value);
+                    });
+
+                $totalForms = $filteredStatus->count();
+
+                $finishedCount = $filteredStatus
+                    ->filter(function ($value) use ($finishedStatuses) {
+                        return in_array($value, $finishedStatuses);
+                    })
+                    ->count();
+
+            } else {
+
+                // Default → NULL tetap dihitung
+                $totalForms = count($status);
+
+                $finishedCount = collect($status)
+                    ->filter(function ($value) use ($finishedStatuses) {
+                        return in_array($value, $finishedStatuses);
+                    })
+                    ->count();
+            }
 
             $progressPercentage = $totalForms > 0
                 ? round(($finishedCount / $totalForms) * 100, 2)
                 : 0;
 
             // ---------------------------------------------------------
-            // RESPONSE FINAL
+            // RESPONSE
             // ---------------------------------------------------------
             return response()->json([
                 'success' => true,
@@ -276,7 +302,7 @@ class FormStatusController extends Controller
                 'data' => [
                     'pk' => [
                         'pk_id'   => $pk_id,
-                        'nama_pk'=> $namaPk,
+                        'nama_pk' => $namaPk,
                     ],
                     'status' => $status,
                     'progress' => [
