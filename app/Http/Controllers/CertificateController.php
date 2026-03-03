@@ -288,6 +288,34 @@ class CertificateController extends Controller
         }
     }
 
+    public function downloadTranskripByFormId($form_1_id)
+    {
+        // Cari transkrip berdasarkan form_1_id
+        $transkrip = TranskripNilaiPk::where('form_1_id', $form_1_id)->first();
+
+        if (!$transkrip) {
+            return response()->json([
+                'message' => 'Transkrip nilai untuk form ini tidak ditemukan'
+            ], 404);
+        }
+
+        // Pastikan file ada di storage
+        if (!Storage::disk('public')->exists($transkrip->file_path)) {
+            return response()->json([
+                'message' => 'File transkrip nilai tidak ditemukan'
+            ], 404);
+        }
+
+        // Ambil file
+        $file = Storage::disk('public')->get($transkrip->file_path);
+        $mime = Storage::disk('public')->mimeType($transkrip->file_path);
+
+        // Return sebagai download
+        return response($file, 200)
+            ->header('Content-Type', $mime)
+            ->header('Content-Disposition', 'attachment; filename="' . basename($transkrip->file_path) . '"');
+    }
+
     public function downloadSertifikatByFormId($form_1_id)
     {
         // Cari sertifikat berdasarkan form_1_id

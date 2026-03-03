@@ -293,6 +293,7 @@ $router->post('/generate-sertifikat', 'CertificateController@generate');
 $router->get('/sertifikat/view/{form_1_id}', 'CertificateController@viewSertifikatByFormId');
 $router->get('/transkrip/view/{form_1_id}', 'CertificateController@viewTranskripByFormId');
 $router->get('/sertifikat/download/{form_1_id}', 'CertificateController@downloadSertifikatByFormId');
+$router->get('/transkrip/download/{form_1_id}', 'CertificateController@downloadTranskripByFormId');
 $router->get('/sertifikat/data/{user_id}', 'CertificateController@getSertifikatByUserId');
 $router->get('/transkrip/data/{user_id}', 'CertificateController@getTranskripByUserId');
 $router->get('/sertifikat/get/{pk_id}', 'CertificateController@getSertifikatByPkId');
