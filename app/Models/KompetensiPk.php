@@ -17,6 +17,7 @@ class KompetensiPk extends Model
         'nama_level',
         'deskripsi',
         'is_active',
+        'area'
     ];
 
     // Timestamps sudah ditangani otomatis

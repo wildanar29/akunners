@@ -218,7 +218,7 @@
 
         <p class="gelar">
             Sebagai <strong>{{ $gelar ?? '-' }}</strong>
-            di Area Keperawatan <strong>Rumah Sakit Immanuel</strong>
+            di Area {{ $area ?? '-' }} <strong>Rumah Sakit Immanuel</strong>
         </p>
     </div>
 
