@@ -297,6 +297,7 @@ $router->get('/transkrip/download/{form_1_id}', 'CertificateController@downloadT
 $router->get('/sertifikat/data/{user_id}', 'CertificateController@getSertifikatByUserId');
 $router->get('/transkrip/data/{user_id}', 'CertificateController@getTranskripByUserId');
 $router->get('/sertifikat/get/{pk_id}', 'CertificateController@getSertifikatByPkId');
+$router->get('/transkrip/get/{pk_id}', 'CertificateController@getTranskripNilaiByPkId');
 $router->get('/sertifikat/list', 'CertificateController@getListSertifikat');
 $router->get('/transkrip/list', 'CertificateController@getListTranskripNilai');
 $router->post('/sertifikat/transkrip-nilai', 'CertificateController@getTranskripNilai');

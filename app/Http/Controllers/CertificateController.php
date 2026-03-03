@@ -676,6 +676,86 @@ class CertificateController extends Controller
         }
     }
 
+    public function getTranskripNilaiByPkId($pk_id)
+    {
+        $userId = auth()->id();
+
+        // ================= VALIDASI PK_ID =================
+        $validator = Validator::make(
+            ['pk_id' => $pk_id],
+            ['pk_id' => 'required|integer|exists:kompetensi_pk,pk_id']
+        );
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validasi gagal',
+                'errors'  => $validator->errors(),
+            ], 422);
+        }
+
+        // ================= AMBIL FORM 1 =================
+        $form1 = BidangModel::where('asesi_id', $userId)
+            ->where('pk_id', $pk_id)
+            ->first();
+
+        if (!$form1) {
+            return response()->json([
+                'message' => 'Form 1 tidak ditemukan'
+            ], 404);
+        }
+
+        // ================= AMBIL PROGRES =================
+        $progres = KompetensiProgres::where('form_id', $form1->form_1_id)
+            ->where('user_id', $form1->asesi_id)
+            ->whereNull('parent_form_id')
+            ->first();
+
+        if (!$progres) {
+            return response()->json([
+                'message' => 'Data progres tidak ditemukan'
+            ], 404);
+        }
+
+        // ================= CEK STATUS =================
+        if (!in_array($progres->status, ['Completed'])) {
+            return response()->json([
+                'message' => 'Transkrip nilai belum tersedia karena proses asesmen belum selesai',
+                'status_form_1' => $form1->status
+            ], 400);
+        }
+
+        // ================= AMBIL TRANSKRIP NILAI =================
+        $transkrip = TranskripNilaiPk::where('asesi_id', $userId)
+            ->where('pk_id', $pk_id)
+            ->first();
+
+        if (!$transkrip) {
+            return response()->json([
+                'message' => 'Tidak ada transkrip nilai untuk pk_id ini'
+            ], 404);
+        }
+
+        $previewUrl = url('storage/' . $transkrip->file_path);
+
+        $data = [
+            'id'               => $transkrip->id,
+            'form_1_id'        => $transkrip->form_1_id,
+            'pk_id'            => $transkrip->pk_id,
+            'nomor_urut'       => $transkrip->nomor_urut,
+            'nomor_dokumen'    => $transkrip->nomor_dokumen,
+            'nama'             => $transkrip->nama,
+            'gelar'            => $transkrip->gelar,
+            'status'           => $transkrip->status,
+            'tanggal_mulai'    => $transkrip->tanggal_mulai,
+            'tanggal_selesai'  => $transkrip->tanggal_selesai,
+            'preview_url'      => $previewUrl,
+        ];
+
+        return response()->json([
+            'message' => 'Detail transkrip nilai berhasil diambil',
+            'data'    => $data,
+        ]);
+    }
         
     public function getSertifikatByPkId($pk_id)
     {
