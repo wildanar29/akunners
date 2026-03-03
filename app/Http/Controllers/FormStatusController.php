@@ -134,7 +134,7 @@ class FormStatusController extends Controller
             }
 
             // ---------------------------------------------------------
-            // Jika pk_id tidak diisi → cari pk_id aktif yang belum Completed
+            // Auto detect PK jika tidak dikirim
             // ---------------------------------------------------------
             if (!$pk_id) {
 
@@ -151,11 +151,6 @@ class FormStatusController extends Controller
                     })
                     ->orderBy('pk_id')
                     ->value('pk_id');
-
-                Log::info('Auto-detect pk_id untuk asesi', [
-                    'asesi_id' => $asesi_id,
-                    'pk_id_terdeteksi' => $pk_id
-                ]);
 
                 if (!$pk_id) {
                     return response()->json([
@@ -174,7 +169,7 @@ class FormStatusController extends Controller
             $namaPk = $pk ? $pk->nama_level : null;
 
             // ---------------------------------------------------------
-            // Ambil item BidangModel
+            // Ambil data utama
             // ---------------------------------------------------------
             $item = BidangModel::where('asesi_id', $asesi_id)
                 ->where('pk_id', $pk_id)
@@ -200,7 +195,7 @@ class FormStatusController extends Controller
             }
 
             // ---------------------------------------------------------
-            // HITUNG DURASI ASESMEN
+            // Hitung End Date
             // ---------------------------------------------------------
             $endDate = null;
             $endDateStatus = null;
@@ -216,7 +211,7 @@ class FormStatusController extends Controller
             }
 
             // ---------------------------------------------------------
-            // Ambil default list form
+            // Ambil default form
             // ---------------------------------------------------------
             $defaultForms = KompetensiTrack::distinct()
                 ->pluck('form_type')
@@ -227,7 +222,7 @@ class FormStatusController extends Controller
             $status = array_fill_keys($defaultForms, null);
 
             // ---------------------------------------------------------
-            // Ambil seluruh progres form
+            // Ambil progres
             // ---------------------------------------------------------
             $allProgres = KompetensiProgres::where(function ($q) use ($item) {
                     $q->where(function ($q2) use ($item) {
@@ -254,16 +249,15 @@ class FormStatusController extends Controller
             }
 
             // ---------------------------------------------------------
-            // 🔥 PERHITUNGAN PROGRESS (MODIFIKASI DI SINI)
+            // 🔥 PERHITUNGAN PROGRESS FINAL
             // ---------------------------------------------------------
-            $finishedStatuses = ['Completed', 'Submitted'];
 
             $form6Completed = isset($status['form_6']) 
                 && $status['form_6'] === 'Completed';
 
             if ($form6Completed) {
 
-                // Jika form_6 Completed → NULL tidak dihitung
+                // 1️⃣ Abaikan NULL
                 $filteredStatus = collect($status)
                     ->filter(function ($value) {
                         return !is_null($value);
@@ -271,20 +265,26 @@ class FormStatusController extends Controller
 
                 $totalForms = $filteredStatus->count();
 
+                // 2️⃣ form_1 Approved dianggap Completed
                 $finishedCount = $filteredStatus
-                    ->filter(function ($value) use ($finishedStatuses) {
-                        return in_array($value, $finishedStatuses);
+                    ->filter(function ($value, $key) {
+
+                        if ($key === 'form_1' && $value === 'Approved') {
+                            return true;
+                        }
+
+                        return in_array($value, ['Completed', 'Submitted']);
                     })
                     ->count();
 
             } else {
 
-                // Default → NULL tetap dihitung
+                // Default normal
                 $totalForms = count($status);
 
                 $finishedCount = collect($status)
-                    ->filter(function ($value) use ($finishedStatuses) {
-                        return in_array($value, $finishedStatuses);
+                    ->filter(function ($value) {
+                        return in_array($value, ['Completed', 'Submitted']);
                     })
                     ->count();
             }
