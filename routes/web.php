@@ -70,6 +70,7 @@ $router->get('/check-profile/{nik}', 'UsersController@CheckDataCompleteness');
 $router->post('/create-password', 'UsersController@createPassword');
 $router->post('/input-jabatan-working/{nik}', 'UsersController@insertHistoryJabatan');
 $router->put('/edit-jabatan-working/{nik}', 'UsersController@updateHistoryJabatan');
+$router->delete('/users/{user_id}', 'UsersController@hardDeleteUser');
 // baru
 $router->delete('/delete-jabatan-working/{nik}', 'UsersController@deleteHistoryJabatan');
 // akhir baru

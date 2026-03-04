@@ -1126,6 +1126,69 @@ class UsersController extends Controller
 			], 500);
 		}
 	}
+
+
+	public function hardDeleteUser($user_id)
+	{
+		try {
+
+			DB::beginTransaction();
+
+			$user = DaftarUser::find($user_id);
+
+			if (!$user) {
+				return response()->json([
+					'status' => false,
+					'message' => 'User tidak ditemukan',
+					'data' => null
+				], 404);
+			}
+
+			$deletedData = $user->toArray();
+
+			// Ambil semua progres milik user
+			$progresIds = DB::table('kompetensi_progres')
+				->where('user_id', $user_id)
+				->pluck('id');
+
+			// Hapus tracks terlebih dahulu
+			DB::table('kompetensi_tracks')
+				->whereIn('progres_id', $progresIds)
+				->delete();
+
+			// Hapus progres
+			DB::table('kompetensi_progres')
+				->where('user_id', $user_id)
+				->delete();
+
+			// Hapus relasi pivot
+			$user->roles()->detach();
+
+			// Hapus sertifikat
+			$user->Sertifikat()->delete();
+
+			// Hapus user
+			$user->delete();
+
+			DB::commit();
+
+			return response()->json([
+				'status' => true,
+				'message' => 'User berhasil dihapus permanen',
+				'data' => $deletedData
+			]);
+
+		} catch (\Exception $e) {
+
+			DB::rollBack();
+
+			return response()->json([
+				'status' => false,
+				'message' => 'Terjadi kesalahan saat menghapus user',
+				'data' => $e->getMessage()
+			], 500);
+		}
+	}
 }
 
 
