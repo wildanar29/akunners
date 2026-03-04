@@ -317,7 +317,10 @@ class UsersController extends Controller
 	public function LoginAkunNurse(Request $request)
 	{
 		try {
-			// Validasi data
+
+			// ================================
+			// VALIDASI REQUEST
+			// ================================
 			$validator = Validator::make($request->all(), [
 				'nik' => 'required',
 				'password' => 'required',
@@ -333,10 +336,14 @@ class UsersController extends Controller
 				], 400);
 			}
 
-			// Cari user
-			$user = DaftarUser::where('nik', $request->nik)->first();
-
-			$pkIdActive = $this->formService->getActivePkIdByAsesi($user->user_id ?? 0);
+			/**
+			 * =====================================
+			 * AMBIL USER TERMASUK YANG SOFT DELETE
+			 * =====================================
+			 */
+			$user = DaftarUser::withTrashed()
+				->where('nik', $request->nik)
+				->first();
 
 			if (!$user) {
 				return response()->json([
@@ -346,7 +353,22 @@ class UsersController extends Controller
 				], 404);
 			}
 
-			// Cek password
+			/**
+			 * =====================================
+			 * CEK JIKA USER SUDAH DI SOFT DELETE
+			 * =====================================
+			 */
+			if ($user->deleted_at !== null) {
+				return response()->json([
+					'status' => 403,
+					'message' => 'Account has been deactivated.',
+					'details' => 'Akun ini sudah dihapus atau dinonaktifkan.'
+				], 403);
+			}
+
+			// ================================
+			// CEK PASSWORD
+			// ================================
 			if (!Hash::check($request->password, $user->password)) {
 				return response()->json([
 					'status' => 401,
@@ -357,19 +379,29 @@ class UsersController extends Controller
 
 			/**
 			 * =========================================
-			 * 🔥 AMBIL SEMUA ROLE YANG DIMILIKI USER
+			 * AMBIL PK AKTIF
+			 * =========================================
+			 */
+			$pkIdActive = $this->formService->getActivePkIdByAsesi($user->user_id ?? 0);
+
+			/**
+			 * =========================================
+			 * AMBIL SEMUA ROLE USER
 			 * =========================================
 			 */
 			$allRoles = $user->roles()
 				->select('roles.role_id', 'roles.role_name')
 				->get();
 
-			// Role aktif (current_role_id)
+			// Role aktif
 			$currentRole = Role::where('role_id', $user->current_role_id)->first();
 			$currentRoleName = $currentRole ? $currentRole->role_name : null;
 
-
-			// Ambil history jabatan terbaru
+			/**
+			 * =========================================
+			 * AMBIL HISTORY JABATAN TERBARU
+			 * =========================================
+			 */
 			$latestHistory = DB::table('history_jabatan_user')
 				->where('user_id', $user->user_id)
 				->latest('created_at')
@@ -378,7 +410,11 @@ class UsersController extends Controller
 			$working_unit_id = $latestHistory->working_unit_id ?? null;
 			$jabatan_id = $latestHistory->jabatan_id ?? null;
 
-			// Ambil working unit + area kerja
+			/**
+			 * =========================================
+			 * AMBIL WORKING UNIT + AREA
+			 * =========================================
+			 */
 			$workingUnit = DB::table('working_unit')
 				->join('working_area', 'working_unit.working_area_id', '=', 'working_area.working_area_id')
 				->where('working_unit.working_unit_id', $working_unit_id)
@@ -389,16 +425,23 @@ class UsersController extends Controller
 				)
 				->first();
 
-			// Ambil nama jabatan
+			/**
+			 * =========================================
+			 * AMBIL JABATAN
+			 * =========================================
+			 */
 			$jabatan = DB::table('jabatan')
 				->where('jabatan_id', $jabatan_id)
 				->select('nama_jabatan')
 				->first();
 
-			// Generate token
+			/**
+			 * =========================================
+			 * GENERATE TOKEN
+			 * =========================================
+			 */
 			$token = JWTAuth::fromUser($user);
 
-			// Simpan token & device token
 			$user->token = $token;
 
 			if ($request->filled('device_token')) {
@@ -416,12 +459,7 @@ class UsersController extends Controller
 					'user_id' => $user->user_id,
 					'pk_id_active' => $pkIdActive,
 
-					/**
-					 * =============================
-					 * 🔥 Tambahan: Semua Role User
-					 * =============================
-					 */
-					'roles' => $allRoles, // <= INI BAGIAN TAMBAHAN
+					'roles' => $allRoles,
 
 					'current_role' => [
 						'role_id' => $user->current_role_id,
@@ -445,6 +483,7 @@ class UsersController extends Controller
 			], 200);
 
 		} catch (\Exception $e) {
+
 			return response()->json([
 				'status' => 500,
 				'message' => 'An error occurred on the server.',
@@ -452,7 +491,6 @@ class UsersController extends Controller
 			], 500);
 		}
 	}
-
 	
 
     public function newPassword(Request $request)
@@ -1128,7 +1166,7 @@ class UsersController extends Controller
 	}
 
 
-	public function hardDeleteUser($user_id)
+	public function softDeleteUser($user_id)
 	{
 		try {
 
@@ -1144,39 +1182,26 @@ class UsersController extends Controller
 				], 404);
 			}
 
+			if ($user->deleted_at) {
+				return response()->json([
+					'status' => false,
+					'message' => 'User sudah dihapus sebelumnya',
+					'data' => null
+				], 400);
+			}
+
 			$deletedData = $user->toArray();
 
-			// Ambil semua progres milik user
-			$progresIds = DB::table('kompetensi_progres')
-				->where('user_id', $user_id)
-				->pluck('id');
-
-			// Hapus tracks terlebih dahulu
-			DB::table('kompetensi_tracks')
-				->whereIn('progres_id', $progresIds)
-				->delete();
-
-			// Hapus progres
-			DB::table('kompetensi_progres')
-				->where('user_id', $user_id)
-				->delete();
-
-			// Hapus relasi pivot
-			$user->roles()->detach();
-
-			// Hapus sertifikat
-			$user->Sertifikat()->delete();
-
-			// Hapus user
+			// Soft delete user
 			$user->delete();
 
 			DB::commit();
 
 			return response()->json([
 				'status' => true,
-				'message' => 'User berhasil dihapus permanen',
+				'message' => 'User berhasil dihapus (soft delete)',
 				'data' => $deletedData
-			]);
+			], 200);
 
 		} catch (\Exception $e) {
 

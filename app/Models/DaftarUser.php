@@ -9,11 +9,13 @@ use Tymon\JWTAuth\Contracts\JWTSubject; // Tambahkan ini
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;    
 use Laravel\Sanctum\HasApiTokens; // Jika menggunakan Sanctum
 use Illuminate\Auth\Authenticatable; // Pastikan ini diimpor
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 
 
 class DaftarUser extends Model implements AuthenticatableContract, JWTSubject
 {  
-    use Authenticatable, HasApiTokens;
+    use Authenticatable, HasApiTokens, SoftDeletes;
 
     protected $table = 'users';  
   
@@ -43,6 +45,7 @@ class DaftarUser extends Model implements AuthenticatableContract, JWTSubject
         'current_role_id',  
         'working_unit_id',  
         'foto',
+        'deleted_at',
         'device_token'  
     ];  
       
