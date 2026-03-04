@@ -101,8 +101,10 @@ class CertificateController extends Controller
             Log::error("Kompetensi PK dengan pk_id {$form1['pk_id']} tidak ditemukan!");
         }
 
-        $data['nama']            = strtoupper($form1->asesi_name);
-        $data['nama_asesor']     = strtoupper($form1->asesor_name ?? 'ASESOR');
+        $asesiName = DaftarUser::where('id', $form1->asesi_id)->value('nama') ?? 'ASESI';
+        $asesorName = DaftarUser::where('id', $form1->asesor_id)->value('nama') ?? 'ASESOR';
+        $data['nama']            = strtoupper($asesiName);
+        $data['nama_asesor']     = strtoupper($asesorName);
         $data['tanggal_mulai']   = Carbon::parse($form1->asesor_date)->translatedFormat('d F Y');
         $data['tanggal_selesai'] = $form6EndedAt;
         $data['status']          = $overallFinal;
@@ -1052,8 +1054,8 @@ class CertificateController extends Controller
 
         $form1 = BidangModel::find($form1Id);
         $nikAsesi = DaftarUser::find($form1->asesi_id)->nik ?? '-';
-        $asesiName  = strtoupper($form1->asesi_name ?? '-');
-        $asesorName = User::find($form1->user_id)->nama ?? '-';
+        $asesiName  = DaftarUser::find($form1->asesi_id)->nama ?? '-';
+        $asesorName = DaftarUser::find($form1->user_id)->nama ?? '-';
         Log::info($form1);
         $userAsesor = DataAsesorModel::where('user_id', $form1->asesor_id)->first();
         Log::info('ini asesor');
@@ -1225,13 +1227,15 @@ class CertificateController extends Controller
                 'message' => 'Direktur aktif tidak ditemukan'
             ], 500);
         }
+        $asesiName  = DaftarUser::find($form1->asesi_id)->nama ?? 'ASESI';
+        $asesorName = DaftarUser::find($form1->asesor_id)->nama ?? 'ASESOR';
 
         // ===============================
         // Bangun Data View
         // ===============================
         $data = [
-            'nama'              => strtoupper($form1->asesi_name),
-            'nama_asesor'       => strtoupper($form1->asesor_name ?? 'ASESOR'),
+            'nama'              => strtoupper($asesiName),
+            'nama_asesor'       => strtoupper($asesorName),
             'tanggal_mulai'     => Carbon::parse($form1->asesor_date)
                                         ->translatedFormat('d F Y'),
             'tanggal_selesai'   => $form6EndedAt,
@@ -1381,7 +1385,7 @@ class CertificateController extends Controller
         $kompetensi = KompetensiPk::find($pkId);
 
         $nikAsesi   = DaftarUser::find($form1->asesi_id)->nik ?? '-';
-        $asesiName  = strtoupper($form1->asesi_name ?? '-');
+        $asesiName  = DaftarUser::find($form1->asesi_id)->nama ?? 'ASESI';
         // $asesorName = ($form1->asesor_name ?? 'ASESOR');
         $asesorName = DaftarUser::find($form1->asesor_id)->nama ?? 'ASESOR';
         log::info('form1 asesor id: ' . $form1->asesor_id);
