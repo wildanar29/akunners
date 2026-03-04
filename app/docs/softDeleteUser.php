@@ -119,4 +119,4 @@ namespace App\Docs;
  * )
  */
 
- class hardDeleteUser {}
+ class softDeleteUser {}
