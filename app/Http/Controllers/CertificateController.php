@@ -101,8 +101,8 @@ class CertificateController extends Controller
             Log::error("Kompetensi PK dengan pk_id {$form1['pk_id']} tidak ditemukan!");
         }
 
-        $asesiName = DaftarUser::where('id', $form1->asesi_id)->value('nama') ?? 'ASESI';
-        $asesorName = DaftarUser::where('id', $form1->asesor_id)->value('nama') ?? 'ASESOR';
+        $asesiName = DaftarUser::where('user_id', $form1->asesi_id)->value('nama') ?? 'ASESI';
+        $asesorName = DaftarUser::where('user_id', $form1->asesor_id)->value('nama') ?? 'ASESOR';
         $data['nama']            = strtoupper($asesiName);
         $data['nama_asesor']     = strtoupper($asesorName);
         $data['tanggal_mulai']   = Carbon::parse($form1->asesor_date)->translatedFormat('d F Y');
