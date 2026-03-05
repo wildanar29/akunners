@@ -126,7 +126,7 @@ class CertificateController extends Controller
             throw new \Exception('Direktur Utama aktif tidak ditemukan');
         }
 
-        $data['nama_direktur']    = strtoupper($direktur->nama ?? '-');
+        $data['nama_direktur']    = ($direktur->nama ?? '-');
         $data['jabatan_direktur'] = $direktur->jabatan ?? '-';
         $data['reg_direktur']     = $direktur->no_reg ?? '-';
 
@@ -1243,7 +1243,7 @@ class CertificateController extends Controller
             'gelar'             => $kompetensi->nama_level ?? null,
             'area'              => $kompetensi->area ?? null,
             'nomor_surat'       => 'PREVIEW',
-            'nama_direktur'     => strtoupper($direktur->nama ?? '-'),
+            'nama_direktur'     => ($direktur->nama ?? '-'),
             'jabatan_direktur'  => $direktur->jabatan ?? '-',
             'reg_direktur'      => $direktur->no_reg ?? '-',
         ];
