@@ -1055,7 +1055,7 @@ class CertificateController extends Controller
         $form1 = BidangModel::find($form1Id);
         $nikAsesi = DaftarUser::find($form1->asesi_id)->nik ?? '-';
         $asesiName  = DaftarUser::find($form1->asesi_id)->nama ?? '-';
-        $asesorName = DaftarUser::find($form1->user_id)->nama ?? '-';
+        $asesorName = DaftarUser::find($form1->asesor_id)->nama ?? '-';
         Log::info($form1);
         $userAsesor = DataAsesorModel::where('user_id', $form1->asesor_id)->first();
         Log::info('ini asesor');
