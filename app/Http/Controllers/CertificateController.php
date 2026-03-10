@@ -1142,7 +1142,7 @@ class CertificateController extends Controller
             'barcode_asesor'  => $barcodeAsesor,
             'barcode_bidang'  => $barcodeBidang,
             'nik_asesi'       => $nikAsesi
-        ]);
+        ])->setPaper([0,0,935,595]);
 
 
         Storage::disk('public')->put($path, $pdf->output());
@@ -1159,7 +1159,7 @@ class CertificateController extends Controller
             'tanggal_mulai'   => $form1->updated_at ?? Carbon::now(),
             'tanggal_selesai' => Carbon::now(),
             'file_path'       => $path,
-        ])->setPaper('F4', 'landscape');;
+        ]);
     }
 
     public function renderSertifikatPreview($form_1_id)
