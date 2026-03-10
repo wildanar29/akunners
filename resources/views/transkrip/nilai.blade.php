@@ -20,7 +20,7 @@ margin: 0.8cm;
 
 body {
 font-family: 'Times New Roman', serif;
-font-size: 9px;
+font-size: 10px;
 line-height: 1.25;
 background-color: #fbfaf5;
 margin: 0;
@@ -102,17 +102,17 @@ padding: 3px 5px;
 table.data-table th {
 background-color: #f0f0f0;
 text-align: center;
-font-size: 9px;
+font-size: 10px;
 }
 
 table.data-table td {
-font-size: 9px;
+font-size: 10px;
 }
 
 .footer {
 margin-top: 10px;
 text-align: right;
-font-size: 9px;
+font-size: 10px;
 }
 
 .signature-wrapper {
@@ -153,7 +153,7 @@ font-size: 10px;
 }
 
 .signature-reg {
-font-size: 9px;
+font-size: 10px;
 margin-top: 2px;
 }
 
