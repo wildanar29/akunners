@@ -12,7 +12,7 @@
     @endphp
     <style>
         @page {
-            size: F4 portrait;
+            size: F4 landscape;
             margin: 1cm;
         }
 

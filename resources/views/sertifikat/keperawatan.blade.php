@@ -97,6 +97,7 @@
             font-size: 2.2vw;
             margin-bottom: 2vw;
             color: #444;
+            font-weight: normal;
         }
 
         .nama {
@@ -120,8 +121,8 @@
 
         .status {
             margin-top: 2.5vw;
-            font-size: 3vw;
-            font-weight: bold;
+            font-size: 5vw;
+            font-weight: normal;
             letter-spacing: 0.2vw;
         }
 
@@ -203,22 +204,22 @@
         <div class="nama">{{ $nama }}</div>
 
         <p class="description">
-            Telah Mengikuti <strong>Asesmen Kompetensi Perawat</strong>
+            Telah Mengikuti Asesmen Kompetensi Perawat
         </p>
 
-        <p class="date-range">
-            pada Tanggal <strong>{{ $tanggal_mulai ?? '-' }}</strong>
-            s/d <strong>{{ $tanggal_selesai ?? '-' }}</strong>
+       <p class="date-range">
+            pada Tanggal <span>{{ $tanggal_mulai ?? '-' }}</span>
+            s/d <span>{{ $tanggal_selesai ?? '-' }}</span>
             dan dinyatakan:
         </p>
 
-        <div class="status {{ ($status ?? 'KOMPETEN') === 'BELUM KOMPETEN' ? 'red' : 'green' }}">
+       <div class="status">
             {{ strtoupper($status ?? 'KOMPETEN') }}
         </div>
 
         <p class="gelar">
-            Sebagai <strong>{{ $gelar ?? '-' }}</strong>
-            di Area {{ $area ?? '-' }} <strong>Rumah Sakit Immanuel</strong>
+            Sebagai <span>{{ $gelar ?? '-' }}</span>
+            di Area {{ $area ?? '-' }} <span>Rumah Sakit Immanuel</span>
         </p>
     </div>
 
