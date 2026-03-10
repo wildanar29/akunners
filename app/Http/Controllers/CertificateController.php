@@ -103,8 +103,8 @@ class CertificateController extends Controller
 
         $asesiName = DaftarUser::where('user_id', $form1->asesi_id)->value('nama') ?? 'ASESI';
         $asesorName = DaftarUser::where('user_id', $form1->asesor_id)->value('nama') ?? 'ASESOR';
-        $data['nama']            = strtoupper($asesiName);
-        $data['nama_asesor']     = strtoupper($asesorName);
+        $data['nama']            = $asesiName;
+        $data['nama_asesor']     = $asesorName;
         $data['tanggal_mulai']   = Carbon::parse($form1->asesor_date)->translatedFormat('d F Y');
         $data['tanggal_selesai'] = $form6EndedAt;
         $data['status']          = $overallFinal;
@@ -577,7 +577,7 @@ class CertificateController extends Controller
             $barcodeAsesorPayload = [
                 'nomor_surat'  => $sertifikat->nomor_surat,
                 'nama'         => $sertifikat->nama,
-                'asesor'       => strtoupper($form1->asesor_name ?? 'ASESOR'),
+                'asesor'       => ($form1->asesor_name ?? 'ASESOR'),
                 'pk'           => $sertifikat->gelar,
                 'penandatangan'=> 'Asesor Kompetensi',
                 'approved_at'  => Carbon::now()->toDateTimeString(),
@@ -585,7 +585,7 @@ class CertificateController extends Controller
 
             $data = [
                 'nama'            => $sertifikat->nama,
-                'nama_asesor'     => strtoupper($form1->asesor_name ?? 'ASESOR'),
+                'nama_asesor'     => ($form1->asesor_name ?? 'ASESOR'),
                 'tanggal_mulai'   => Carbon::parse($sertifikat->tanggal_mulai)->translatedFormat('d F Y'),
                 'tanggal_selesai' => $sertifikat->tanggal_selesai
                                         ? Carbon::parse($sertifikat->tanggal_selesai)->translatedFormat('d F Y')
@@ -1099,7 +1099,7 @@ class CertificateController extends Controller
             throw new \Exception('Kepala Bidang Keperawatan aktif tidak ditemukan');
         }
 
-        $bidangName    = strtoupper($kabid->nama ?? '-');
+        $bidangName    = ($kabid->nama ?? '-');
         $bidangJabatan = $kabid->jabatan ?? '-';
         $bidangReg     = $kabid->no_reg ?? '-';
 
@@ -1234,8 +1234,8 @@ class CertificateController extends Controller
         // Bangun Data View
         // ===============================
         $data = [
-            'nama'              => strtoupper($asesiName),
-            'nama_asesor'       => strtoupper($asesorName),
+            'nama'              => ($asesiName),
+            'nama_asesor'       => ($asesorName),
             'tanggal_mulai'     => Carbon::parse($form1->asesor_date)
                                         ->translatedFormat('d F Y'),
             'tanggal_selesai'   => $form6EndedAt,
@@ -1431,7 +1431,7 @@ class CertificateController extends Controller
             json_encode([
                 'preview'    => true,
                 'nama_asesi' => $asesiName,
-                'bidang'     => strtoupper($kabid->nama),
+                'bidang'     => ($kabid->nama),
                 'jenis'      => 'Transkrip Nilai',
             ], JSON_UNESCAPED_UNICODE),
             'QRCODE',
@@ -1451,7 +1451,7 @@ class CertificateController extends Controller
             'nomor'           => $nomorDokumen,
             'asesor_name'     => $asesorName,
             'asesor_reg'      => $asesorReg,
-            'bidang_name'     => strtoupper($kabid->nama ?? '-'),
+            'bidang_name'     => ($kabid->nama ?? '-'),
             'bidang_jabatan'  => $kabid->jabatan ?? '-',
             'bidang_reg'      => $kabid->no_reg ?? '-',
             'barcode_asesor'  => $barcodeAsesor,
