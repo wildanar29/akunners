@@ -367,6 +367,8 @@ class AsesiPermohonanController extends Controller
 		$userId = $request->input('user_id');
 		$status = $request->input('status');
 
+		Log::info("Menerima request getForm1ByAsesor dengan user_id: $userId dan status: $status");
+
 		// Validasi input user_id
 		if (!$userId) {
 			return response()->json([
