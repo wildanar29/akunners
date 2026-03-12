@@ -380,12 +380,12 @@ class AsesiPermohonanController extends Controller
 			->where('user_id', $userId)
 			->first();
 
-		if (!$asesor) {
-			return response()->json([
-				'success' => "OK",
-				'message' => 'User ini bukan asesor.',
-			], 403);
-		}
+		// if (!$asesor) {
+		// 	return response()->json([
+		// 		'success' => "OK",
+		// 		'message' => 'User ini bukan asesor.',
+		// 	], 403);
+		// }
 
 		// Ambil no_reg asesor
 		$noReg = $asesor->no_reg;
