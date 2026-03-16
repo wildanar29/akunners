@@ -1142,7 +1142,7 @@ class CertificateController extends Controller
             'barcode_asesor'  => $barcodeAsesor,
             'barcode_bidang'  => $barcodeBidang,
             'nik_asesi'       => $nikAsesi
-        ])->setPaper([0,0,935,595]);
+        ])->setPaper('a4', 'landscape');
 
 
         Storage::disk('public')->put($path, $pdf->output());
