@@ -462,92 +462,119 @@ class Form10Controller extends BaseController
 
     
     public function getForm10WithAnswersById($form10Id)
-    {
-        try {
-            $form10 = Form10::with([
-                'daftarTilik.kegiatanDaftarTilik' => function ($q) use ($form10Id) {
-                    $q->whereNull('parent_id')
-                        ->orderBy('urutan')
-                        ->with([
-                            'jawaban' => function ($jq) use ($form10Id) {
-                                $jq->where('form_10_id', $form10Id);
-                            },
-                            'children.children.jawaban' => function ($jq) use ($form10Id) {
-                                $jq->where('form_10_id', $form10Id);
-                            },
-                            'children.children.children.jawaban' => function ($jq) use ($form10Id) {
-                                $jq->where('form_10_id', $form10Id);
-                            },
-                            'children' => function ($cq) {
-                                $cq->orderBy('urutan'); // pastikan urutan anak juga teratur
-                            },
-                            'children.children' => function ($cq) {
-                                $cq->orderBy('urutan');
-                            },
-                            'children.children.children' => function ($cq) {
-                                $cq->orderBy('urutan');
-                            },
-                        ]);
-                },
-            ])->find($form10Id);
+{
+    try {
 
-            if (!$form10) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Data Form 10 tidak ditemukan',
-                    'data'    => null
-                ], 404);
-            }
+        $form10 = Form10::with([
+            'daftarTilik.kegiatanDaftarTilik' => function ($q) use ($form10Id) {
 
-            // 🧩 Fungsi rekursif untuk format kegiatan beserta anak-anaknya
-            $formatKegiatan = function ($kegiatan) use (&$formatKegiatan) {
-                $jawaban = $kegiatan->jawaban->first();
+                $q->whereNull('parent_id')
+                    ->orderBy('urutan')
+                    ->with([
 
-                $jawabanData = $kegiatan->isTitle
-                    ? null
-                    : [
-                        'dilakukan' => (bool) ($jawaban->dilakukan ?? false),
-                        'catatan'   => $jawaban->catatan ?? null,
-                    ];
+                        // parent
+                        'jawaban' => function ($jq) use ($form10Id) {
+                            $jq->where('form_10_id', $form10Id);
+                        },
 
-                return [
-                    'id'       => $kegiatan->id,
-                    'kegiatan' => $kegiatan->kegiatan,
-                    'urutan'   => $kegiatan->urutan, // 🆕 tambahkan urutan di sini
-                    'isTitle'  => (bool) $kegiatan->isTitle,
-                    'jawaban'  => $jawabanData,
-                    // 🔁 Rekursif: panggil lagi untuk setiap child
-                    'children' => $kegiatan->children->map(fn($child) => $formatKegiatan($child))->values(),
-                ];
-            };
+                        // children level 1
+                        'children.jawaban' => function ($jq) use ($form10Id) {
+                            $jq->where('form_10_id', $form10Id);
+                        },
 
-            // Gunakan fungsi rekursif untuk memetakan semua kegiatan
-            $data = [
-                'form_10_id' => $form10->form_10_id,
-                'pk_id'      => $form10->pk_id,
-                'asesi_id'   => $form10->asesi_id,
-                'asesor_id'  => $form10->asesor_id,
-                'soal'       => $form10->daftarTilik->kegiatanDaftarTilik
-                                    ->map(fn($kegiatan) => $formatKegiatan($kegiatan))
-                                    ->values(),
-            ];
+                        // children level 2
+                        'children.children.jawaban' => function ($jq) use ($form10Id) {
+                            $jq->where('form_10_id', $form10Id);
+                        },
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Data Form 10 berhasil diambil',
-                'data'    => $data
-            ], 200);
+                        // children level 3
+                        'children.children.children.jawaban' => function ($jq) use ($form10Id) {
+                            $jq->where('form_10_id', $form10Id);
+                        },
 
-        } catch (\Exception $e) {
-            \Log::error('Gagal mengambil Form 10: ' . $e->getMessage());
+                        // urutan children level 1
+                        'children' => function ($cq) {
+                            $cq->orderBy('urutan');
+                        },
+
+                        // urutan children level 2
+                        'children.children' => function ($cq) {
+                            $cq->orderBy('urutan');
+                        },
+
+                        // urutan children level 3
+                        'children.children.children' => function ($cq) {
+                            $cq->orderBy('urutan');
+                        },
+
+                    ]);
+            },
+        ])->find($form10Id);
+
+        if (!$form10) {
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan saat mengambil data Form 10',
-                'error'   => $e->getMessage(),
+                'message' => 'Data Form 10 tidak ditemukan',
                 'data'    => null
-            ], 500);
+            ], 404);
         }
+
+        // 🧩 Fungsi rekursif untuk format kegiatan beserta anak-anaknya
+        $formatKegiatan = function ($kegiatan) use (&$formatKegiatan) {
+
+            $jawaban = $kegiatan->jawaban->first();
+
+            $jawabanData = $kegiatan->isTitle
+                ? null
+                : [
+                    'dilakukan' => (int) ($jawaban->dilakukan ?? 0) === 1,
+                    'catatan'   => $jawaban->catatan ?? null,
+                ];
+
+            return [
+                'id'       => $kegiatan->id,
+                'kegiatan' => $kegiatan->kegiatan,
+                'urutan'   => $kegiatan->urutan,
+                'isTitle'  => (bool) $kegiatan->isTitle,
+                'jawaban'  => $jawabanData,
+
+                // 🔁 Rekursif children
+                'children' => $kegiatan->children
+                    ->map(fn($child) => $formatKegiatan($child))
+                    ->values(),
+            ];
+        };
+
+        // hasil akhir
+        $data = [
+            'form_10_id' => $form10->form_10_id,
+            'pk_id'      => $form10->pk_id,
+            'asesi_id'   => $form10->asesi_id,
+            'asesor_id'  => $form10->asesor_id,
+
+            'soal'       => $form10->daftarTilik->kegiatanDaftarTilik
+                ->map(fn($kegiatan) => $formatKegiatan($kegiatan))
+                ->values(),
+        ];
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Data Form 10 berhasil diambil',
+            'data'    => $data
+        ], 200);
+
+    } catch (\Exception $e) {
+
+        \Log::error('Gagal mengambil Form 10: ' . $e->getMessage());
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Terjadi kesalahan saat mengambil data Form 10',
+            'error'   => $e->getMessage(),
+            'data'    => null
+        ], 500);
     }
+}
 
 
 
